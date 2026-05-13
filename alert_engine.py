@@ -172,18 +172,108 @@ def run_alerts(baris_baru, sheet_data=None):
 
 # ── Sheet Alert Log ───────────────────────────────────────────────────────────
 
+def apply_alert_formatting(spreadsheet, ws):
+    """
+    Terapkan conditional formatting ke sheet Alert Log.
+    Hapus rules lama dulu (hindari akumulasi duplikat), lalu tambahkan:
+    - Header (R1)  : background navy, teks putih bold, frozen
+    - [MERAH]      : background merah muda  (seluruh baris)
+    - [KUNING]     : background kuning muda (seluruh baris)
+    - [BIRU]       : background biru muda   (seluruh baris)
+    Kolom C (index 2) berisi teks jenis alert — dipakai sebagai kunci formula.
+    """
+    sid   = ws.id
+    ssid  = spreadsheet.id
+    NAVY  = {"red": 0.02, "green": 0.15, "blue": 0.35}
+    WHITE = {"red": 1.00, "green": 1.00, "blue": 1.00}
+
+    # ── 1. Hapus conditional rules yang sudah ada ─────────────────────────────
+    try:
+        url  = (f"https://sheets.googleapis.com/v4/spreadsheets/{ssid}"
+                f"?fields=sheets(conditionalFormats,properties.sheetId)")
+        resp = spreadsheet.client.request("GET", url)
+        meta = resp.json()
+        n_rules = 0
+        for s in meta.get("sheets", []):
+            if s.get("properties", {}).get("sheetId") == sid:
+                n_rules = len(s.get("conditionalFormats", []))
+                break
+        if n_rules:
+            # Hapus dari index tertinggi ke 0 (hindari index-shift)
+            del_reqs = [
+                {"deleteConditionalFormatRule": {"sheetId": sid, "index": i}}
+                for i in range(n_rules - 1, -1, -1)
+            ]
+            spreadsheet.batch_update({"requests": del_reqs})
+            print(f"  {n_rules} rule lama dihapus.")
+    except Exception as exc:
+        print(f"  [WARN] Tidak bisa hapus rule lama: {exc}")
+
+    # ── 2. Terapkan formatting baru ───────────────────────────────────────────
+    data_range = {
+        "startRowIndex": 1, "endRowIndex": 500,
+        "startColumnIndex": 0, "endColumnIndex": 7,
+    }
+
+    def cond_rule(keyword, bg, idx):
+        """Helper: satu addConditionalFormatRule request."""
+        return {"addConditionalFormatRule": {
+            "rule": {
+                "ranges": [{**data_range, "sheetId": sid}],
+                "booleanRule": {
+                    "condition": {
+                        "type": "CUSTOM_FORMULA",
+                        # $C2 → kolom C absolut, baris relatif (bergerak per baris)
+                        "values": [{"userEnteredValue": f'=REGEXMATCH($C2,"{keyword}")'}],
+                    },
+                    "format": {"backgroundColor": bg},
+                },
+            },
+            "index": idx,
+        }}
+
+    requests = [
+        # Header row: navy + white bold + frozen
+        {"repeatCell": {
+            "range": {"sheetId": sid, "startRowIndex": 0, "endRowIndex": 1,
+                      "startColumnIndex": 0, "endColumnIndex": 7},
+            "cell": {"userEnteredFormat": {
+                "backgroundColor": NAVY,
+                "textFormat": {"foregroundColor": WHITE, "bold": True, "fontSize": 10},
+            }},
+            "fields": "userEnteredFormat(backgroundColor,textFormat)",
+        }},
+        {"updateSheetProperties": {
+            "properties": {"sheetId": sid, "gridProperties": {"frozenRowCount": 1}},
+            "fields": "gridProperties.frozenRowCount",
+        }},
+        # Lebar kolom: Tanggal|Komoditas|Jenis Alert|Sebelum|Sekarang|%|Rekomendasi
+        *[{"updateDimensionProperties": {
+            "range": {"sheetId": sid, "dimension": "COLUMNS",
+                      "startIndex": c, "endIndex": c + 1},
+            "properties": {"pixelSize": px}, "fields": "pixelSize",
+        }} for c, px in [(0,100),(1,200),(2,260),(3,140),(4,180),(5,90),(6,300)]],
+        # Conditional rules (urutan penting: index 0 diperiksa pertama)
+        cond_rule("MERAH",  {"red": 1.00, "green": 0.87, "blue": 0.87}, 0),
+        cond_rule("KUNING", {"red": 1.00, "green": 0.97, "blue": 0.77}, 1),
+        cond_rule("BIRU",   {"red": 0.85, "green": 0.93, "blue": 1.00}, 2),
+    ]
+
+    spreadsheet.batch_update({"requests": requests})
+    print("  Conditional formatting Alert Log diterapkan.")
+
+
 def get_or_create_alert_sheet(spreadsheet):
     try:
         ws = spreadsheet.worksheet("Alert Log")
         existing = ws.get_all_values()
         if not existing:
             ws.append_row(ALERT_HEADERS, value_input_option="RAW")
-            ws.format("A1:G1", {"textFormat": {"bold": True}})
         return ws
     except gspread.exceptions.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title="Alert Log", rows=500, cols=len(ALERT_HEADERS))
         ws.append_row(ALERT_HEADERS, value_input_option="RAW")
-        ws.format("A1:G1", {"textFormat": {"bold": True}})
+        apply_alert_formatting(spreadsheet, ws)
         print("Sheet 'Alert Log' dibuat baru.")
         return ws
 
@@ -233,6 +323,7 @@ def main():
         return
 
     alert_ws = get_or_create_alert_sheet(ss)
+    apply_alert_formatting(spreadsheet=ss, ws=alert_ws)
     existing = alert_ws.get_all_values()
     # Hindari duplikat: set (komoditas, jenis_alert) yang sudah ada hari ini
     existing_keys = {
