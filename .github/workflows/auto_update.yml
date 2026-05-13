@@ -1,0 +1,36 @@
+name: Market Watch AJN - Auto Update
+
+on:
+  schedule:
+    # Setiap Senin jam 01:00 UTC = 08:00 WIB
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+    # Tombol "Run workflow" manual di GitHub Actions
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Tulis credentials.json dari secret
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Jalankan auto update
+        run: python auto_update.py
+
+      - name: Hapus credentials (cleanup)
+        if: always()
+        run: rm -f credentials.json
