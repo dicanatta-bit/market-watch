@@ -69,6 +69,124 @@ DATA_UDANG_VANAME = [
     ],
 ]
 
+DATA_UDANG_WINDU = [
+    [
+        TANGGAL,
+        "Udang Windu (Penaeus monodon)",
+        "Size 20",
+        "100.000 - 120.000",
+        "8,00 - 10,00",
+        "",
+        "KKP; JALA Tech",
+        "Produksi terbatas, harga jauh di atas vaname. Permintaan ekspor stabil."
+    ],
+    [
+        TANGGAL,
+        "Udang Windu (Penaeus monodon)",
+        "Size 30",
+        "80.000 - 100.000",
+        "6,00 - 8,00",
+        "",
+        "KKP; JALA Tech",
+        "Dominan dari tambak Sulawesi dan Kalimantan."
+    ],
+]
+
+DATA_NILA = [
+    [
+        TANGGAL,
+        "Nila (Oreochromis niloticus)",
+        "300-500 g",
+        "22.000 - 28.000",
+        "3,00 - 4,00",
+        "",
+        "KKP; DJPB",
+        "Harga tambak Jawa Barat & Sumatera. Ekspor fillet ke AS & Eropa."
+    ],
+]
+
+DATA_TUNA_YELLOWFIN = [
+    [
+        TANGGAL,
+        "Tuna Sirip Kuning / Yellowfin (Thunnus albacares)",
+        "Sashimi grade",
+        "60.000 - 80.000",
+        "5,00 - 8,00",
+        "6,50 - 9,00",
+        "KKP; ASTUIN; PPS Bitung",
+        "Harga nelayan Bitung & Ambon. Ekspor utama ke Jepang dan Eropa."
+    ],
+    [
+        TANGGAL,
+        "Tuna Sirip Kuning / Yellowfin (Thunnus albacares)",
+        "Loin/kaleng",
+        "30.000 - 45.000",
+        "2,50 - 4,00",
+        "",
+        "KKP; ASTUIN",
+        "Grade industri untuk pengalengan dan loin beku."
+    ],
+]
+
+DATA_TUNA_CAKALANG = [
+    [
+        TANGGAL,
+        "Tuna Cakalang (Katsuwonus pelamis)",
+        "-",
+        "15.000 - 25.000",
+        "1,50 - 2,50",
+        "1,80 - 2,20",
+        "KKP; PPS Bitung; ASTUIN",
+        "Bahan baku utama industri pengalengan. Harga dipengaruhi musim tangkapan."
+    ],
+]
+
+DATA_KAKAP_MERAH = [
+    [
+        TANGGAL,
+        "Kakap Merah (Lutjanus spp.)",
+        "-",
+        "50.000 - 70.000",
+        "5,00 - 8,00",
+        "",
+        "KKP; Pelabuhan Perikanan",
+        "Harga nelayan bervariasi per wilayah. Permintaan ekspor ke China & Singapura tinggi."
+    ],
+]
+
+DATA_KERAPU = [
+    [
+        TANGGAL,
+        "Kerapu (Epinephelus spp.)",
+        "Hidup (>500 g)",
+        "100.000 - 150.000",
+        "8,00 - 12,00",
+        "",
+        "KKP; DJPB; Pelabuhan Perikanan",
+        "Ekspor hidup ke China dominan. Harga sangat sensitif terhadap permintaan China."
+    ],
+    [
+        TANGGAL,
+        "Kerapu (Epinephelus spp.)",
+        "Beku/segar",
+        "60.000 - 90.000",
+        "5,00 - 7,00",
+        "",
+        "KKP; DJPB",
+        "Pasar lokal dan ekspor grade beku."
+    ],
+]
+
+ALL_DATA = (
+    DATA_UDANG_VANAME
+    + DATA_UDANG_WINDU
+    + DATA_NILA
+    + DATA_TUNA_YELLOWFIN
+    + DATA_TUNA_CAKALANG
+    + DATA_KAKAP_MERAH
+    + DATA_KERAPU
+)
+
 
 def get_or_create_sheet(spreadsheet: gspread.Spreadsheet, name: str) -> gspread.Worksheet:
     """Ambil sheet jika ada, buat baru jika belum ada."""
@@ -134,7 +252,7 @@ def main():
     # Masukkan data
     baris_ditambah = 0
     baris_dilewati = 0
-    for baris in DATA_UDANG_VANAME:
+    for baris in ALL_DATA:
         tanggal, komoditas, size = baris[0], baris[1], baris[2]
         if cek_duplikat(sheet, tanggal, komoditas, size):
             print(f"  [LEWATI] {komoditas} {size} tanggal {tanggal} sudah ada.")
