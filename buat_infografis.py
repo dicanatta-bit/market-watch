@@ -336,7 +336,7 @@ def main():
     print(f"Sheet '{SHEET_NAME}' dibuat (id={sid}).")
 
     # Tulis data
-    ws.update(DATA, "A1", value_input_option="USER_ENTERED")
+    ws.update(DATA, "A1", value_input_option="RAW")
     print("Data berhasil ditulis.")
 
     # Terapkan formatting + chart
