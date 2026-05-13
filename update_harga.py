@@ -115,7 +115,7 @@ def main():
 
     # Autentikasi
     creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
-    client = gspread.authorize(creds)
+    client = gspread.Client(auth=creds)
     print("Autentikasi Google Sheets berhasil.")
 
     # Buka spreadsheet berdasarkan ID

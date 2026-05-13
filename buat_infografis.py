@@ -320,7 +320,7 @@ def main():
     print("=== Market Watch AJN -- Buat Infografis ===\n")
 
     creds = Credentials.from_service_account_file(CREDS_FILE, scopes=SCOPES)
-    client = gspread.authorize(creds)
+    client = gspread.Client(auth=creds)
     ss = client.open_by_key(SPREADSHEET_ID)
     print(f"Spreadsheet '{ss.title}' dibuka.")
 
