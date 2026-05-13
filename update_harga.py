@@ -308,6 +308,31 @@ def get_or_create_sheet(spreadsheet, name):
         return ws, []
 
 
+def append_rows_with_retry(sheet, rows, max_retries=3):
+    """
+    Tulis semua baris sekaligus dengan satu append_rows() call.
+    Retry dengan exponential backoff jika kena 429 (quota exceeded).
+    Jeda: 10 s → 20 s → 40 s.
+    """
+    delays = [10, 20, 40]
+    for attempt in range(max_retries + 1):
+        try:
+            sheet.append_rows(rows, value_input_option="RAW")
+            print(f"  {len(rows)} baris ditulis ke sheet (attempt {attempt + 1}).")
+            return
+        except gspread.exceptions.APIError as e:
+            status = getattr(e, "response", None)
+            code   = status.status_code if status else 0
+            if code == 429 and attempt < max_retries:
+                jeda = delays[attempt]
+                print(f"  [429] Quota exceeded — tunggu {jeda} detik lalu coba ulang "
+                      f"(attempt {attempt + 1}/{max_retries})...")
+                time.sleep(jeda)
+            else:
+                print(f"  [ERROR] append_rows gagal: {e}")
+                raise
+
+
 def cek_duplikat(sheet_data, tanggal, komoditas, size):
     for row in sheet_data[1:]:
         if len(row) >= 3 and row[0] == tanggal and row[1] == komoditas and row[2] == size:
@@ -346,7 +371,9 @@ def main():
     web.update(scrape_kkp())
     print()
 
-    ditambah = dilewati = 0
+    # ── Kumpulkan semua baris baru dulu, baru tulis sekaligus ────────────────
+    baris_baru = []
+    dilewati   = 0
 
     for entry in BASE_DATA:
         k = entry["komoditas"]
@@ -357,35 +384,28 @@ def main():
             dilewati += 1
             continue
 
-        # Harga historis
-        h_minggu  = lookup_tambak(existing_data, k, s, 7)
+        h_minggu  = lookup_tambak(existing_data, k, s,  7)
         h_1bulan  = lookup_tambak(existing_data, k, s, 30)
         h_3bulan  = lookup_tambak(existing_data, k, s, 90)
 
-        pct_minggu = fmt_pct(entry["harga_tambak"], h_minggu)
-        pct_3bulan = fmt_pct(entry["harga_tambak"], h_3bulan)
-
-        kepercayaan = determine_kepercayaan(entry, web)
-        sumber      = enrich_sumber(entry, web)
-
         baris = [
-            TANGGAL,
-            k, s,
-            entry["harga_tambak"],
-            entry["harga_ekspor"],
-            entry["harga_intl"],
+            TANGGAL, k, s,
+            entry["harga_tambak"], entry["harga_ekspor"], entry["harga_intl"],
             h_minggu, h_1bulan, h_3bulan,
-            pct_minggu, pct_3bulan,
-            sumber,
-            kepercayaan,
+            fmt_pct(entry["harga_tambak"], h_minggu),
+            fmt_pct(entry["harga_tambak"], h_3bulan),
+            enrich_sumber(entry, web),
+            determine_kepercayaan(entry, web),
             entry["catatan"],
         ]
+        baris_baru.append(baris)
+        print(f"  [ANTRIAN] {k} {s}")
 
-        sheet.append_row(baris, value_input_option="RAW")
-        time.sleep(2)  # Hindari 429 "Write requests per minute" quota
-        existing_data.append(baris)  # Update cache lokal
-        print(f"  [OK] {k} {s} — ditambahkan. Kepercayaan: {kepercayaan}")
-        ditambah += 1
+    # ── Tulis sekaligus (satu API call) dengan retry exponential backoff ─────
+    ditambah = 0
+    if baris_baru:
+        append_rows_with_retry(sheet, baris_baru)
+        ditambah = len(baris_baru)
 
     print(f"\nSelesai: {ditambah} baris ditambahkan, {dilewati} dilewati.")
     print(f"Lihat: https://docs.google.com/spreadsheets/d/{spreadsheet_id}")
