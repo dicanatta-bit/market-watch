@@ -61,6 +61,12 @@ STATIC_PRICES = [
     {"komoditas": "Kakap Merah",    "size": "—",         "tambak": "50.000 – 70.000",   "ekspor": "5,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
     {"komoditas": "Kerapu",         "size": "Hidup (>500 g)", "tambak": "100.000 – 150.000", "ekspor": "8,00 – 12,00","pct_minggu": "", "kepercayaan": "Estimasi"},
     {"komoditas": "Kerapu",         "size": "Beku/segar",     "tambak": "60.000 – 90.000",   "ekspor": "5,00 – 7,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Rumput Laut",    "size": "Kering",         "tambak": "6.000 – 7.000",     "ekspor": "0,40 – 0,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Rumput Laut",    "size": "Basah",          "tambak": "1.000 – 1.500",     "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Lobster Mutiara","size": ">200 g",         "tambak": "280.000 – 380.000", "ekspor": "18,00 – 22,00","pct_minggu":"", "kepercayaan": "Estimasi"},
+    {"komoditas": "Lobster Pasir",  "size": ">100 g",         "tambak": "150.000 – 220.000", "ekspor": "10,00 – 15,00","pct_minggu":"", "kepercayaan": "Estimasi"},
+    {"komoditas": "Bandeng",        "size": "250-500 g",      "tambak": "20.000 – 28.000",   "ekspor": "1,80 – 2,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Cumi-cumi",      "size": "-",              "tambak": "35.000 – 50.000",   "ekspor": "3,50 – 5,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
 ]
 
 # ── Layout baris (0-indexed) ──────────────────────────────────────────────────
@@ -370,7 +376,7 @@ def build_requests(sid, today_alerts):
 
 # ── HTML export ───────────────────────────────────────────────────────────────
 
-_BUDIDAYA_KEYS = ["Vaname", "Windu", "Nila"]
+_BUDIDAYA_KEYS = ["Vaname", "Windu", "Nila", "Rumput Laut", "Bandeng"]
 
 _SHORT_NAMES = [
     ("Udang Vaname",   "Vaname"),
@@ -380,6 +386,10 @@ _SHORT_NAMES = [
     ("Cakalang",       "Cakalang"),
     ("Kakap",          "Kakap"),
     ("Kerapu",         "Kerapu"),
+    ("Rumput Laut",    "Rmpt Laut"),
+    ("Lobster",        "Lobster"),
+    ("Bandeng",        "Bandeng"),
+    ("Cumi",           "Cumi"),
 ]
 
 

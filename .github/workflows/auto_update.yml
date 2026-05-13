@@ -30,6 +30,9 @@ jobs:
       - name: Tulis credentials.json dari secret
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
 
+      - name: Backfill historis (skip jika sheet sudah ada)
+        run: python backfill_historis.py --skip-if-exists || true
+
       - name: Jalankan auto update
         run: python auto_update.py
 
