@@ -382,10 +382,10 @@ def main():
         ]
 
         sheet.append_row(baris, value_input_option="RAW")
+        time.sleep(2)  # Hindari 429 "Write requests per minute" quota
         existing_data.append(baris)  # Update cache lokal
         print(f"  [OK] {k} {s} — ditambahkan. Kepercayaan: {kepercayaan}")
         ditambah += 1
-        time.sleep(0.3)  # Hindari rate limiting
 
     print(f"\nSelesai: {ditambah} baris ditambahkan, {dilewati} dilewati.")
     print(f"Lihat: https://docs.google.com/spreadsheets/d/{spreadsheet_id}")
