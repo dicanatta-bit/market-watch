@@ -41,6 +41,28 @@ C_ABU         = {"red": 0.40, "green": 0.40, "blue": 0.40}
 
 MAX_ALERTS = 5   # Maksimum baris alert di infografis (layout tetap)
 
+GITHUB_HTML_URL = (
+    "https://github.com/dicanatta-bit/market-watch/blob/main/output/"
+    f"MarketWatch_AJN_{date.today().strftime('%Y%m%d')}.html"
+)
+
+# ── Data statis fallback (dipakai jika sheet belum berisi data) ───────────────
+STATIC_PRICES = [
+    {"komoditas": "Udang Vaname",   "size": "Size 50",        "tambak": "60.000 – 65.000",   "ekspor": "3,55 – 3,64", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 60",        "tambak": "55.000 – 60.000",   "ekspor": "3,55",             "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 70",        "tambak": "50.000 – 55.000",   "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 100",       "tambak": "40.000 – 45.000",   "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Windu",    "size": "Size 20",        "tambak": "100.000 – 120.000", "ekspor": "8,00 – 10,00","pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Windu",    "size": "Size 30",        "tambak": "80.000 – 100.000",  "ekspor": "6,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Nila",           "size": "300–500 g", "tambak": "22.000 – 28.000",   "ekspor": "3,00 – 4,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Tuna Yellowfin", "size": "Sashimi grade",  "tambak": "60.000 – 80.000",   "ekspor": "5,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Tuna Yellowfin", "size": "Loin/beku",      "tambak": "30.000 – 45.000",   "ekspor": "2,50 – 4,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Tuna Cakalang",  "size": "—",         "tambak": "15.000 – 25.000",   "ekspor": "1,50 – 2,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kakap Merah",    "size": "—",         "tambak": "50.000 – 70.000",   "ekspor": "5,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kerapu",         "size": "Hidup (>500 g)", "tambak": "100.000 – 150.000", "ekspor": "8,00 – 12,00","pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kerapu",         "size": "Beku/segar",     "tambak": "60.000 – 90.000",   "ekspor": "5,00 – 7,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+]
+
 # ── Layout baris (0-indexed) ──────────────────────────────────────────────────
 # R0–R3   : header, subtitle, tanggal, spacer
 # R4–R12  : Section A Budidaya (header R4, kolom R5, data R6–R12)
@@ -348,216 +370,28 @@ def build_requests(sid, today_alerts):
 
 # ── HTML export ───────────────────────────────────────────────────────────────
 
-def _alert_badge(jenis):
-    j = str(jenis).upper()
-    if "MERAH" in j:  return "badge-red",   "MERAH"
-    if "KUNING" in j: return "badge-yellow", "KUNING"
-    if "BIRU" in j:   return "badge-blue",   "BIRU"
-    return "badge-grey", "INFO"
+_BUDIDAYA_KEYS = ["Vaname", "Windu", "Nila"]
+
+_SHORT_NAMES = [
+    ("Udang Vaname",   "Vaname"),
+    ("Udang Windu",    "Windu"),
+    ("Nila",           "Nila"),
+    ("Yellowfin",      "Yellowfin"),
+    ("Cakalang",       "Cakalang"),
+    ("Kakap",          "Kakap"),
+    ("Kerapu",         "Kerapu"),
+]
 
 
-def generate_html(prices, alerts, out_path):
-    """Generate HTML infografis interaktif ke out_path."""
-
-    # Build price rows HTML
-    def price_rows(data_list):
-        rows = []
-        for i, p in enumerate(data_list):
-            pct = p.get("pct_minggu", "")
-            if pct.startswith("+"):
-                pct_html = f'<span class="up">{pct}</span>'
-            elif pct.startswith("-"):
-                pct_html = f'<span class="down">{pct}</span>'
-            else:
-                pct_html = pct or "—"
-            rows.append(f"""
-      <tr class="{'row-alt' if i % 2 else ''}">
-        <td class="bold">{p['komoditas']}</td>
-        <td class="center">{p['size']}</td>
-        <td class="center">{p['tambak']}</td>
-        <td class="center">{p['ekspor']}</td>
-        <td class="center">{pct_html}</td>
-        <td class="center badge-{p['kepercayaan'].lower()}">{p['kepercayaan']}</td>
-      </tr>""")
-        return "".join(rows)
-
-    budidaya = [p for p in prices if any(k in p["komoditas"] for k in
-                ["Vaname", "Windu", "Nila"])]
-    tangkap  = [p for p in prices if p not in budidaya]
-
-    # Build alert rows HTML
-    alert_html = ""
-    if not alerts:
-        alert_html = '<tr><td colspan="5" class="center muted">Tidak ada alert aktif hari ini.</td></tr>'
-    else:
-        for a in alerts:
-            cls, label = _alert_badge(a.get("jenis", ""))
-            alert_html += f"""
-      <tr>
-        <td><span class="badge {cls}">{label}</span></td>
-        <td>{a.get('komoditas', '')}</td>
-        <td class="center bold">{a.get('pct', '')}</td>
-        <td>{a.get('sebelum', '')} → {a.get('sekarang', '')}</td>
-        <td class="small">{a.get('rekomendasi', '')}</td>
-      </tr>"""
-
-    # Chart data (harga tambak midpoint untuk komoditas utama)
-    chart_labels, chart_values = [], []
-    seen = set()
-    for p in prices:
-        k = p["komoditas"].split("(")[0].strip()[:20]
-        s = p["size"]
-        key = f"{k} {s}"
-        if key not in seen:
-            seen.add(key)
-            mid = _parse_mid_simple(p["tambak"])
-            if mid:
-                chart_labels.append(f'"{key}"')
-                chart_values.append(str(int(mid)))
-
-    chart_js = ""
-    if chart_labels:
-        chart_js = f"""
-  <script>
-    const ctx = document.getElementById('priceChart').getContext('2d');
-    new Chart(ctx, {{
-      type: 'bar',
-      data: {{
-        labels: [{', '.join(chart_labels)}],
-        datasets: [{{
-          label: 'Harga Tambak/Nelayan (Rp/kg)',
-          data: [{', '.join(chart_values)}],
-          backgroundColor: 'rgba(6,80,114,0.75)',
-          borderColor: 'rgba(6,80,114,1)',
-          borderWidth: 1
-        }}]
-      }},
-      options: {{
-        responsive: true,
-        plugins: {{ legend: {{ display: false }} }},
-        scales: {{
-          y: {{ beginAtZero: true, ticks: {{ callback: v => 'Rp ' + v.toLocaleString('id') }} }},
-          x: {{ ticks: {{ font: {{ size: 10 }} }} }}
-        }}
-      }}
-    }});
-  </script>"""
-
-    html = f"""<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Watch AJN — {TANGGAL}</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-<style>
-  * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a1a1a; }}
-  .header {{ background: #065072; color: #fff; padding: 18px 24px; }}
-  .header h1 {{ font-size: 1.35rem; font-weight: 700; }}
-  .header p  {{ font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }}
-  .container {{ max-width: 1100px; margin: 20px auto; padding: 0 16px; }}
-  .card {{ background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.1);
-           margin-bottom: 20px; overflow: hidden; }}
-  .card-header {{ padding: 10px 16px; font-weight: 700; font-size: 0.9rem; color: #fff; }}
-  .bg-blue  {{ background: #065072; }}
-  .bg-green {{ background: #145A30; }}
-  .bg-red   {{ background: #922B21; }}
-  table {{ width: 100%; border-collapse: collapse; font-size: 0.84rem; }}
-  th {{ background: #065072; color: #fff; padding: 8px 10px; text-align: left; font-weight: 600; }}
-  td {{ padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }}
-  .row-alt {{ background: #f7fbfd; }}
-  .center {{ text-align: center; }}
-  .bold   {{ font-weight: 600; }}
-  .small  {{ font-size: 0.78rem; color: #555; }}
-  .muted  {{ color: #888; }}
-  .up   {{ color: #27AE60; font-weight: 700; }}
-  .down {{ color: #E74C3C; font-weight: 700; }}
-  .badge {{ display: inline-block; padding: 2px 8px; border-radius: 12px;
-            font-size: 0.72rem; font-weight: 700; letter-spacing: .5px; }}
-  .badge-red    {{ background: #FADBD8; color: #C0392B; }}
-  .badge-yellow {{ background: #FDEBD0; color: #B7950B; }}
-  .badge-blue   {{ background: #D6EAF8; color: #1A5276; }}
-  .badge-grey   {{ background: #ECF0F1; color: #555; }}
-  .badge-tinggi  {{ background: #D5F5E3; color: #1E8449; }}
-  .badge-sedang  {{ background: #FDEBD0; color: #B7950B; }}
-  .badge-estimasi{{ background: #ECF0F1; color: #777; }}
-  .chart-wrap {{ padding: 16px; max-height: 300px; }}
-  .footer {{ text-align: center; font-size: 0.75rem; color: #888;
-             padding: 14px; margin-top: 10px; }}
-</style>
-</head>
-<body>
-<div class="header">
-  <h1>PT AGRINAS JALADRI NUSANTARA (AJN)</h1>
-  <p>MARKET WATCH &mdash; HARGA KOMODITAS PERIKANAN STRATEGIS &nbsp;|&nbsp; Update: {TANGGAL}</p>
-</div>
-
-<div class="container">
-
-  <!-- Chart -->
-  <div class="card">
-    <div class="card-header bg-blue">Grafik Harga Tambak / Nelayan (Rp/kg) — Semua Komoditas</div>
-    <div class="chart-wrap">
-      <canvas id="priceChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Alert -->
-  <div class="card">
-    <div class="card-header bg-red">Alert Aktif &mdash; {TANGGAL}</div>
-    <table>
-      <thead><tr>
-        <th>Jenis</th><th>Komoditas</th><th>% Perubahan</th>
-        <th>Nilai Sebelum → Sekarang</th><th>Rekomendasi</th>
-      </tr></thead>
-      <tbody>{alert_html}</tbody>
-    </table>
-  </div>
-
-  <!-- Budidaya -->
-  <div class="card">
-    <div class="card-header bg-blue">A. Komoditas Budidaya</div>
-    <table>
-      <thead><tr>
-        <th>Komoditas</th><th>Size/Grade</th><th>Harga Tambak (Rp/kg)</th>
-        <th>Harga Ekspor (USD/kg)</th><th>% vs Minggu Lalu</th><th>Kepercayaan</th>
-      </tr></thead>
-      <tbody>{price_rows(budidaya)}</tbody>
-    </table>
-  </div>
-
-  <!-- Tangkap -->
-  <div class="card">
-    <div class="card-header bg-green">B. Komoditas Perikanan Tangkap</div>
-    <table>
-      <thead><tr>
-        <th>Komoditas</th><th>Grade/Bentuk</th><th>Harga Nelayan (Rp/kg)</th>
-        <th>Harga Ekspor (USD/kg)</th><th>% vs Minggu Lalu</th><th>Kepercayaan</th>
-      </tr></thead>
-      <tbody>{price_rows(tangkap)}</tbody>
-    </table>
-  </div>
-
-</div><!-- /container -->
-
-<div class="footer">
-  Dibuat otomatis oleh Market Watch AJN &nbsp;&bull;&nbsp;
-  Data bersifat indikatif &nbsp;&bull;&nbsp;
-  {TANGGAL}
-</div>
-
-{chart_js}
-</body>
-</html>"""
-
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(html)
-    print(f"HTML infografis disimpan: {out_path}")
+def _short_name(komoditas):
+    for k, v in _SHORT_NAMES:
+        if k in komoditas:
+            return v
+    return komoditas.split("(")[0].strip()[:14]
 
 
 def _parse_mid_simple(s):
-    """Versi ringan parse_mid untuk HTML generation (tanpa import alert_engine)."""
+    """Ekstrak nilai tengah dari string harga range (tanpa import eksternal)."""
     import re
     if not s or str(s).strip() in ("", "—", "-"):
         return None
@@ -570,24 +404,341 @@ def _parse_mid_simple(s):
         return None
 
 
+def _get_latest_prices(ss):
+    """
+    Baca harga terbaru per komoditas+size dari sheet.
+    Fallback ke STATIC_PRICES jika sheet kosong atau error.
+    """
+    try:
+        ws   = ss.worksheet("Harga Komoditas")
+        rows = ws.get_all_values()
+        if len(rows) < 2:
+            print("  Sheet kosong — pakai data statis.")
+            return STATIC_PRICES
+        latest = {}
+        for row in rows[1:]:
+            if len(row) < 5:
+                continue
+            latest[(row[1], row[2])] = row
+        if not latest:
+            return STATIC_PRICES
+        return [
+            {
+                "komoditas":   k,
+                "size":        s,
+                "tambak":      row[3]  if len(row) > 3  else "—",
+                "ekspor":      row[4]  if len(row) > 4  else "—",
+                "pct_minggu":  row[9]  if len(row) > 9  else "",
+                "kepercayaan": row[12] if len(row) > 12 else "Estimasi",
+            }
+            for (k, s), row in latest.items()
+        ]
+    except Exception as exc:
+        print(f"  [WARN] Tidak bisa baca sheet: {exc} — pakai data statis")
+        return STATIC_PRICES
+
+
+def generate_html(prices, alerts, out_path):
+    """
+    Generate file HTML infografis interaktif ke out_path.
+    - prices: list of dicts {komoditas, size, tambak, ekspor, pct_minggu, kepercayaan}
+    - alerts: list of dicts {jenis, komoditas, pct, sebelum, sekarang, rekomendasi}
+    """
+    data = prices if prices else STATIC_PRICES
+
+    budidaya = [p for p in data if any(k in p["komoditas"] for k in _BUDIDAYA_KEYS)]
+    tangkap  = [p for p in data if p not in budidaya]
+
+    # ── Chart data (horizontal bar, sorted desc) ──────────────────────────────
+    chart_items = []
+    for p in data:
+        mid = _parse_mid_simple(p["tambak"])
+        if mid is None:
+            continue
+        nm  = _short_name(p["komoditas"])
+        sz  = p["size"]
+        lbl = f"{nm} {sz}" if sz not in ("-", "—", "") else nm
+        cat = "b" if any(k in p["komoditas"] for k in _BUDIDAYA_KEYS) else "t"
+        chart_items.append((lbl, int(mid), cat))
+
+    chart_items.sort(key=lambda x: x[1], reverse=True)
+
+    labels_js = "[" + ", ".join(f'"{lbl}"' for lbl, _, _ in chart_items) + "]"
+    values_js = "[" + ", ".join(str(v)   for _, v, _   in chart_items) + "]"
+    colors_js = "[" + ", ".join(
+        '"rgba(6,80,114,0.82)"' if cat == "b" else '"rgba(20,90,48,0.82)"'
+        for _, _, cat in chart_items
+    ) + "]"
+
+    # ── Price table rows ──────────────────────────────────────────────────────
+    def price_rows(lst):
+        rows = []
+        for i, p in enumerate(lst):
+            pct = (p.get("pct_minggu") or "").strip()
+            if pct.startswith("+"):
+                pct_cell = f'<span class="up">{pct}</span>'
+            elif pct.startswith("-"):
+                pct_cell = f'<span class="dn">{pct}</span>'
+            else:
+                pct_cell = pct or "—"
+            kep = p.get("kepercayaan", "Estimasi")
+            cls = "alt" if i % 2 else ""
+            rows.append(
+                f'<tr class="{cls}">'
+                f'<td class="b">{p["komoditas"]}</td>'
+                f'<td class="c">{p["size"]}</td>'
+                f'<td class="c">{p["tambak"]}</td>'
+                f'<td class="c">{p["ekspor"]}</td>'
+                f'<td class="c">{pct_cell}</td>'
+                f'<td class="c kep-{kep.lower()}">{kep}</td>'
+                f'</tr>'
+            )
+        return "\n".join(rows) if rows else '<tr><td colspan="6" class="c muted">Belum ada data.</td></tr>'
+
+    # ── Alert table rows ──────────────────────────────────────────────────────
+    def alert_rows(lst):
+        if not lst:
+            return '<tr><td colspan="5" class="c muted">Tidak ada alert aktif hari ini.</td></tr>'
+        rows = []
+        for a in lst:
+            j = str(a.get("jenis", "")).upper()
+            if "MERAH" in j:
+                rcls, bcls, btxt = "rm", "bm", "MERAH"
+            elif "KUNING" in j:
+                rcls, bcls, btxt = "rk", "bk", "KUNING"
+            elif "BIRU" in j:
+                rcls, bcls, btxt = "rb", "bb", "BIRU"
+            else:
+                rcls, bcls, btxt = "",   "bg", "INFO"
+            rows.append(
+                f'<tr class="{rcls}">'
+                f'<td><span class="badge {bcls}">{btxt}</span></td>'
+                f'<td>{a.get("komoditas","")}</td>'
+                f'<td class="c b">{a.get("pct","")}</td>'
+                f'<td>{a.get("sebelum","")} &#8594; {a.get("sekarang","")}</td>'
+                f'<td class="sm">{a.get("rekomendasi","")}</td>'
+                f'</tr>'
+            )
+        return "\n".join(rows)
+
+    # ── Render HTML ───────────────────────────────────────────────────────────
+    html = f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Watch AJN &mdash; {TANGGAL}</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;font-size:14px}}
+.hdr{{background:#065072;color:#fff;padding:16px 24px}}
+.hdr h1{{font-size:1.2rem;font-weight:700}}
+.hdr p{{font-size:.8rem;opacity:.85;margin-top:3px}}
+.wrap{{max-width:1140px;margin:16px auto;padding:0 14px}}
+.card{{background:#fff;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.1);margin-bottom:16px;overflow:hidden}}
+.ch{{padding:9px 14px;font-weight:700;font-size:.86rem;color:#fff}}
+.blue{{background:#065072}}.green{{background:#145A30}}.red{{background:#8B1A1A}}
+.chart-box{{padding:14px 14px 20px;height:400px;position:relative}}
+table{{width:100%;border-collapse:collapse;font-size:.82rem}}
+th{{background:#065072;color:#fff;padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap}}
+td{{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:middle}}
+.alt td{{background:#f7fbfd}}
+tr:hover td{{filter:brightness(.97)}}
+.c{{text-align:center}}.b{{font-weight:600}}.sm{{font-size:.76rem;color:#555}}.muted{{color:#aaa}}
+.up{{color:#1e8449;font-weight:700}}.dn{{color:#c0392b;font-weight:700}}
+/* Alert row backgrounds */
+.rm td{{background:#fde8e8}}.rk td{{background:#fef9df}}.rb td{{background:#e6f2fd}}
+.rm:hover td{{background:#fbdcdc}}.rk:hover td{{background:#fdf3bb}}.rb:hover td{{background:#d5eafb}}
+/* Badges */
+.badge{{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}}
+.bm{{background:#fde8e8;color:#c0392b}}.bk{{background:#fef9df;color:#9a7d0a}}
+.bb{{background:#e6f2fd;color:#1a5276}}.bg{{background:#eee;color:#555}}
+/* Kepercayaan */
+.kep-tinggi{{color:#1e8449;font-weight:600}}.kep-sedang{{color:#9a7d0a;font-weight:600}}.kep-estimasi{{color:#888}}
+.ftr{{text-align:center;font-size:.72rem;color:#aaa;padding:12px 0 20px}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>PT AGRINAS JALADRI NUSANTARA (AJN)</h1>
+  <p>MARKET WATCH &mdash; HARGA KOMODITAS PERIKANAN STRATEGIS &nbsp;|&nbsp; Update: {TANGGAL}</p>
+</div>
+
+<div class="wrap">
+
+  <!-- Chart harga tambak -->
+  <div class="card">
+    <div class="ch blue">Harga Tambak / Nelayan (Rp/kg) &mdash; Semua Komoditas</div>
+    <div class="chart-box">
+      <canvas id="priceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Alert aktif -->
+  <div class="card">
+    <div class="ch red">&#9888; Alert Aktif &mdash; {TANGGAL}</div>
+    <table>
+      <thead><tr>
+        <th>Jenis</th><th>Komoditas</th><th>% Perubahan</th>
+        <th>Sebelum &#8594; Sekarang</th><th>Rekomendasi</th>
+      </tr></thead>
+      <tbody>
+{alert_rows(alerts)}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Budidaya -->
+  <div class="card">
+    <div class="ch blue">A. Komoditas Budidaya</div>
+    <table>
+      <thead><tr>
+        <th>Komoditas</th><th>Size / Grade</th>
+        <th>Harga Tambak (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
+        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
+      </tr></thead>
+      <tbody>
+{price_rows(budidaya)}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tangkap -->
+  <div class="card">
+    <div class="ch green">B. Komoditas Perikanan Tangkap</div>
+    <table>
+      <thead><tr>
+        <th>Komoditas</th><th>Grade / Bentuk</th>
+        <th>Harga Nelayan (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
+        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
+      </tr></thead>
+      <tbody>
+{price_rows(tangkap)}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="ftr">
+  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif &bull; {TANGGAL}
+</div>
+
+<!-- Chart.js dimuat di akhir body (setelah canvas ada di DOM) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {{
+  'use strict';
+  try {{
+    var canvas = document.getElementById('priceChart');
+    if (!canvas) {{ throw new Error('Canvas tidak ditemukan'); }}
+    new Chart(canvas, {{
+      type: 'bar',
+      data: {{
+        labels: {labels_js},
+        datasets: [{{
+          label: 'Harga (Rp/kg)',
+          data: {values_js},
+          backgroundColor: {colors_js},
+          borderRadius: 4,
+          borderSkipped: false
+        }}]
+      }},
+      options: {{
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {{
+          legend: {{ display: false }},
+          tooltip: {{
+            callbacks: {{
+              label: function (ctx) {{
+                return ' Rp ' + ctx.parsed.x.toLocaleString('id-ID') + '/kg';
+              }}
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{
+            beginAtZero: true,
+            ticks: {{
+              callback: function (v) {{
+                return 'Rp ' + (v / 1000).toFixed(0) + ' rb';
+              }},
+              font: {{ size: 11 }}
+            }},
+            grid: {{ color: 'rgba(0,0,0,.06)' }}
+          }},
+          y: {{
+            ticks: {{ font: {{ size: 11 }} }},
+            grid: {{ display: false }}
+          }}
+        }}
+      }}
+    }});
+  }} catch (e) {{
+    console.error('Chart render error:', e);
+    var box = document.querySelector('.chart-box');
+    if (box) {{
+      box.innerHTML = '<p style="padding:40px;text-align:center;color:#999">'
+        + 'Grafik tidak dapat dimuat. Periksa koneksi internet.</p>';
+    }}
+  }}
+}})();
+</script>
+</body>
+</html>"""
+
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    kb = os.path.getsize(out_path) // 1024
+    print(f"HTML disimpan: {out_path} ({kb} KB, {len(chart_items)} bar chart)")
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print("=== Market Watch AJN -- Buat Infografis Komprehensif ===\n")
+    import sys
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # ── Mode test: generate HTML dengan data statis, tanpa credentials ────────
+    if "--test-html" in sys.argv:
+        print("=== TEST MODE: generate HTML dengan data statis ===")
+        test_alerts = [
+            {"jenis": "[MERAH] Pergerakan harga tambak >5%",
+             "komoditas": "Udang Vaname (Size 50)", "pct": "+7.20%",
+             "sebelum": "58.000", "sekarang": "60.000 - 65.000",
+             "rekomendasi": "Pertimbangkan penjualan atau hedging segera."},
+            {"jenis": "[KUNING] Gap ekspor vs tambak >40%",
+             "komoditas": "Udang Windu (Size 20)", "pct": "65.1%",
+             "sebelum": "100.000 - 120.000", "sekarang": "~Rp 160.000/kg (ekspor)",
+             "rekomendasi": "Peluang AJN sebagai agregator; review margin distribusi."},
+            {"jenis": "[BIRU] Harga internasional turun >10%",
+             "komoditas": "Tuna Cakalang", "pct": "-12.40%",
+             "sebelum": "USD 2.10/kg", "sekarang": "1,50 - 2,50",
+             "rekomendasi": "Waspadai risiko program ekspor; review kontrak."},
+        ]
+        out = os.path.join(OUTPUT_DIR, f"MarketWatch_AJN_{TANGGAL_FILE}.html")
+        generate_html(STATIC_PRICES, test_alerts, out)
+        print(f"\nBuka file ini di browser untuk verifikasi:")
+        print(f"  {os.path.abspath(out)}")
+        return
+
+    # ── Mode normal: butuh credentials ───────────────────────────────────────
+    print("=== Market Watch AJN -- Buat Infografis Komprehensif ===\n")
 
     creds  = Credentials.from_service_account_file(CREDS_FILE, scopes=SCOPES)
     client = gspread.Client(auth=creds)
     ss     = client.open_by_key(SPREADSHEET_ID)
     print(f"Spreadsheet '{ss.title}' dibuka.")
 
-    # Baca alert hari ini
     today_alerts = alert_engine.get_today_alerts(ss)
     print(f"Alert aktif hari ini: {len(today_alerts)}")
 
-    # Baca harga terbaru untuk HTML
-    from laporan_mingguan import get_latest_prices
-    prices = get_latest_prices(ss)
+    prices = _get_latest_prices(ss)
+    print(f"Data harga: {len(prices)} komoditas/size")
 
     # ── Google Sheet Infografis ──────────────────────────────────────────────
     try:
@@ -600,8 +751,7 @@ def main():
     sid = ws.id
     print(f"Sheet '{SHEET_NAME}' dibuat (id={sid}).")
 
-    data = build_data(today_alerts)
-    ws.update(data, "A1", value_input_option="RAW")
+    ws.update(build_data(today_alerts), "A1", value_input_option="RAW")
     print("Data berhasil ditulis ke GSheet.")
 
     reqs = [r for r in build_requests(sid, today_alerts) if r is not None]
@@ -609,23 +759,23 @@ def main():
     print("Formatting diterapkan.")
 
     # ── HTML export ──────────────────────────────────────────────────────────
-    html_path = os.path.join(OUTPUT_DIR, f"MarketWatch_AJN_{TANGGAL_FILE}.html")
+    html_path   = os.path.join(OUTPUT_DIR, f"MarketWatch_AJN_{TANGGAL_FILE}.html")
     alert_dicts = [
         {
-            "jenis":      a[2] if len(a) > 2 else "",
-            "komoditas":  a[1] if len(a) > 1 else "",
-            "pct":        a[5] if len(a) > 5 else "",
-            "sebelum":    a[3] if len(a) > 3 else "",
-            "sekarang":   a[4] if len(a) > 4 else "",
-            "rekomendasi":a[6] if len(a) > 6 else "",
+            "jenis":       a[2] if len(a) > 2 else "",
+            "komoditas":   a[1] if len(a) > 1 else "",
+            "pct":         a[5] if len(a) > 5 else "",
+            "sebelum":     a[3] if len(a) > 3 else "",
+            "sekarang":    a[4] if len(a) > 4 else "",
+            "rekomendasi": a[6] if len(a) > 6 else "",
         }
         for a in today_alerts
     ]
     generate_html(prices, alert_dicts, html_path)
 
     print(f"\nInfografis selesai!")
-    print(f"GSheet: https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}")
-    print(f"HTML  : {html_path}")
+    print(f"GSheet : https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}")
+    print(f"HTML   : {html_path}")
 
 
 if __name__ == "__main__":
