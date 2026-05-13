@@ -697,6 +697,155 @@ tr:hover td{{filter:brightness(.97)}}
     print(f"HTML disimpan: {out_path} ({kb} KB, {len(chart_items)} bar chart)")
 
 
+# ── Dashboard sheet ──────────────────────────────────────────────────────────
+
+def create_dashboard_sheet(ss):
+    """
+    Buat atau perbarui sheet 'Dashboard' — TIDAK menghapus sheet lain.
+    Berisi: judul, link GitHub output, tanggal last update otomatis.
+    """
+    DS_NAME    = "Dashboard"
+    URL_OUTPUT = "https://github.com/dicanatta-bit/market-watch/tree/main/output"
+    URL_REPO   = "https://github.com/dicanatta-bit/market-watch"
+    URL_HTML   = (
+        "https://github.com/dicanatta-bit/market-watch/blob/main/output/"
+        f"MarketWatch_AJN_{TANGGAL_FILE}.html"
+    )
+    HTML_FILE  = f"MarketWatch_AJN_{TANGGAL_FILE}.html"
+
+    NAVY     = {"red": 0.02, "green": 0.15, "blue": 0.35}
+    WHITE    = {"red": 1.00, "green": 1.00, "blue": 1.00}
+    BLUE_HDR = {"red": 0.02, "green": 0.27, "blue": 0.45}
+    PALE_BG  = {"red": 0.92, "green": 0.95, "blue": 0.99}
+    KREM_HL  = {"red": 1.00, "green": 0.97, "blue": 0.88}
+    LABEL_FG = {"red": 0.30, "green": 0.30, "blue": 0.30}
+    GREY_FG  = {"red": 0.60, "green": 0.60, "blue": 0.60}
+
+    # Ambil sheet jika sudah ada (clear isinya), atau buat baru
+    # — tidak menyentuh sheet lain sama sekali
+    try:
+        ws = ss.worksheet(DS_NAME)
+        ws.clear()
+        print(f"  Sheet '{DS_NAME}' sudah ada — isi diperbarui.")
+    except gspread.exceptions.WorksheetNotFound:
+        ws = ss.add_worksheet(title=DS_NAME, rows=25, cols=4)
+        print(f"  Sheet '{DS_NAME}' dibuat baru.")
+    sid = ws.id
+
+    # ── Layout (0-indexed) ──────────────────────────────────────────────────
+    # R0  : Judul utama            (merged A:D)
+    # R1  : Subtitle               (merged A:D)
+    # R2  : spacer
+    # R3  : Section LAPORAN        (merged A:D)
+    # R4  : Folder output + link
+    # R5  : Infografis HTML terkini + link
+    # R6  : spacer
+    # R7  : Section INFORMASI      (merged A:D)
+    # R8  : Repository + link
+    # R9  : Jadwal update
+    # R10 : Last Update            ← highlight krem
+    # R11 : File HTML aktif
+    # R12 : spacer
+    # R13 : Section KOMODITAS      (merged A:D)
+    # R14 : Budidaya
+    # R15 : Perikanan Tangkap
+    # R16 : spacer
+    # R17 : Footer                 (merged A:D)
+    # ────────────────────────────────────────────────────────────────────────
+    rows = [
+        ["Market Watch AJN - Dashboard", "", "", ""],                              # R0
+        ["PT Agrinas Jaladri Nusantara (Persero)  |  Pemantauan Harga Komoditas Perikanan",
+         "", "", ""],                                                               # R1
+        ["", "", "", ""],                                                           # R2
+        ["LAPORAN & INFOGRAFIS", "", "", ""],                                       # R3
+        ["Folder Laporan (PDF & HTML)",
+         f'=HYPERLINK("{URL_OUTPUT}","Buka folder output di GitHub")',
+         "", ""],                                                                   # R4
+        ["Infografis HTML Terkini",
+         f'=HYPERLINK("{URL_HTML}","Buka infografis {TANGGAL}")',
+         "", ""],                                                                   # R5
+        ["", "", "", ""],                                                           # R6
+        ["INFORMASI SISTEM", "", "", ""],                                           # R7
+        ["Repository GitHub",
+         f'=HYPERLINK("{URL_REPO}","dicanatta-bit/market-watch")',
+         "", ""],                                                                   # R8
+        ["Jadwal Update Otomatis", "Setiap Senin, 08:00 WIB (via GitHub Actions)",
+         "", ""],                                                                   # R9
+        ["Last Update", TANGGAL, "", ""],                                           # R10
+        ["File HTML Aktif", HTML_FILE, "", ""],                                     # R11
+        ["", "", "", ""],                                                           # R12
+        ["KOMODITAS YANG DIPANTAU", "", "", ""],                                    # R13
+        ["Budidaya",
+         "Udang Vaname (Size 50/60/70/100)  |  Udang Windu (Size 20/30)  |  Nila",
+         "", ""],                                                                   # R14
+        ["Perikanan Tangkap",
+         "Tuna Yellowfin  |  Tuna Cakalang  |  Kakap Merah  |  Kerapu",
+         "", ""],                                                                   # R15
+        ["", "", "", ""],                                                           # R16
+        ["Dibuat otomatis oleh Market Watch AJN  |  Data bersifat indikatif",
+         "", "", ""],                                                               # R17
+    ]
+
+    # USER_ENTERED agar formula HYPERLINK dievaluasi oleh Sheets
+    ws.update(rows, "A1", value_input_option="USER_ENTERED")
+
+    reqs = [
+        # Lebar kolom: Label | Nilai/Link | thin buffer × 2
+        col_px(sid, 0, 1, 210),
+        col_px(sid, 1, 2, 400),
+        col_px(sid, 2, 3,  12),
+        col_px(sid, 3, 4,  12),
+        # Tinggi baris
+        row_px(sid,  0,  1, 54),
+        row_px(sid,  1,  2, 26),
+        row_px(sid,  2,  3,  8),
+        row_px(sid,  3,  4, 28),
+        row_px(sid,  4,  6, 28),
+        row_px(sid,  6,  7,  8),
+        row_px(sid,  7,  8, 28),
+        row_px(sid,  8, 12, 26),
+        row_px(sid, 12, 13,  8),
+        row_px(sid, 13, 14, 28),
+        row_px(sid, 14, 16, 28),
+        row_px(sid, 16, 17,  8),
+        row_px(sid, 17, 18, 22),
+        # Merge
+        merge(sid,  0,  1, 0, 4),
+        merge(sid,  1,  2, 0, 4),
+        merge(sid,  3,  4, 0, 4),
+        merge(sid,  7,  8, 0, 4),
+        merge(sid, 13, 14, 0, 4),
+        merge(sid, 17, 18, 0, 4),
+        # Judul: navy bg, putih bold, size 15, tengah
+        fmt(sid, 0, 1, 0, 4, bg=NAVY, fg=WHITE, bold=True, size=15,
+            halign="CENTER", valign="MIDDLE"),
+        # Subtitle: biru, putih, size 9, tengah
+        fmt(sid, 1, 2, 0, 4, bg=BLUE_HDR, fg=WHITE, size=9,
+            halign="CENTER", valign="MIDDLE"),
+        # Section headers: pale blue bg, navy bold
+        fmt(sid,  3,  4, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
+        fmt(sid,  7,  8, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
+        fmt(sid, 13, 14, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
+        # Label kolom A: abu-abu bold size 9
+        fmt(sid,  4,  6, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
+        fmt(sid,  8, 12, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
+        fmt(sid, 14, 16, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
+        # Nilai kolom B: size 9, wrap untuk teks panjang
+        fmt(sid,  4,  6, 1, 2, size=9, valign="MIDDLE"),
+        fmt(sid,  8, 12, 1, 2, size=9, valign="MIDDLE"),
+        fmt(sid, 14, 16, 1, 2, size=9, valign="MIDDLE", wrap="WRAP"),
+        # Last Update (R10 = index 10) → highlight krem + bold
+        fmt(sid, 10, 11, 1, 2, bg=KREM_HL, bold=True, size=9),
+        # Footer: abu-abu, tengah, size 8
+        fmt(sid, 17, 18, 0, 4, fg=GREY_FG, size=8,
+            halign="CENTER", valign="MIDDLE"),
+    ]
+
+    ss.batch_update({"requests": [r for r in reqs if r is not None]})
+    print(f"  Formatting 'Dashboard' diterapkan (id={sid}).")
+    return ws
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -772,6 +921,10 @@ def main():
         for a in today_alerts
     ]
     generate_html(prices, alert_dicts, html_path)
+
+    # ── Dashboard sheet (tanpa hapus sheet lain) ─────────────────────────────
+    print("\nMemperbarui sheet Dashboard...")
+    create_dashboard_sheet(ss)
 
     print(f"\nInfografis selesai!")
     print(f"GSheet : https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}")
