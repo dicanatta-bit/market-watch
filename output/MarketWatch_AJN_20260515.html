@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Watch AJN &mdash; 15 Mei 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;font-size:14px}
+.hdr{background:#065072;color:#fff;padding:16px 24px}
+.hdr h1{font-size:1.2rem;font-weight:700}
+.hdr p{font-size:.8rem;opacity:.85;margin-top:3px}
+.wrap{max-width:1140px;margin:16px auto;padding:0 14px}
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.1);margin-bottom:16px;overflow:hidden}
+.ch{padding:9px 14px;font-weight:700;font-size:.86rem;color:#fff}
+.blue{background:#065072}.green{background:#145A30}.red{background:#8B1A1A}
+.chart-box{padding:14px 14px 20px;height:400px;position:relative}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:#065072;color:#fff;padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap}
+td{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+.alt td{background:#f7fbfd}
+tr:hover td{filter:brightness(.97)}
+.c{text-align:center}.b{font-weight:600}.sm{font-size:.76rem;color:#555}.muted{color:#aaa}
+.up{color:#1e8449;font-weight:700}.dn{color:#c0392b;font-weight:700}
+/* Alert row backgrounds */
+.rm td{background:#fde8e8}.rk td{background:#fef9df}.rb td{background:#e6f2fd}
+.rm:hover td{background:#fbdcdc}.rk:hover td{background:#fdf3bb}.rb:hover td{background:#d5eafb}
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}
+.bm{background:#fde8e8;color:#c0392b}.bk{background:#fef9df;color:#9a7d0a}
+.bb{background:#e6f2fd;color:#1a5276}.bg{background:#eee;color:#555}
+/* Kepercayaan */
+.kep-tinggi{color:#1e8449;font-weight:600}.kep-sedang{color:#9a7d0a;font-weight:600}.kep-estimasi{color:#888}
+.ftr{text-align:center;font-size:.72rem;color:#aaa;padding:12px 0 20px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>PT AGRINAS JALADRI NUSANTARA (AJN)</h1>
+  <p>MARKET WATCH &mdash; HARGA KOMODITAS PERIKANAN STRATEGIS &nbsp;|&nbsp; Update: 15 Mei 2026</p>
+</div>
+
+<div class="wrap">
+
+  <!-- Chart harga tambak -->
+  <div class="card">
+    <div class="ch blue">Harga Tambak / Nelayan (Rp/kg) &mdash; Semua Komoditas</div>
+    <div class="chart-box">
+      <canvas id="priceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Alert aktif -->
+  <div class="card">
+    <div class="ch red">&#9888; Alert Aktif &mdash; 15 Mei 2026</div>
+    <table>
+      <thead><tr>
+        <th>Jenis</th><th>Komoditas</th><th>% Perubahan</th>
+        <th>Sebelum &#8594; Sekarang</th><th>Rekomendasi</th>
+      </tr></thead>
+      <tbody>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Nila (Oreochromis niloticus) (300-500 g)</td><td class="c b">124.0%</td><td>22.000 – 28.000 &#8594; ~Rp 56,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Tuna Sirip Kuning / Yellowfin (Thunnus albacares) (Sashimi grade)</td><td class="c b">48.6%</td><td>60.000 – 80.000 &#8594; ~Rp 104,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Tuna Cakalang (Katsuwonus pelamis)</td><td class="c b">60.0%</td><td>15.000 – 25.000 &#8594; ~Rp 32,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Kakap Merah (Lutjanus spp.)</td><td class="c b">73.3%</td><td>50.000 – 70.000 &#8594; ~Rp 104,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Bandeng (Chanos chanos) (250-500 g)</td><td class="c b">43.3%</td><td>20.000 – 28.000 &#8594; ~Rp 34,400/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Cumi-cumi (Loligo spp.)</td><td class="c b">60.0%</td><td>35.000 – 50.000 &#8594; ~Rp 68,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Budidaya -->
+  <div class="card">
+    <div class="ch blue">A. Komoditas Budidaya</div>
+    <table>
+      <thead><tr>
+        <th>Komoditas</th><th>Size / Grade</th>
+        <th>Harga Tambak (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
+        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
+      </tr></thead>
+      <tbody>
+<tr class=""><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 50</td><td class="c">60.000 – 65.000</td><td class="c">3,55 – 3,64</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 60</td><td class="c">55.000 – 60.000</td><td class="c">3,55</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 70</td><td class="c">50.000 – 55.000</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 100</td><td class="c">40.000 – 45.000</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Udang Windu (Penaeus monodon)</td><td class="c">Size 20</td><td class="c">100.000 – 120.000</td><td class="c">8,00 – 10,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Udang Windu (Penaeus monodon)</td><td class="c">Size 30</td><td class="c">80.000 – 100.000</td><td class="c">6,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Nila (Oreochromis niloticus)</td><td class="c">300-500 g</td><td class="c">22.000 – 28.000</td><td class="c">3,00 – 4,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Kering</td><td class="c">6.000 – 7.000</td><td class="c">0,40 – 0,50</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Basah</td><td class="c">1.000 – 1.500</td><td class="c">—</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Bandeng (Chanos chanos)</td><td class="c">250-500 g</td><td class="c">20.000 – 28.000</td><td class="c">1,80 – 2,50</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tangkap -->
+  <div class="card">
+    <div class="ch green">B. Komoditas Perikanan Tangkap</div>
+    <table>
+      <thead><tr>
+        <th>Komoditas</th><th>Grade / Bentuk</th>
+        <th>Harga Nelayan (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
+        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
+      </tr></thead>
+      <tbody>
+<tr class=""><td class="b">Tuna Sirip Kuning / Yellowfin (Thunnus albacares)</td><td class="c">Sashimi grade</td><td class="c">60.000 – 80.000</td><td class="c">5,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Tuna Sirip Kuning / Yellowfin (Thunnus albacares)</td><td class="c">Loin/beku</td><td class="c">30.000 – 45.000</td><td class="c">2,50 – 4,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Tuna Cakalang (Katsuwonus pelamis)</td><td class="c">-</td><td class="c">15.000 – 25.000</td><td class="c">1,50 – 2,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Kakap Merah (Lutjanus spp.)</td><td class="c">-</td><td class="c">50.000 – 70.000</td><td class="c">5,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Kerapu (Epinephelus spp.)</td><td class="c">Hidup (>500 g)</td><td class="c">100.000 – 150.000</td><td class="c">8,00 – 12,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Kerapu (Epinephelus spp.)</td><td class="c">Beku/segar</td><td class="c">60.000 – 90.000</td><td class="c">5,00 – 7,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Lobster (Panulirus ornatus) / Mutiara</td><td class="c">>200 g</td><td class="c">280.000 – 380.000</td><td class="c">18,00 – 22,00</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Lobster (Panulirus homarus) / Pasir</td><td class="c">>100 g</td><td class="c">150.000 – 220.000</td><td class="c">10,00 – 15,00</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Cumi-cumi (Loligo spp.)</td><td class="c">-</td><td class="c">35.000 – 50.000</td><td class="c">3,50 – 5,00</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="ftr">
+  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif &bull; 15 Mei 2026
+</div>
+
+<!-- Chart.js dimuat di akhir body (setelah canvas ada di DOM) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  try {
+    var canvas = document.getElementById('priceChart');
+    if (!canvas) { throw new Error('Canvas tidak ditemukan'); }
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: ["Lobster >200 g", "Lobster >100 g", "Kerapu Hidup (>500 g)", "Windu Size 20", "Windu Size 30", "Kerapu Beku/segar", "Yellowfin Sashimi grade", "Vaname Size 50", "Kakap", "Vaname Size 60", "Vaname Size 70", "Vaname Size 100", "Cumi", "Yellowfin Loin/beku", "Nila 300-500 g", "Bandeng 250-500 g", "Cakalang", "Rmpt Laut Kering", "Rmpt Laut Basah"],
+        datasets: [{
+          label: 'Harga (Rp/kg)',
+          data: [330000, 185000, 125000, 110000, 90000, 75000, 70000, 62500, 60000, 57500, 52500, 42500, 42500, 37500, 25000, 24000, 20000, 6500, 1250],
+          backgroundColor: ["rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)"],
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return ' Rp ' + ctx.parsed.x.toLocaleString('id-ID') + '/kg';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              callback: function (v) {
+                return 'Rp ' + (v / 1000).toFixed(0) + ' rb';
+              },
+              font: { size: 11 }
+            },
+            grid: { color: 'rgba(0,0,0,.06)' }
+          },
+          y: {
+            ticks: { font: { size: 11 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error('Chart render error:', e);
+    var box = document.querySelector('.chart-box');
+    if (box) {
+      box.innerHTML = '<p style="padding:40px;text-align:center;color:#999">'
+        + 'Grafik tidak dapat dimuat. Periksa koneksi internet.</p>';
+    }
+  }
+})();
+</script>
+</body>
+</html>
