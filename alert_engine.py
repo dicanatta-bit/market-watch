@@ -6,6 +6,7 @@ Bisa dijalankan standalone: python alert_engine.py [SPREADSHEET_ID]
 
 import sys
 import re
+import time
 from datetime import date, datetime, timedelta
 from google.oauth2.service_account import Credentials
 import gspread
@@ -204,6 +205,7 @@ def apply_alert_formatting(spreadsheet, ws):
                 {"deleteConditionalFormatRule": {"sheetId": sid, "index": i}}
                 for i in range(n_rules - 1, -1, -1)
             ]
+            time.sleep(5)
             spreadsheet.batch_update({"requests": del_reqs})
             print(f"  {n_rules} rule lama dihapus.")
     except Exception as exc:
@@ -259,6 +261,7 @@ def apply_alert_formatting(spreadsheet, ws):
         cond_rule("BIRU",   {"red": 0.85, "green": 0.93, "blue": 1.00}, 2),
     ]
 
+    time.sleep(5)
     spreadsheet.batch_update({"requests": requests})
     print("  Conditional formatting Alert Log diterapkan.")
 
@@ -323,7 +326,11 @@ def main():
         return
 
     alert_ws = get_or_create_alert_sheet(ss)
-    apply_alert_formatting(spreadsheet=ss, ws=alert_ws)
+    if date.today().weekday() == 0:  # 0 = Senin
+        print("  Hari Senin — menerapkan formatting Alert Log...")
+        apply_alert_formatting(spreadsheet=ss, ws=alert_ws)
+    else:
+        print("  Bukan hari Senin — formatting dilewati.")
     existing = alert_ws.get_all_values()
     # Hindari duplikat: set (komoditas, jenis_alert) yang sudah ada hari ini
     existing_keys = {
