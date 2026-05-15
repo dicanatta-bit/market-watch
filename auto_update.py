@@ -6,20 +6,27 @@ Orchestrator: update harga → cek alert → infografis → laporan PDF
 import subprocess
 import sys
 import os
+import time
 from datetime import datetime
 
 SPREADSHEET_ID = "1qAn5AsxdL5CliEQltMuqN1hkAy6L-FIcMb1YqMFbUyw"
 
 
-def run(script, *args):
+def run(script, *args, max_retries=0, retry_delay=60):
     cmd = [sys.executable, script, *args]
     print(f"\n{'='*55}")
     print(f"Menjalankan: {' '.join(cmd)}")
     print(f"{'='*55}")
-    result = subprocess.run(cmd, capture_output=False, text=True)
-    if result.returncode != 0:
+    for attempt in range(1 + max_retries):
+        result = subprocess.run(cmd, capture_output=False, text=True)
+        if result.returncode == 0:
+            return
         print(f"[ERROR] {script} gagal dengan exit code {result.returncode}")
-        sys.exit(result.returncode)
+        if result.returncode == 1 and attempt < max_retries:
+            print(f"[RETRY] Percobaan {attempt + 1}/{max_retries} gagal. Menunggu {retry_delay} detik sebelum retry...")
+            time.sleep(retry_delay)
+        else:
+            sys.exit(result.returncode)
 
 
 if __name__ == "__main__":
@@ -30,7 +37,7 @@ if __name__ == "__main__":
     os.makedirs("output", exist_ok=True)
 
     # 2. Update harga semua komoditas ke sheet "Harga Komoditas"
-    run("update_harga.py", SPREADSHEET_ID)
+    run("update_harga.py", SPREADSHEET_ID, max_retries=2, retry_delay=60)
 
     # 3. Cek alert & tulis ke sheet "Alert Log"
     run("alert_engine.py", SPREADSHEET_ID)
