@@ -3,10 +3,16 @@ Market Watch - AJN
 Dashboard HTML interaktif + Google Sheet Infografis + Sheet formatting
 """
 
+import sys
+import io
 import os
 import re
 import json
 from datetime import date
+
+# Pastikan UTF-8 di Windows agar karakter sheet (→, –, dll.) tidak error
+if hasattr(sys.stdout, "buffer"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 from google.oauth2.service_account import Credentials
 import gspread
 import alert_engine
@@ -121,17 +127,42 @@ def _pct_str(s):
 
 # ── Google Sheet data ─────────────────────────────────────────────────────────
 
+def _parse_tanggal(s):
+    """Parse tanggal DD/MM/YYYY ke objek date; kembalikan date.min jika gagal."""
+    from datetime import datetime as _dt
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+        try:
+            return _dt.strptime(str(s).strip(), fmt).date()
+        except ValueError:
+            continue
+    return date.min
+
+
 def _get_latest_prices(ss):
+    """Baca harga terbaru per (komoditas, size) — deduplikasi berdasarkan kolom Tanggal."""
     try:
         ws   = ss.worksheet("Harga Komoditas")
         rows = ws.get_all_values()
         if len(rows) < 2:
             print("  Sheet kosong — pakai data statis.")
             return STATIC_PRICES
-        result = []
+
+        # Kumpulkan semua baris; simpan hanya yang paling baru per key
+        latest: dict = {}   # (komoditas, size) → (date, row)
         for row in rows[1:]:
             if len(row) < 5:
                 continue
+            key  = (row[1], row[2])
+            tgl  = _parse_tanggal(row[0]) if len(row) > 0 else date.min
+            prev = latest.get(key)
+            if prev is None or tgl > prev[0]:
+                latest[key] = (tgl, row)
+
+        if not latest:
+            return STATIC_PRICES
+
+        result = []
+        for (_k, _s), (_tgl, row) in latest.items():
             result.append({
                 "komoditas":   row[1]  if len(row) > 1  else "—",
                 "size":        row[2]  if len(row) > 2  else "—",
@@ -141,7 +172,8 @@ def _get_latest_prices(ss):
                 "pct_3bulan":  row[10] if len(row) > 10 else "",
                 "kepercayaan": row[12] if len(row) > 12 else "Estimasi",
             })
-        return result if result else STATIC_PRICES
+        print(f"  Deduplikasi: {len(rows) - 1} baris → {len(result)} komoditas/size unik")
+        return result
     except Exception as exc:
         print(f"  [WARN] Tidak bisa baca sheet: {exc} — pakai data statis")
         return STATIC_PRICES
@@ -764,6 +796,12 @@ tr:hover td{{filter:brightness(.97)}}
     kb = os.path.getsize(out_path) // 1024
     print(f"HTML disimpan: {out_path} ({kb} KB)")
 
+    # Selalu simpan juga sebagai nama tetap (untuk GitHub Pages)
+    dashboard_path = os.path.join(os.path.dirname(out_path), "MarketWatch_AJN_Dashboard.html")
+    with open(dashboard_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    print(f"HTML disimpan: {dashboard_path} ({kb} KB)")
+
 
 # ── Dashboard Sheet ───────────────────────────────────────────────────────────
 
@@ -913,6 +951,12 @@ def main():
         for a in today_alerts
     ]
     generate_html(prices, alert_dicts, html_path)
+
+    # Salin Dashboard.html ke index.html di root (untuk GitHub Pages)
+    import shutil
+    dashboard_path = os.path.join(OUTPUT_DIR, "MarketWatch_AJN_Dashboard.html")
+    shutil.copy2(dashboard_path, "index.html")
+    print(f"index.html diperbarui dari {dashboard_path}")
 
     # Sheet Formatter: "Harga Komoditas"
     print("\nMemformat sheet 'Harga Komoditas'...")

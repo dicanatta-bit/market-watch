@@ -255,19 +255,22 @@ def apply_sheet_formatting(ss=None):
                      halign="LEFT", valign="MIDDLE"))
 
     # ── 3. Hapus conditional formatting lama dulu ────────────────────────────
-    # (bersihkan semua rules dari sheet ini)
+    # Hapus dari indeks tertinggi ke terendah agar indeks tidak bergeser saat batch
     current_meta = ss.fetch_sheet_metadata()
+    cf_delete_reqs = []
     for sheet in current_meta.get("sheets", []):
         if sheet["properties"]["sheetId"] == sid:
             existing_cf = sheet.get("conditionalFormats", [])
             for idx in reversed(range(len(existing_cf))):
-                reqs.insert(0, {
+                cf_delete_reqs.append({
                     "deleteConditionalFormatRule": {"sheetId": sid, "index": idx}
                 })
             break
 
+    # CF delete harus di depan agar formatting baru tidak kena hapus
+    reqs_clean = cf_delete_reqs + [r for r in reqs if r is not None]
+
     # ── 4. Terapkan batch format ─────────────────────────────────────────────
-    reqs_clean = [r for r in reqs if r is not None]
     if reqs_clean:
         ss.batch_update({"requests": reqs_clean})
     print(f"  Formatting dasar diterapkan ({len(reqs_clean)} requests).")
