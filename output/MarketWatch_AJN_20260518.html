@@ -90,6 +90,10 @@ tr:hover td{filter:brightness(.97)}
 <tr class="alt"><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Kering</td><td class="c">6.000 – 7.000</td><td class="c">0,40 – 0,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
 <tr class=""><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Basah</td><td class="c">1.000 – 1.500</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
 <tr class="alt"><td class="b">Bandeng (Chanos chanos)</td><td class="c">250-500 g</td><td class="c">20.000 – 28.000</td><td class="c">1,80 – 2,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Rumput Laut ATC/SRC (E. cottonii processed)</td><td class="c">ATC/SRC</td><td class="c">40.000 – 70.000</td><td class="c">2,50 – 5,00</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Utuh/Hidup</td><td class="c">15.000 – 22.000</td><td class="c">—</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class=""><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Fillet Segar</td><td class="c">28.000 – 38.000</td><td class="c">2,20 – 2,80</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="alt"><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Fillet Beku Ekspor</td><td class="c">32.000 – 45.000</td><td class="c">2,80 – 3,50</td><td class="c">—</td><td class="c kep-estimasi">Estimasi</td></tr>
       </tbody>
     </table>
   </div>
@@ -134,11 +138,11 @@ tr:hover td{filter:brightness(.97)}
     new Chart(canvas, {
       type: 'bar',
       data: {
-        labels: ["Lobster >200 g", "Lobster >100 g", "Kerapu Hidup (>500 g)", "Windu Size 20", "Windu Size 30", "Kerapu Beku/segar", "Yellowfin Sashimi grade", "Vaname Size 50", "Kakap", "Vaname Size 60", "Vaname Size 70", "Vaname Size 100", "Cumi", "Yellowfin Loin/beku", "Nila 300-500 g", "Bandeng 250-500 g", "Cakalang", "Rmpt Laut Kering", "Rmpt Laut Basah"],
+        labels: ["Lobster >200 g", "Lobster >100 g", "Kerapu Hidup (>500 g)", "Windu Size 20", "Windu Size 30", "Kerapu Beku/segar", "Yellowfin Sashimi grade", "Vaname Size 50", "Kakap", "Vaname Size 60", "RL ATC ATC/SRC", "Vaname Size 70", "Vaname Size 100", "Cumi", "Patin Fillet Beku Ekspor", "Yellowfin Loin/beku", "Patin Fillet Segar", "Nila 300-500 g", "Bandeng 250-500 g", "Cakalang", "Patin Utuh/Hidup", "Rmpt Laut Kering", "Rmpt Laut Basah"],
         datasets: [{
           label: 'Harga (Rp/kg)',
-          data: [330000, 185000, 125000, 110000, 90000, 75000, 70000, 62500, 60000, 57500, 52500, 42500, 42500, 37500, 25000, 24000, 20000, 6500, 1250],
-          backgroundColor: ["rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)"],
+          data: [330000, 185000, 125000, 110000, 90000, 75000, 70000, 62500, 60000, 57500, 55000, 52500, 42500, 42500, 38500, 37500, 33000, 25000, 24000, 20000, 18500, 6500, 1250],
+          backgroundColor: ["rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)"],
           borderRadius: 4,
           borderSkipped: false
         }]
