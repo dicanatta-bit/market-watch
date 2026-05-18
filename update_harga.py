@@ -528,12 +528,45 @@ def cek_duplikat(sheet_data, tanggal, komoditas, size):
     return False
 
 
+def delete_today_rows(spreadsheet, sheet, sheet_data, tanggal):
+    """
+    Hapus semua baris bertanggal=tanggal dalam satu batch API call.
+    Indices dihitung 0-based (header = 0); dikirim dari bawah ke atas
+    agar penghapusan tidak menggeser indeks baris berikutnya.
+    Returns jumlah baris yang dihapus.
+    """
+    sid = sheet.id
+    indices = [
+        i + 1                          # +1: header ada di posisi 0
+        for i, row in enumerate(sheet_data[1:])
+        if len(row) >= 1 and row[0] == tanggal
+    ]
+    if not indices:
+        return 0
+    indices.sort(reverse=True)         # hapus dari bawah ke atas
+    reqs = [
+        {"deleteDimension": {"range": {
+            "sheetId": sid, "dimension": "ROWS",
+            "startIndex": idx, "endIndex": idx + 1,
+        }}}
+        for idx in indices
+    ]
+    spreadsheet.batch_update({"requests": reqs})
+    return len(reqs)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print("=== Market Watch AJN -- Update Harga ===\n")
+    force          = "--force" in sys.argv
+    spreadsheet_id = next((a for a in sys.argv[1:] if not a.startswith("--")),
+                          SPREADSHEET_ID)
 
-    spreadsheet_id = sys.argv[1] if len(sys.argv) > 1 else SPREADSHEET_ID
+    print("=== Market Watch AJN -- Update Harga ===")
+    if force:
+        print("    Mode: --force (overwrite data hari ini)\n")
+    else:
+        print()
 
     creds  = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     client = gspread.Client(auth=creds)
@@ -548,6 +581,18 @@ def main():
     print(f"Spreadsheet '{ss.title}' dibuka.\n")
 
     sheet, existing_data = get_or_create_sheet(ss, SHEET_NAME)
+
+    # --force: hapus data hari ini sebelum menulis ulang
+    if force:
+        print(f"[--force] Menghapus baris tanggal {TANGGAL} dari sheet...")
+        n_del = delete_today_rows(ss, sheet, existing_data, TANGGAL)
+        if n_del:
+            time.sleep(3)
+            existing_data = sheet.get_all_values()
+            print(f"  {n_del} baris dihapus. Sheet di-refresh: "
+                  f"{len(existing_data) - 1} baris tersisa.\n")
+        else:
+            print(f"  Tidak ada data untuk {TANGGAL}.\n")
 
     # Muat sheet Historis 12 Bulan sebagai fallback referensi harga
     print("Membaca sheet 'Historis 12 Bulan' untuk referensi historis...")
@@ -584,7 +629,7 @@ def main():
         k = entry["komoditas"]
         s = entry["size"]
 
-        if cek_duplikat(existing_data, TANGGAL, k, s):
+        if not force and cek_duplikat(existing_data, TANGGAL, k, s):
             print(f"  [LEWATI] {k} {s} — sudah ada hari ini.")
             dilewati += 1
             continue
@@ -592,19 +637,23 @@ def main():
         h_minggu  = lookup_harga(existing_data, hist_idx, k, s,  7)
         h_1bulan  = lookup_harga(existing_data, hist_idx, k, s, 30)
         h_3bulan  = lookup_harga(existing_data, hist_idx, k, s, 90)
+        pct_minggu = fmt_pct(entry["harga_tambak"], h_minggu)
+        pct_3bulan = fmt_pct(entry["harga_tambak"], h_3bulan)
 
         baris = [
             TANGGAL, k, s,
             entry["harga_tambak"], entry["harga_ekspor"], entry["harga_intl"],
             h_minggu, h_1bulan, h_3bulan,
-            fmt_pct(entry["harga_tambak"], h_minggu),
-            fmt_pct(entry["harga_tambak"], h_3bulan),
+            pct_minggu, pct_3bulan,
             enrich_sumber(entry, web),
             determine_kepercayaan(entry, web),
             entry["catatan"],
         ]
         baris_baru.append(baris)
-        print(f"  [ANTRIAN] {k} {s}")
+        print(f"  [ANTRIAN] {k} | {s}")
+        print(f"            G Minggu lalu  : {h_minggu  or '(kosong)':30s}  J % vs minggu  : {pct_minggu  or '—'}")
+        print(f"            H 1 bulan lalu : {h_1bulan  or '(kosong)':30s}")
+        print(f"            I 3 bulan lalu : {h_3bulan  or '(kosong)':30s}  K % vs 3 bulan : {pct_3bulan or '—'}")
 
     # ── Tulis sekaligus (satu API call) dengan retry exponential backoff ─────
     ditambah = 0
