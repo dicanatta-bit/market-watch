@@ -39,6 +39,37 @@ HEADER_COL = chr(64 + len(HEADERS))   # 'N'
 
 TANGGAL = date.today().strftime("%d/%m/%Y")
 
+# ── Mapping (komoditas, size) di "Harga Komoditas" → key di "Historis 12 Bulan" ─
+# Digunakan sebagai fallback ketika "Harga Komoditas" belum punya data lama.
+_HISTORIS_KEY_MAP = {
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 50"):              "Udang Vaname Size 50",
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 60"):              "Udang Vaname Size 60",
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 70"):              "Udang Vaname Size 70",
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 100"):             "Udang Vaname Size 100",
+    ("Udang Windu (Penaeus monodon)", "Size 20"):                    "Udang Windu Size 20",
+    ("Udang Windu (Penaeus monodon)", "Size 30"):                    "Udang Windu Size 30",
+    ("Nila (Oreochromis niloticus)", "300-500 g"):                   "Nila 300-500 g",
+    ("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Sashimi grade"): "Tuna Yellowfin Sashimi",
+    ("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Loin/beku"):     "Tuna Yellowfin Loin/beku",
+    ("Tuna Cakalang (Katsuwonus pelamis)", "-"):                     "Tuna Cakalang",
+    ("Kakap Merah (Lutjanus spp.)", "-"):                            "Kakap Merah",
+    ("Kerapu (Epinephelus spp.)", "Hidup (>500 g)"):                 "Kerapu Hidup",
+    ("Kerapu (Epinephelus spp.)", "Beku/segar"):                     "Kerapu Beku/segar",
+    ("Rumput Laut (Eucheuma cottonii)", "Kering"):                   "Rumput Laut Kering",
+    ("Rumput Laut (Eucheuma cottonii)", "Basah"):                    "Rumput Laut Basah",
+    ("Rumput Laut ATC/SRC (E. cottonii processed)", "ATC/SRC"):      "Rumput Laut ATC/SRC",
+    ("Lobster (Panulirus ornatus) / Mutiara", ">200 g"):             "Lobster Mutiara (>200 g)",
+    ("Lobster (Panulirus homarus) / Pasir", ">100 g"):               "Lobster Pasir (>100 g)",
+    ("Bandeng (Chanos chanos)", "250-500 g"):                        "Bandeng 250-500 g",
+    ("Cumi-cumi (Loligo spp.)", "-"):                                "Cumi-cumi",
+    ("Patin (Pangasianodon hypophthalmus)", "Utuh/Hidup"):           "Patin Utuh/Hidup",
+    ("Patin (Pangasianodon hypophthalmus)", "Fillet Segar"):         "Patin Fillet Segar",
+    ("Patin (Pangasianodon hypophthalmus)", "Fillet Beku Ekspor"):   "Patin Fillet Beku Ekspor",
+}
+
+_BULAN_ID_H = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+               "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+
 # ── Data dasar (fallback; diperbarui jika scraping berhasil) ──────────────────
 # Sumber diverifikasi: KKP, BPS, DJPB, FAO GLOBEFISH, VASEP, ShrimpNews, SeafoodSource,
 # Undercurrent News, IntraFish, IndexMundi, Trobos Aqua, Agrina, Kontan, Antaranews
@@ -194,7 +225,7 @@ def parse_date(s):
 
 
 def lookup_tambak(sheet_data, komoditas, size, days_back):
-    """Cari harga tambak (col 3) untuk komoditas+size dari ~days_back hari lalu."""
+    """Cari harga tambak (col 3) di 'Harga Komoditas' dari ~days_back hari lalu."""
     today  = date.today()
     target = today - timedelta(days=days_back)
     best_row, best_delta = None, None
@@ -211,6 +242,68 @@ def lookup_tambak(sheet_data, komoditas, size, days_back):
     if best_row and best_delta is not None and best_delta <= days_back + 14:
         return best_row[3]
     return ""
+
+
+def _add_months(y, m, delta):
+    """Tambah delta bulan (positif/negatif). Returns (year, month)."""
+    m += delta
+    while m < 1:
+        m += 12; y -= 1
+    while m > 12:
+        m -= 12; y += 1
+    return y, m
+
+
+def build_historis_index(historis_data):
+    """
+    Bangun lookup dict dari sheet 'Historis 12 Bulan'.
+    Format baris: [Bulan, Komoditas, Harga Tambak, Harga Ekspor, ...]
+    Returns: {(komoditas_key, "Bulan Tahun"): harga_tambak_str}
+    """
+    idx = {}
+    for row in historis_data[1:]:
+        if len(row) < 3:
+            continue
+        bulan  = row[0].strip()
+        komod  = row[1].strip()
+        tambak = row[2].strip()
+        if bulan and komod and tambak and tambak not in ("—", "-", ""):
+            idx[(komod, bulan)] = tambak
+    return idx
+
+
+def lookup_historis(historis_idx, komoditas, size, days_back):
+    """
+    Fallback lookup dari 'Historis 12 Bulan'.
+    Mencari bulan terdekat dengan (today - days_back), toleransi ±2 bulan.
+    Tidak menggunakan data bulan yang lebih baru dari bulan ini.
+    """
+    hist_key = _HISTORIS_KEY_MAP.get((komoditas, size))
+    if not hist_key:
+        return ""
+    today  = date.today()
+    target = today - timedelta(days=days_back)
+    ty, tm = target.year, target.month
+    for delta in (0, -1, 1, -2, 2):
+        y, m = _add_months(ty, tm, delta)
+        if (y > today.year) or (y == today.year and m > today.month):
+            continue   # jangan pakai data masa depan
+        val = historis_idx.get((hist_key, f"{_BULAN_ID_H[m]} {y}"))
+        if val:
+            return val
+    return ""
+
+
+def lookup_harga(harga_data, historis_idx, komoditas, size, days_back):
+    """
+    Lookup harga tambak historis dengan dua lapisan:
+    1. Sheet 'Harga Komoditas' — data exact mingguan/harian (prioritas)
+    2. Sheet 'Historis 12 Bulan' — data bulanan 25 bulan (fallback)
+    """
+    val = lookup_tambak(harga_data, komoditas, size, days_back)
+    if val:
+        return val
+    return lookup_historis(historis_idx, komoditas, size, days_back)
 
 
 def fmt_pct(current_str, hist_str, mode="IDR"):
@@ -455,6 +548,17 @@ def main():
 
     sheet, existing_data = get_or_create_sheet(ss, SHEET_NAME)
 
+    # Muat sheet Historis 12 Bulan sebagai fallback referensi harga
+    print("Membaca sheet 'Historis 12 Bulan' untuk referensi historis...")
+    try:
+        hist_ws   = ss.worksheet("Historis 12 Bulan")
+        hist_data = hist_ws.get_all_values()
+        hist_idx  = build_historis_index(hist_data)
+        print(f"  {len(hist_idx)} entri historis dimuat sebagai fallback.\n")
+    except gspread.exceptions.WorksheetNotFound:
+        print("  [WARN] Sheet 'Historis 12 Bulan' tidak ditemukan — fallback dinonaktifkan.\n")
+        hist_idx = {}
+
     # Jalankan scraping sekali (shared untuk semua komoditas)
     print("Menjalankan scraping sumber web...")
     web = {}
@@ -484,9 +588,9 @@ def main():
             dilewati += 1
             continue
 
-        h_minggu  = lookup_tambak(existing_data, k, s,  7)
-        h_1bulan  = lookup_tambak(existing_data, k, s, 30)
-        h_3bulan  = lookup_tambak(existing_data, k, s, 90)
+        h_minggu  = lookup_harga(existing_data, hist_idx, k, s,  7)
+        h_1bulan  = lookup_harga(existing_data, hist_idx, k, s, 30)
+        h_3bulan  = lookup_harga(existing_data, hist_idx, k, s, 90)
 
         baris = [
             TANGGAL, k, s,
