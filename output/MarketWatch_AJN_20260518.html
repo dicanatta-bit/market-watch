@@ -5,120 +5,490 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Market Watch AJN &mdash; 18 Mei 2026</title>
 <style>
+/* ── Reset & Base ── */
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;font-size:14px}
-.hdr{background:#065072;color:#fff;padding:16px 24px}
-.hdr h1{font-size:1.2rem;font-weight:700}
-.hdr p{font-size:.8rem;opacity:.85;margin-top:3px}
-.wrap{max-width:1140px;margin:16px auto;padding:0 14px}
-.card{background:#fff;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.1);margin-bottom:16px;overflow:hidden}
-.ch{padding:9px 14px;font-weight:700;font-size:.86rem;color:#fff}
-.blue{background:#065072}.green{background:#145A30}.red{background:#8B1A1A}
-.chart-box{padding:14px 14px 20px;height:400px;position:relative}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;font-size:14px;min-height:100vh}
+
+/* ── Header ── */
+.hdr{background:linear-gradient(135deg,#1B3A6B 0%,#0d2244 100%);color:#fff;padding:0}
+.hdr-inner{max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr-brand{display:flex;flex-direction:column;gap:4px}
+.hdr-logo{font-size:1.5rem;font-weight:800;letter-spacing:.5px;color:#C9A84C}
+.hdr-sub{font-size:.75rem;opacity:.85;color:#cbd5e1}
+.hdr-meta{text-align:right}
+.hdr-date{font-size:.8rem;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:#C9A84C;padding:5px 12px;border-radius:20px;white-space:nowrap}
+
+/* ── Wrap ── */
+.wrap{max-width:1200px;margin:0 auto;padding:20px 14px}
+
+/* ── Summary Cards ── */
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}
+.sum-card{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 6px rgba(0,0,0,.09);border-left:4px solid #1B3A6B;display:flex;flex-direction:column;gap:4px}
+.sum-card.gold{border-left-color:#C9A84C}
+.sum-card.green{border-left-color:#1E7E34}
+.sum-card.red{border-left-color:#721C24}
+.sum-num{font-size:2rem;font-weight:800;color:#1B3A6B;line-height:1}
+.sum-card.gold .sum-num{color:#C9A84C}
+.sum-card.green .sum-num{color:#1E7E34}
+.sum-card.red .sum-num{color:#721C24}
+.sum-lbl{font-size:.78rem;color:#666;font-weight:500}
+
+/* ── Section Title ── */
+.sec-title{font-size:.92rem;font-weight:700;color:#1B3A6B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px}
+.sec-title .dot{width:8px;height:8px;border-radius:50%;background:#C9A84C;flex-shrink:0}
+
+/* ── Filter Buttons ── */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{padding:6px 16px;border-radius:20px;border:2px solid #1B3A6B;background:#fff;color:#1B3A6B;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .18s}
+.filter-btn:hover,.filter-btn.active{background:#1B3A6B;color:#fff}
+.filter-btn.active-gold{background:#C9A84C;color:#fff;border-color:#C9A84C}
+
+/* ── Commodity Cards Grid ── */
+.komod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.komod-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.komod-grid{grid-template-columns:1fr}}
+
+.komod-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.09);border-top:3px solid #1B3A6B;display:flex;flex-direction:column;gap:5px;transition:transform .15s,box-shadow .15s}
+.komod-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.13)}
+.komod-card[data-cat="t"]{border-top-color:#145A30}
+.komod-card.hidden{display:none}
+
+.kcard-top{display:flex;justify-content:space-between;align-items:center}
+.cat-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.cat-b{background:#dbeafe;color:#1e3a8a}
+.cat-t{background:#dcfce7;color:#14532d}
+.trend-icon{font-size:1.3rem;font-weight:800;line-height:1}
+.trend-up{color:#1E7E34}.trend-dn{color:#721C24}.trend-flat{color:#6C757D}
+
+.kcard-name{font-size:.88rem;font-weight:700;color:#1B3A6B;margin-top:2px}
+.kcard-size{font-size:.75rem;color:#888}
+.kcard-harga{font-size:1.25rem;font-weight:800;color:#1a1a1a;margin-top:4px}
+.kcard-unit{font-size:.7rem;font-weight:400;color:#888}
+.kcard-ekspor{font-size:.75rem;color:#555}
+.kcard-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+
+.pct-badge{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:8px}
+.badge-up{background:#D4EDDA;color:#1E7E34}
+.badge-dn{background:#F8D7DA;color:#721C24}
+.badge-neutral{background:#f0f0f0;color:#6C757D}
+.kep-badge{font-size:.65rem;padding:2px 6px;border-radius:8px;background:#f0f0f0;color:#555}
+.kep-tinggi{background:#d1fae5;color:#065f46}
+.kep-sedang{background:#fef3c7;color:#92400e}
+.kep-estimasi{background:#f3f4f6;color:#6b7280}
+
+/* ── Card Sections ── */
+.card-section{background:#fff;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,.09);margin-bottom:20px;overflow:hidden}
+.ch{padding:10px 16px;font-weight:700;font-size:.87rem;color:#fff;display:flex;align-items:center;gap:8px}
+.ch-navy{background:#1B3A6B}.ch-green{background:#145A30}.ch-red{background:#8B1A1A}
+
+/* ── Alert Table ── */
 table{width:100%;border-collapse:collapse;font-size:.82rem}
-th{background:#065072;color:#fff;padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap}
-td{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:middle}
-.alt td{background:#f7fbfd}
+th{background:#1B3A6B;color:#fff;padding:8px 10px;text-align:left;font-weight:600;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
 tr:hover td{filter:brightness(.97)}
 .c{text-align:center}.b{font-weight:600}.sm{font-size:.76rem;color:#555}.muted{color:#aaa}
-.up{color:#1e8449;font-weight:700}.dn{color:#c0392b;font-weight:700}
-/* Alert row backgrounds */
-.rm td{background:#fde8e8}.rk td{background:#fef9df}.rb td{background:#e6f2fd}
-.rm:hover td{background:#fbdcdc}.rk:hover td{background:#fdf3bb}.rb:hover td{background:#d5eafb}
-/* Badges */
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700}
-.bm{background:#fde8e8;color:#c0392b}.bk{background:#fef9df;color:#9a7d0a}
-.bb{background:#e6f2fd;color:#1a5276}.bg{background:#eee;color:#555}
-/* Kepercayaan */
-.kep-tinggi{color:#1e8449;font-weight:600}.kep-sedang{color:#9a7d0a;font-weight:600}.kep-estimasi{color:#888}
-.ftr{text-align:center;font-size:.72rem;color:#aaa;padding:12px 0 20px}
+
+.row-merah td{background:#fde8e8}.row-kuning td{background:#fef9df}.row-biru td{background:#e6f2fd}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.7rem;font-weight:700}
+.badge-merah{background:#fde8e8;color:#721C24}.badge-kuning{background:#fef9df;color:#9a7d0a}
+.badge-biru{background:#e6f2fd;color:#1a5276}.badge-grey{background:#eee;color:#555}
+
+/* ── Charts ── */
+.chart-wrap{padding:16px;position:relative}
+.chart-box{height:380px;position:relative}
+.chart-box-lg{height:280px;position:relative}
+
+/* ── Footer ── */
+.ftr{text-align:center;font-size:.72rem;color:#aaa;padding:16px 0 28px}
 </style>
 </head>
 <body>
 
+<!-- Header -->
 <div class="hdr">
-  <h1>PT AGRINAS JALADRI NUSANTARA (AJN)</h1>
-  <p>MARKET WATCH &mdash; HARGA KOMODITAS PERIKANAN STRATEGIS &nbsp;|&nbsp; Update: 18 Mei 2026</p>
+  <div class="hdr-inner">
+    <div class="hdr-brand">
+      <div class="hdr-logo">Market Watch AJN</div>
+      <div class="hdr-sub">PT Agrinas Jaladri Nusantara (Persero) &mdash; Pemantauan Harga Komoditas Perikanan Strategis</div>
+    </div>
+    <div class="hdr-meta">
+      <div class="hdr-date">Update: 18 Mei 2026</div>
+    </div>
+  </div>
 </div>
 
 <div class="wrap">
 
-  <!-- Chart harga tambak -->
-  <div class="card">
-    <div class="ch blue">Harga Tambak / Nelayan (Rp/kg) &mdash; Semua Komoditas</div>
-    <div class="chart-box">
-      <canvas id="priceChart"></canvas>
+  <!-- Summary Cards -->
+  <div class="summary-row">
+    <div class="sum-card">
+      <div class="sum-num">19</div>
+      <div class="sum-lbl">Total Komoditas Dipantau</div>
+    </div>
+    <div class="sum-card gold">
+      <div class="sum-num">3</div>
+      <div class="sum-lbl">Alert Aktif</div>
+    </div>
+    <div class="sum-card green">
+      <div class="sum-num">0</div>
+      <div class="sum-lbl">Komoditas Naik Minggu Ini</div>
+    </div>
+    <div class="sum-card red">
+      <div class="sum-num">0</div>
+      <div class="sum-lbl">Komoditas Turun Minggu Ini</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-num">10</div>
+      <div class="sum-lbl">Komoditas Budidaya</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-num">9</div>
+      <div class="sum-lbl">Komoditas Tangkap</div>
     </div>
   </div>
 
-  <!-- Alert aktif -->
-  <div class="card">
-    <div class="ch red">&#9888; Alert Aktif &mdash; 18 Mei 2026</div>
+  <!-- Commodity Cards -->
+  <div class="sec-title"><span class="dot"></span>Kartu Komoditas</div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterCards('all', this)">Semua</button>
+    <button class="filter-btn" onclick="filterCards('b', this)">Budidaya</button>
+    <button class="filter-btn" onclick="filterCards('t', this)">Tangkap</button>
+  </div>
+  <div class="komod-grid" id="komodGrid">
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Vaname</div>
+        <div class="kcard-size">Size 50</div>
+        <div class="kcard-harga">Rp 60.000 – 65.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 3,55 – 3,64/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Vaname</div>
+        <div class="kcard-size">Size 60</div>
+        <div class="kcard-harga">Rp 55.000 – 60.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 3,55/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Vaname</div>
+        <div class="kcard-size">Size 70</div>
+        <div class="kcard-harga">Rp 50.000 – 55.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD —/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Vaname</div>
+        <div class="kcard-size">Size 100</div>
+        <div class="kcard-harga">Rp 40.000 – 45.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD —/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Windu</div>
+        <div class="kcard-size">Size 20</div>
+        <div class="kcard-harga">Rp 100.000 – 120.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 8,00 – 10,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Udang Windu</div>
+        <div class="kcard-size">Size 30</div>
+        <div class="kcard-harga">Rp 80.000 – 100.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 6,00 – 8,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Nila</div>
+        <div class="kcard-size">300–500 g</div>
+        <div class="kcard-harga">Rp 22.000 – 28.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 3,00 – 4,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Patin</div>
+        <div class="kcard-size">Utuh/Hidup</div>
+        <div class="kcard-harga">Rp 15.000 – 22.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD —/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Bandeng</div>
+        <div class="kcard-size">250-500 g</div>
+        <div class="kcard-harga">Rp 20.000 – 28.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 1,80 – 2,50/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Tuna Yellowfin</div>
+        <div class="kcard-size">Sashimi grade</div>
+        <div class="kcard-harga">Rp 60.000 – 80.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 5,00 – 8,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Tuna Yellowfin</div>
+        <div class="kcard-size">Loin/beku</div>
+        <div class="kcard-harga">Rp 30.000 – 45.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 2,50 – 4,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Tuna Cakalang</div>
+        <div class="kcard-size">—</div>
+        <div class="kcard-harga">Rp 15.000 – 25.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 1,50 – 2,50/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Kakap Merah</div>
+        <div class="kcard-size">—</div>
+        <div class="kcard-harga">Rp 50.000 – 70.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 5,00 – 8,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Kerapu</div>
+        <div class="kcard-size">Hidup (>500 g)</div>
+        <div class="kcard-harga">Rp 100.000 – 150.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 8,00 – 12,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Kerapu</div>
+        <div class="kcard-size">Beku/segar</div>
+        <div class="kcard-harga">Rp 60.000 – 90.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 5,00 – 7,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Lobster Mutiara</div>
+        <div class="kcard-size">>200 g</div>
+        <div class="kcard-harga">Rp 280.000 – 380.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 18,00 – 22,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Lobster Pasir</div>
+        <div class="kcard-size">>100 g</div>
+        <div class="kcard-harga">Rp 150.000 – 220.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 10,00 – 15,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="b">
+        <div class="kcard-top">
+          <span class="cat-badge cat-b">Budidaya</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Rumput Laut</div>
+        <div class="kcard-size">Kering</div>
+        <div class="kcard-harga">Rp 6.000 – 7.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 0,40 – 0,50/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+
+      <div class="komod-card " data-cat="t">
+        <div class="kcard-top">
+          <span class="cat-badge cat-t">Tangkap</span>
+          <span class="trend-icon trend-flat">→</span>
+        </div>
+        <div class="kcard-name">Cumi-cumi</div>
+        <div class="kcard-size">—</div>
+        <div class="kcard-harga">Rp 35.000 – 50.000<span class="kcard-unit">/kg</span></div>
+        <div class="kcard-ekspor">Ekspor: USD 3,50 – 5,00/kg</div>
+        <div class="kcard-badges">
+          <span class="pct-badge badge-neutral" title="% vs Minggu Lalu">W: —</span>
+          <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
+          <span class="kep-badge kep-estimasi">Estimasi</span>
+        </div>
+      </div>
+  </div>
+
+  <!-- Chart: Bar harga tambak -->
+  <div class="card-section">
+    <div class="ch ch-navy">&#9632; Harga Tambak / Nelayan (Rp/kg) &mdash; Semua Komoditas</div>
+    <div class="chart-wrap">
+      <div class="chart-box"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chart: Line tren top 5 -->
+  <div class="card-section">
+    <div class="ch ch-navy">&#9632; Tren Harga 3 Bulan &mdash; Top 5 Komoditas</div>
+    <div class="chart-wrap">
+      <div class="chart-box-lg"><canvas id="lineChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Alert Aktif -->
+  <div class="card-section">
+    <div class="ch ch-red">&#9888; Alert Aktif &mdash; 18 Mei 2026</div>
     <table>
       <thead><tr>
         <th>Jenis</th><th>Komoditas</th><th>% Perubahan</th>
-        <th>Sebelum &#8594; Sekarang</th><th>Rekomendasi</th>
+        <th>Sebelum &rarr; Sekarang</th><th>Rekomendasi</th>
       </tr></thead>
       <tbody>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Nila (Oreochromis niloticus) (300-500 g)</td><td class="c b">124.0%</td><td>22.000 – 28.000 &#8594; ~Rp 56,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Tuna Sirip Kuning / Yellowfin (Thunnus albacares) (Sashimi grade)</td><td class="c b">48.6%</td><td>60.000 – 80.000 &#8594; ~Rp 104,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Tuna Cakalang (Katsuwonus pelamis)</td><td class="c b">60.0%</td><td>15.000 – 25.000 &#8594; ~Rp 32,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Kakap Merah (Lutjanus spp.)</td><td class="c b">73.3%</td><td>50.000 – 70.000 &#8594; ~Rp 104,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Bandeng (Chanos chanos) (250-500 g)</td><td class="c b">43.3%</td><td>20.000 – 28.000 &#8594; ~Rp 34,400/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rk"><td><span class="badge bk">KUNING</span></td><td>Cumi-cumi (Loligo spp.)</td><td class="c b">60.0%</td><td>35.000 – 50.000 &#8594; ~Rp 68,000/kg (ekspor est.)</td><td class="sm">Gap ekspor-tambak tinggi — peluang AJN sebagai agregator; review margin distribusi.</td></tr>
-<tr class="rm"><td><span class="badge bm">MERAH</span></td><td>Rumput Laut (Eucheuma cottonii) (Basah)</td><td class="c b">+25.00%</td><td>1.000 – 1.000 &#8594; 1.000 – 1.500</td><td class="sm">Harga naik signifikan — pertimbangkan penjualan atau hedging segera.</td></tr>
-<tr class="rm"><td><span class="badge bm">MERAH</span></td><td>Lobster (Panulirus homarus) / Pasir (>100 g)</td><td class="c b">-7.50%</td><td>184.000 – 216.000 &#8594; 150.000 – 220.000</td><td class="sm">Harga turun signifikan — tahan stok; evaluasi harga pokok produksi.</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Budidaya -->
-  <div class="card">
-    <div class="ch blue">A. Komoditas Budidaya</div>
-    <table>
-      <thead><tr>
-        <th>Komoditas</th><th>Size / Grade</th>
-        <th>Harga Tambak (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
-        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
-      </tr></thead>
-      <tbody>
-<tr class=""><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 50</td><td class="c">60.000 – 65.000</td><td class="c">3,55 – 3,64</td><td class="c"><span class="dn">-0.79%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 60</td><td class="c">55.000 – 60.000</td><td class="c">3,55</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 70</td><td class="c">50.000 – 55.000</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Udang Vaname (Litopenaeus vannamei)</td><td class="c">Size 100</td><td class="c">40.000 – 45.000</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Udang Windu (Penaeus monodon)</td><td class="c">Size 20</td><td class="c">100.000 – 120.000</td><td class="c">8,00 – 10,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Udang Windu (Penaeus monodon)</td><td class="c">Size 30</td><td class="c">80.000 – 100.000</td><td class="c">6,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Nila (Oreochromis niloticus)</td><td class="c">300-500 g</td><td class="c">22.000 – 28.000</td><td class="c">3,00 – 4,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Kering</td><td class="c">6.000 – 7.000</td><td class="c">0,40 – 0,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Rumput Laut (Eucheuma cottonii)</td><td class="c">Basah</td><td class="c">1.000 – 1.500</td><td class="c">—</td><td class="c"><span class="up">+25.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Bandeng (Chanos chanos)</td><td class="c">250-500 g</td><td class="c">20.000 – 28.000</td><td class="c">1,80 – 2,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Rumput Laut ATC/SRC (E. cottonii processed)</td><td class="c">ATC/SRC</td><td class="c">40.000 – 70.000</td><td class="c">2,50 – 5,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Utuh/Hidup</td><td class="c">15.000 – 22.000</td><td class="c">—</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Fillet Segar</td><td class="c">28.000 – 38.000</td><td class="c">2,20 – 2,80</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Patin (Pangasianodon hypophthalmus)</td><td class="c">Fillet Beku Ekspor</td><td class="c">32.000 – 45.000</td><td class="c">2,80 – 3,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Tangkap -->
-  <div class="card">
-    <div class="ch green">B. Komoditas Perikanan Tangkap</div>
-    <table>
-      <thead><tr>
-        <th>Komoditas</th><th>Grade / Bentuk</th>
-        <th>Harga Nelayan (Rp/kg)</th><th>Harga Ekspor (USD/kg)</th>
-        <th>% vs Minggu Lalu</th><th>Kepercayaan</th>
-      </tr></thead>
-      <tbody>
-<tr class=""><td class="b">Tuna Sirip Kuning / Yellowfin (Thunnus albacares)</td><td class="c">Sashimi grade</td><td class="c">60.000 – 80.000</td><td class="c">5,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Tuna Sirip Kuning / Yellowfin (Thunnus albacares)</td><td class="c">Loin/beku</td><td class="c">30.000 – 45.000</td><td class="c">2,50 – 4,00</td><td class="c"><span class="up">+1.35%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Tuna Cakalang (Katsuwonus pelamis)</td><td class="c">-</td><td class="c">15.000 – 25.000</td><td class="c">1,50 – 2,50</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Kakap Merah (Lutjanus spp.)</td><td class="c">-</td><td class="c">50.000 – 70.000</td><td class="c">5,00 – 8,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Kerapu (Epinephelus spp.)</td><td class="c">Hidup (>500 g)</td><td class="c">100.000 – 150.000</td><td class="c">8,00 – 12,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Kerapu (Epinephelus spp.)</td><td class="c">Beku/segar</td><td class="c">60.000 – 90.000</td><td class="c">5,00 – 7,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Lobster (Panulirus ornatus) / Mutiara</td><td class="c">>200 g</td><td class="c">280.000 – 380.000</td><td class="c">18,00 – 22,00</td><td class="c"><span class="up">+1.54%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class="alt"><td class="b">Lobster (Panulirus homarus) / Pasir</td><td class="c">>100 g</td><td class="c">150.000 – 220.000</td><td class="c">10,00 – 15,00</td><td class="c"><span class="dn">-7.50%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
-<tr class=""><td class="b">Cumi-cumi (Loligo spp.)</td><td class="c">-</td><td class="c">35.000 – 50.000</td><td class="c">3,50 – 5,00</td><td class="c"><span class="up">+0.00%</span></td><td class="c kep-estimasi">Estimasi</td></tr>
+<tr class="row-merah"><td><span class="badge badge-merah">MERAH</span></td><td>Udang Vaname (Size 50)</td><td class="c b">+7.20%</td><td>58.000 &rarr; 60.000 - 65.000</td><td class="sm">Pertimbangkan penjualan atau hedging segera.</td></tr>
+<tr class="row-kuning"><td><span class="badge badge-kuning">KUNING</span></td><td>Udang Windu (Size 20)</td><td class="c b">65.1%</td><td>100.000 - 120.000 &rarr; ~Rp 160.000/kg (ekspor)</td><td class="sm">Peluang AJN sebagai agregator; review margin distribusi.</td></tr>
+<tr class="row-biru"><td><span class="badge badge-biru">BIRU</span></td><td>Tuna Cakalang</td><td class="c b">-12.40%</td><td>USD 2.10/kg &rarr; 1,50 - 2,50</td><td class="sm">Waspadai risiko program ekspor; review kontrak.</td></tr>
       </tbody>
     </table>
   </div>
@@ -126,69 +496,111 @@ tr:hover td{filter:brightness(.97)}
 </div>
 
 <div class="ftr">
-  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif &bull; 18 Mei 2026
+  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; 18 Mei 2026
 </div>
 
-<!-- Chart.js dimuat di akhir body (setelah canvas ada di DOM) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 (function () {
   'use strict';
-  try {
-    var canvas = document.getElementById('priceChart');
-    if (!canvas) { throw new Error('Canvas tidak ditemukan'); }
-    new Chart(canvas, {
-      type: 'bar',
-      data: {
-        labels: ["Lobster >200 g", "Lobster >100 g", "Kerapu Hidup (>500 g)", "Windu Size 20", "Windu Size 30", "Kerapu Beku/segar", "Yellowfin Sashimi grade", "Vaname Size 50", "Kakap", "Vaname Size 60", "RL ATC ATC/SRC", "Vaname Size 70", "Vaname Size 100", "Cumi", "Patin Fillet Beku Ekspor", "Yellowfin Loin/beku", "Patin Fillet Segar", "Nila 300-500 g", "Bandeng 250-500 g", "Cakalang", "Patin Utuh/Hidup", "Rmpt Laut Kering", "Rmpt Laut Basah"],
-        datasets: [{
-          label: 'Harga (Rp/kg)',
-          data: [330000, 185000, 125000, 110000, 90000, 75000, 70000, 62500, 60000, 57500, 55000, 52500, 42500, 42500, 38500, 37500, 33000, 25000, 24000, 20000, 18500, 6500, 1250],
-          backgroundColor: ["rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(20,90,48,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)", "rgba(6,80,114,0.82)"],
-          borderRadius: 4,
-          borderSkipped: false
-        }]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (ctx) {
-                return ' Rp ' + ctx.parsed.x.toLocaleString('id-ID') + '/kg';
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: {
-              callback: function (v) {
-                return 'Rp ' + (v / 1000).toFixed(0) + ' rb';
-              },
-              font: { size: 11 }
-            },
-            grid: { color: 'rgba(0,0,0,.06)' }
-          },
-          y: {
-            ticks: { font: { size: 11 } },
-            grid: { display: false }
-          }
-        }
+
+  /* ── Filter cards ── */
+  window.filterCards = function(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.komod-card').forEach(function(c) {
+      if (cat === 'all' || c.dataset.cat === cat) {
+        c.classList.remove('hidden');
+      } else {
+        c.classList.add('hidden');
       }
     });
-  } catch (e) {
-    console.error('Chart render error:', e);
-    var box = document.querySelector('.chart-box');
-    if (box) {
-      box.innerHTML = '<p style="padding:40px;text-align:center;color:#999">'
-        + 'Grafik tidak dapat dimuat. Periksa koneksi internet.</p>';
+  };
+
+  /* ── Bar Chart ── */
+  try {
+    var bc = document.getElementById('barChart');
+    if (bc) {
+      new Chart(bc, {
+        type: 'bar',
+        data: {
+          labels: ["Lobster Mutiara >200 g", "Lobster Pasir >100 g", "Kerapu Hidup (>500 g)", "Udang Windu Size 20", "Udang Windu Size 30", "Kerapu Beku/segar", "Tuna Yellowfin Sashimi grade", "Udang Vaname Size 50", "Kakap Merah", "Udang Vaname Size 60", "Udang Vaname Size 70", "Udang Vaname Size 100", "Cumi-cumi", "Tuna Yellowfin Loin/beku", "Nila 300\u2013500 g", "Bandeng 250-500 g", "Tuna Cakalang", "Patin Utuh/Hidup", "Rumput Laut Kering"],
+          datasets: [{
+            label: 'Harga (Rp/kg)',
+            data: [330000, 185000, 125000, 110000, 90000, 75000, 70000, 62500, 60000, 57500, 52500, 42500, 42500, 37500, 25000, 24000, 20000, 18500, 6500],
+            backgroundColor: ["rgba(20,90,48,0.85)", "rgba(20,90,48,0.85)", "rgba(20,90,48,0.85)", "rgba(27,58,107,0.85)", "rgba(27,58,107,0.85)", "rgba(20,90,48,0.85)", "rgba(20,90,48,0.85)", "rgba(27,58,107,0.85)", "rgba(20,90,48,0.85)", "rgba(27,58,107,0.85)", "rgba(27,58,107,0.85)", "rgba(27,58,107,0.85)", "rgba(20,90,48,0.85)", "rgba(20,90,48,0.85)", "rgba(27,58,107,0.85)", "rgba(27,58,107,0.85)", "rgba(20,90,48,0.85)", "rgba(27,58,107,0.85)", "rgba(27,58,107,0.85)"],
+            borderRadius: 4,
+            borderSkipped: false
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return ' Rp ' + ctx.parsed.x.toLocaleString('id-ID') + '/kg';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(v) { return 'Rp ' + (v/1000).toFixed(0) + ' rb'; },
+                font: { size: 10 }
+              },
+              grid: { color: 'rgba(0,0,0,.06)' }
+            },
+            y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
     }
-  }
+  } catch(e) { console.error('Bar chart error:', e); }
+
+  /* ── Line Chart ── */
+  try {
+    var lc = document.getElementById('lineChart');
+    if (lc) {
+      new Chart(lc, {
+        type: 'line',
+        data: {
+          labels: ["3 Bln Lalu", "1 Bln Lalu", "Minggu Lalu", "Sekarang"],
+          datasets: [{"label": "Udang Windu Size 20", "data": [110000.0, 110000.0, 110000.0, 110000], "borderColor": "#1B3A6B", "backgroundColor": "#1B3A6B22", "tension": 0.3, "fill": false}, {"label": "Udang Windu Size 30", "data": [90000.0, 90000.0, 90000.0, 90000], "borderColor": "#C9A84C", "backgroundColor": "#C9A84C22", "tension": 0.3, "fill": false}, {"label": "Kerapu Hidup (>500 g)", "data": [125000.0, 125000.0, 125000.0, 125000], "borderColor": "#145A30", "backgroundColor": "#145A3022", "tension": 0.3, "fill": false}, {"label": "Lobster Mutiara >200 g", "data": [330000.0, 330000.0, 330000.0, 330000], "borderColor": "#8B1A1A", "backgroundColor": "#8B1A1A22", "tension": 0.3, "fill": false}, {"label": "Lobster Pasir >100 g", "data": [185000.0, 185000.0, 185000.0, 185000], "borderColor": "#065072", "backgroundColor": "#06507222", "tension": 0.3, "fill": false}]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return ctx.dataset.label + ': Rp ' + ctx.parsed.y.toLocaleString('id-ID') + '/kg';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function(v) { return 'Rp ' + (v/1000).toFixed(0) + ' rb'; },
+                font: { size: 10 }
+              },
+              grid: { color: 'rgba(0,0,0,.06)' }
+            },
+            x: { ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+  } catch(e) { console.error('Line chart error:', e); }
+
 })();
 </script>
 </body>

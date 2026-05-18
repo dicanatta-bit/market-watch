@@ -36,6 +36,9 @@ jobs:
       - name: Jalankan auto update
         run: python auto_update.py
 
+      - name: Format sheet Harga Komoditas (Senin)
+        run: python sheet_formatter.py
+
       - name: Hapus credentials (cleanup)
         if: always()
         run: rm -f credentials.json
