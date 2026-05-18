@@ -297,13 +297,14 @@ def lookup_historis(historis_idx, komoditas, size, days_back):
 def lookup_harga(harga_data, historis_idx, komoditas, size, days_back):
     """
     Lookup harga tambak historis dengan dua lapisan:
-    1. Sheet 'Harga Komoditas' — data exact mingguan/harian (prioritas)
-    2. Sheet 'Historis 12 Bulan' — data bulanan 25 bulan (fallback)
+    1. Sheet 'Historis 12 Bulan' — data bulanan bervariasi per bulan (prioritas)
+    2. Sheet 'Harga Komoditas' — fallback jika komoditas tidak ada di Historis
+       (harga ini statis dari BASE_DATA sehingga kurang berguna untuk trend)
     """
-    val = lookup_tambak(harga_data, komoditas, size, days_back)
+    val = lookup_historis(historis_idx, komoditas, size, days_back)
     if val:
         return val
-    return lookup_historis(historis_idx, komoditas, size, days_back)
+    return lookup_tambak(harga_data, komoditas, size, days_back)
 
 
 def fmt_pct(current_str, hist_str, mode="IDR"):
