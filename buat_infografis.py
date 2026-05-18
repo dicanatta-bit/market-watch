@@ -48,25 +48,34 @@ GITHUB_HTML_URL = (
 
 # ── Data statis fallback (dipakai jika sheet belum berisi data) ───────────────
 STATIC_PRICES = [
-    {"komoditas": "Udang Vaname",   "size": "Size 50",        "tambak": "60.000 – 65.000",   "ekspor": "3,55 – 3,64", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Udang Vaname",   "size": "Size 60",        "tambak": "55.000 – 60.000",   "ekspor": "3,55",             "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Udang Vaname",   "size": "Size 70",        "tambak": "50.000 – 55.000",   "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Udang Vaname",   "size": "Size 100",       "tambak": "40.000 – 45.000",   "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Udang Windu",    "size": "Size 20",        "tambak": "100.000 – 120.000", "ekspor": "8,00 – 10,00","pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Udang Windu",    "size": "Size 30",        "tambak": "80.000 – 100.000",  "ekspor": "6,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Nila",           "size": "300–500 g", "tambak": "22.000 – 28.000",   "ekspor": "3,00 – 4,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Tuna Yellowfin", "size": "Sashimi grade",  "tambak": "60.000 – 80.000",   "ekspor": "5,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Tuna Yellowfin", "size": "Loin/beku",      "tambak": "30.000 – 45.000",   "ekspor": "2,50 – 4,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Tuna Cakalang",  "size": "—",         "tambak": "15.000 – 25.000",   "ekspor": "1,50 – 2,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Kakap Merah",    "size": "—",         "tambak": "50.000 – 70.000",   "ekspor": "5,00 – 8,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Kerapu",         "size": "Hidup (>500 g)", "tambak": "100.000 – 150.000", "ekspor": "8,00 – 12,00","pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Kerapu",         "size": "Beku/segar",     "tambak": "60.000 – 90.000",   "ekspor": "5,00 – 7,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Rumput Laut",    "size": "Kering",         "tambak": "6.000 – 7.000",     "ekspor": "0,40 – 0,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Rumput Laut",    "size": "Basah",          "tambak": "1.000 – 1.500",     "ekspor": "—",           "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Lobster Mutiara","size": ">200 g",         "tambak": "280.000 – 380.000", "ekspor": "18,00 – 22,00","pct_minggu":"", "kepercayaan": "Estimasi"},
-    {"komoditas": "Lobster Pasir",  "size": ">100 g",         "tambak": "150.000 – 220.000", "ekspor": "10,00 – 15,00","pct_minggu":"", "kepercayaan": "Estimasi"},
-    {"komoditas": "Bandeng",        "size": "250-500 g",      "tambak": "20.000 – 28.000",   "ekspor": "1,80 – 2,50", "pct_minggu": "", "kepercayaan": "Estimasi"},
-    {"komoditas": "Cumi-cumi",      "size": "-",              "tambak": "35.000 – 50.000",   "ekspor": "3,50 – 5,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    # Udang
+    {"komoditas": "Udang Vaname",   "size": "Size 50",           "tambak": "60.000 – 65.000",   "ekspor": "3,55 – 3,64",  "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 60",           "tambak": "55.000 – 60.000",   "ekspor": "3,55",          "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 70",           "tambak": "50.000 – 55.000",   "ekspor": "—",             "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Vaname",   "size": "Size 100",          "tambak": "40.000 – 45.000",   "ekspor": "—",             "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Windu",    "size": "Size 20",           "tambak": "100.000 – 120.000", "ekspor": "8,00 – 10,00",  "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Udang Windu",    "size": "Size 30",           "tambak": "80.000 – 100.000",  "ekspor": "6,00 – 8,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    # Budidaya air tawar & payau
+    {"komoditas": "Nila",           "size": "300–500 g",         "tambak": "22.000 – 28.000",   "ekspor": "3,00 – 4,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Patin",          "size": "Utuh/Hidup",        "tambak": "15.000 – 22.000",   "ekspor": "—",             "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Patin",          "size": "Fillet Segar",      "tambak": "28.000 – 38.000",   "ekspor": "2,20 – 2,80",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Patin",          "size": "Fillet Beku Ekspor","tambak": "32.000 – 45.000",   "ekspor": "2,80 – 3,50",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Bandeng",        "size": "250-500 g",         "tambak": "20.000 – 28.000",   "ekspor": "1,80 – 2,50",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    # Tangkap
+    {"komoditas": "Tuna Yellowfin", "size": "Sashimi grade",     "tambak": "60.000 – 80.000",   "ekspor": "5,00 – 8,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Tuna Yellowfin", "size": "Loin/beku",         "tambak": "30.000 – 45.000",   "ekspor": "2,50 – 4,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Tuna Cakalang",  "size": "—",                 "tambak": "15.000 – 25.000",   "ekspor": "1,50 – 2,50",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kakap Merah",    "size": "—",                 "tambak": "50.000 – 70.000",   "ekspor": "5,00 – 8,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kerapu",         "size": "Hidup (>500 g)",    "tambak": "100.000 – 150.000", "ekspor": "8,00 – 12,00",  "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Kerapu",         "size": "Beku/segar",        "tambak": "60.000 – 90.000",   "ekspor": "5,00 – 7,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Cumi-cumi",      "size": "-",                 "tambak": "35.000 – 50.000",   "ekspor": "3,50 – 5,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    # Lobster
+    {"komoditas": "Lobster Mutiara","size": ">200 g",            "tambak": "280.000 – 380.000", "ekspor": "18,00 – 22,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Lobster Pasir",  "size": ">100 g",            "tambak": "150.000 – 220.000", "ekspor": "10,00 – 15,00", "pct_minggu": "", "kepercayaan": "Estimasi"},
+    # Rumput Laut
+    {"komoditas": "Rumput Laut",    "size": "Kering",            "tambak": "6.000 – 7.000",     "ekspor": "0,40 – 0,50",   "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Rumput Laut",    "size": "Basah",             "tambak": "1.000 – 1.500",     "ekspor": "—",             "pct_minggu": "", "kepercayaan": "Estimasi"},
+    {"komoditas": "Rumput Laut ATC","size": "ATC/SRC",           "tambak": "40.000 – 70.000",   "ekspor": "2,50 – 5,00",   "pct_minggu": "", "kepercayaan": "Estimasi"},
 ]
 
 # ── Layout baris (0-indexed) ──────────────────────────────────────────────────
@@ -376,16 +385,18 @@ def build_requests(sid, today_alerts):
 
 # ── HTML export ───────────────────────────────────────────────────────────────
 
-_BUDIDAYA_KEYS = ["Vaname", "Windu", "Nila", "Rumput Laut", "Bandeng"]
+_BUDIDAYA_KEYS = ["Vaname", "Windu", "Nila", "Patin", "Rumput Laut", "Bandeng"]
 
 _SHORT_NAMES = [
     ("Udang Vaname",   "Vaname"),
     ("Udang Windu",    "Windu"),
     ("Nila",           "Nila"),
+    ("Patin",          "Patin"),
     ("Yellowfin",      "Yellowfin"),
     ("Cakalang",       "Cakalang"),
     ("Kakap",          "Kakap"),
     ("Kerapu",         "Kerapu"),
+    ("Rumput Laut ATC","RL ATC"),
     ("Rumput Laut",    "Rmpt Laut"),
     ("Lobster",        "Lobster"),
     ("Bandeng",        "Bandeng"),
@@ -786,10 +797,10 @@ def create_dashboard_sheet(ss):
         ["", "", "", ""],                                                           # R12
         ["KOMODITAS YANG DIPANTAU", "", "", ""],                                    # R13
         ["Budidaya",
-         "Udang Vaname (Size 50/60/70/100)  |  Udang Windu (Size 20/30)  |  Nila",
+         "Udang Vaname (Size 50/60/70/100)  |  Udang Windu (Size 20/30)  |  Nila  |  Patin (Utuh/Fillet Segar/Fillet Beku)  |  Bandeng  |  Rumput Laut (Kering/Basah/ATC-SRC)",
          "", ""],                                                                   # R14
         ["Perikanan Tangkap",
-         "Tuna Yellowfin  |  Tuna Cakalang  |  Kakap Merah  |  Kerapu",
+         "Tuna Yellowfin  |  Tuna Cakalang  |  Kakap Merah  |  Kerapu  |  Lobster (Mutiara/Pasir)  |  Cumi-cumi",
          "", ""],                                                                   # R15
         ["", "", "", ""],                                                           # R16
         ["Dibuat otomatis oleh Market Watch AJN  |  Data bersifat indikatif",

@@ -63,25 +63,34 @@ def fmt_bulan(y, m):
 # Komoditas → (tambak_mid_idr, ekspor_mid_usd, intl_mid_usd)
 # None berarti tidak tersedia (akan diisi "—")
 ANCHOR = {
+    # Udang
     "Udang Vaname Size 50":        (62_500,  3.60, 3.60),
     "Udang Vaname Size 60":        (57_500,  3.55, 3.55),
     "Udang Vaname Size 70":        (52_500,  None, None),
     "Udang Vaname Size 100":       (42_500,  None, None),
     "Udang Windu Size 20":         (110_000, 9.00, None),
     "Udang Windu Size 30":         (90_000,  7.00, None),
+    # Budidaya air tawar & payau
     "Nila 300-500 g":              (25_000,  3.50, None),
+    "Patin Utuh/Hidup":            (18_500,  None, None),
+    "Patin Fillet Segar":          (33_000,  2.50, 2.75),
+    "Patin Fillet Beku Ekspor":    (38_500,  3.15, 3.15),
+    "Bandeng 250-500 g":           (24_000,  2.15, None),
+    # Tangkap
     "Tuna Yellowfin Sashimi":      (70_000,  6.50, 7.75),
     "Tuna Yellowfin Loin/beku":    (37_500,  3.25, None),
     "Tuna Cakalang":               (20_000,  2.00, 2.00),
     "Kakap Merah":                 (60_000,  6.50, None),
     "Kerapu Hidup":                (125_000, 10.00, None),
     "Kerapu Beku/segar":           (75_000,  6.00, None),
-    "Rumput Laut Kering":          (6_500,   0.45, 0.40),
-    "Rumput Laut Basah":           (1_200,   None, None),
+    "Cumi-cumi":                   (42_500,  4.25, 3.75),
+    # Lobster
     "Lobster Mutiara (>200 g)":    (325_000, 20.00, None),
     "Lobster Pasir (>100 g)":      (200_000, 13.00, None),
-    "Bandeng 250-500 g":           (24_000,  2.15, None),
-    "Cumi-cumi":                   (42_500,  4.25, 3.75),
+    # Rumput Laut
+    "Rumput Laut Kering":          (6_500,   0.45, 0.40),
+    "Rumput Laut Basah":           (1_200,   None, None),
+    "Rumput Laut ATC/SRC":         (55_000,  3.75, 4.00),
 }
 
 # ── Tren bulanan per kategori (25 nilai, idx 0=Mei2024, idx 24=Mei2026) ────────
@@ -91,6 +100,8 @@ TREN = {
                     0.94,0.95,0.93,0.91,0.90,0.92, 0.94,0.96,0.97,0.98,0.99,1.00,1.00],
     "nila":        [0.92,0.93,0.93,0.94,0.94,0.95, 0.95,0.96,0.96,0.96,0.97,0.97,
                     0.97,0.97,0.97,0.98,0.98,0.98, 0.98,0.99,0.99,0.99,1.00,1.00,1.00],
+    "patin":       [0.91,0.92,0.92,0.93,0.93,0.94, 0.94,0.95,0.95,0.95,0.96,0.96,
+                    0.96,0.97,0.97,0.97,0.97,0.98, 0.98,0.99,0.99,0.99,1.00,1.00,1.00],
     "tuna":        [0.94,0.94,0.94,0.95,0.95,0.94, 0.93,0.93,0.94,0.94,0.95,0.96,
                     0.95,0.95,0.95,0.96,0.96,0.97, 0.97,0.98,0.98,0.99,0.99,1.00,1.00],
     "kerapu":      [0.88,0.90,0.88,0.87,0.88,0.89, 0.90,0.91,0.89,0.88,0.90,0.92,
@@ -101,6 +112,8 @@ TREN = {
                     0.89,0.90,0.90,0.91,0.92,0.93, 0.94,0.95,0.96,0.97,0.98,1.00,1.00],
     "rumput_laut": [0.87,0.88,0.88,0.89,0.90,0.90, 0.91,0.91,0.92,0.92,0.93,0.93,
                     0.93,0.94,0.94,0.95,0.95,0.96, 0.96,0.97,0.97,0.98,0.99,1.00,1.00],
+    "rl_olahan":   [0.82,0.83,0.84,0.84,0.85,0.86, 0.86,0.87,0.88,0.88,0.89,0.90,
+                    0.90,0.91,0.92,0.92,0.93,0.94, 0.94,0.95,0.96,0.97,0.98,1.00,1.00],
     "bandeng":     [0.91,0.91,0.92,0.92,0.93,0.93, 0.94,0.94,0.95,0.95,0.96,0.96,
                     0.96,0.96,0.97,0.97,0.97,0.98, 0.98,0.98,0.99,0.99,0.99,1.00,1.00],
     "cumi":        [0.90,0.90,0.91,0.91,0.92,0.93, 0.93,0.93,0.94,0.94,0.95,0.95,
@@ -110,11 +123,13 @@ TREN = {
 _CATATAN = {
     "udang":       "Tren: harga global tinggi Q1-2024, tertekan 2025, mulai pulih 2026.",
     "nila":        "Tren: relatif stabil, kenaikan bertahap mengikuti permintaan ekspor.",
+    "patin":       "Tren: harga stabil; kenaikan bertahap didorong permintaan ekspor fillet beku. Benchmark Vietnam dominan pasar global.",
     "tuna":        "Tren: stabil dengan fluktuasi musiman. Pasar Jepang & Eropa dominan.",
     "kerapu":      "Tren: terpengaruh permintaan China; puncak menjelang Imlek tiap tahun.",
     "kakap":       "Tren: stabil, didorong permintaan ekspor China & Singapura.",
     "lobster":     "Tren: pertumbuhan harga signifikan seiring regulasi ekspor benih diperketat.",
     "rumput_laut": "Tren: harga kering relatif stabil; dipengaruhi permintaan industri karagenan.",
+    "rl_olahan":   "Tren: nilai tambah tinggi vs raw; tumbuh seiring permintaan industri karagenan & food additive global.",
     "bandeng":     "Tren: stabil sepanjang tahun; sedikit premium menjelang Lebaran.",
     "cumi":        "Tren: fluktuasi musiman mengikuti pola tangkapan nelayan.",
 }
@@ -124,10 +139,12 @@ def kategori(komoditas):
     k = komoditas.lower()
     if "vaname" in k or "windu" in k:  return "udang"
     if "nila" in k:                    return "nila"
+    if "patin" in k:                   return "patin"
     if "tuna" in k or "cakalang" in k: return "tuna"
     if "kerapu" in k:                  return "kerapu"
     if "kakap" in k:                   return "kakap"
     if "lobster" in k:                 return "lobster"
+    if "atc" in k or "src" in k:       return "rl_olahan"
     if "rumput" in k:                  return "rumput_laut"
     if "bandeng" in k:                 return "bandeng"
     if "cumi" in k:                    return "cumi"
@@ -371,14 +388,24 @@ def main():
         apply_formatting(ss, ws)
         return
 
-    # Tulis ke sheet dalam batch (hindari timeout untuk data besar)
+    # Tulis ke sheet dalam batch — satu append_rows per batch, dengan retry 429
     BATCH = 50
     for i in range(0, len(new_rows), BATCH):
         chunk = new_rows[i:i + BATCH]
-        for row in chunk:
-            ws.append_row(row, value_input_option="RAW")
+        for attempt in range(4):
+            try:
+                ws.append_rows(chunk, value_input_option="RAW")
+                break
+            except gspread.exceptions.APIError as e:
+                code = getattr(getattr(e, "response", None), "status_code", 0)
+                if code == 429 and attempt < 3:
+                    jeda = [15, 30, 60][attempt]
+                    print(f"  [429] Quota — tunggu {jeda}s (attempt {attempt+1}/3)...")
+                    time.sleep(jeda)
+                else:
+                    raise
         print(f"  Ditulis {min(i + BATCH, len(new_rows))}/{len(new_rows)} baris...")
-        time.sleep(0.5)
+        time.sleep(2)
 
     apply_formatting(ss, ws)
 
