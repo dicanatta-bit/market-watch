@@ -675,7 +675,7 @@ tr:hover td{filter:brightness(.97)}
 </div>
 
 <div class="ftr">
-  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; 18 Mei 2026
+  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; Last Update: 18 Mei 2026
 </div>
 
 <!-- Modal -->
@@ -865,8 +865,10 @@ tr:hover td{filter:brightness(.97)}
     /* --- Section 2: Sumber Data --- */
     if (d.sumber && d.sumber.length) {
       html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div>';
+      var ttip = 'Tinggi = sumber resmi pemerintah/lembaga internasional&#10;Sedang = sumber industri/asosiasi&#10;Estimasi = kalkulasi berdasarkan tren';
       html += '<div style="display:flex;justify-content:space-between;font-size:.67rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:0 0 5px;border-bottom:1px solid #f3f4f6;margin-bottom:7px">' +
-              '<span>Sumber</span><span>Kepercayaan</span></div>';
+              '<span>Sumber</span>' +
+              '<span title="' + ttip + '" style="cursor:help;border-bottom:1px dashed #d1d5db">Tingkat Kepercayaan Data &#9432;</span></div>';
       html += '<div class="m-src-list">';
       d.sumber.forEach(function(s) {
         var bc = 'src-' + s.level.toLowerCase();
