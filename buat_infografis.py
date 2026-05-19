@@ -223,7 +223,10 @@ def _get_latest_prices(ss):
             return STATIC_PRICES
 
         result = []
+        latest_date = date.min
         for (_k, _s), (_tgl, row) in latest.items():
+            if _tgl > latest_date:
+                latest_date = _tgl
             result.append({
                 "komoditas":        row[1]  if len(row) > 1  else "—",
                 "size":             row[2]  if len(row) > 2  else "—",
@@ -240,10 +243,10 @@ def _get_latest_prices(ss):
                 "catatan":          row[13] if len(row) > 13 else "",
             })
         print(f"  Deduplikasi: {len(rows) - 1} baris → {len(result)} komoditas/size unik")
-        return result
+        return result, latest_date
     except Exception as exc:
         print(f"  [WARN] Tidak bisa baca sheet: {exc} — pakai data statis")
-        return STATIC_PRICES
+        return STATIC_PRICES, date.min
 
 
 def _get_historical_series(ss):
@@ -278,6 +281,30 @@ def _get_historical_series(ss):
     except Exception as exc:
         print(f"  [WARN] Gagal baca historis: {exc}")
         return {}
+
+
+def _get_latest_alerts(ss):
+    """Baca alert dari tanggal update terakhir di Alert Log (bukan hari ini)."""
+    try:
+        ws   = ss.worksheet("Alert Log")
+        rows = ws.get_all_values()
+        if len(rows) < 2:
+            return []
+        latest_date = date.min
+        for row in rows[1:]:
+            if row and row[0]:
+                d = _parse_tanggal(row[0])
+                if d != date.min and d > latest_date:
+                    latest_date = d
+        if latest_date == date.min:
+            return []
+        latest_str = latest_date.strftime("%d/%m/%Y")
+        return [r for r in rows[1:] if r and r[0] == latest_str]
+    except gspread.exceptions.WorksheetNotFound:
+        return []
+    except Exception as exc:
+        print(f"  [WARN] Gagal baca Alert Log: {exc}")
+        return []
 
 
 # ── Google Sheet Infografis (tetap dipertahankan) ────────────────────────────
@@ -467,10 +494,11 @@ def build_requests(sid, today_alerts):
 
 # ── HTML Dashboard ────────────────────────────────────────────────────────────
 
-def generate_html(prices, alerts, out_path, hist_series=None):
+def generate_html(prices, alerts, out_path, hist_series=None, tanggal_data=None):
     data = prices if prices else STATIC_PRICES
     if hist_series is None:
         hist_series = {}
+    TGL = tanggal_data if tanggal_data else TANGGAL
 
     budidaya = [p for p in data if _is_budidaya(p["komoditas"])]
     tangkap  = [p for p in data if not _is_budidaya(p["komoditas"])]
@@ -478,6 +506,32 @@ def generate_html(prices, alerts, out_path, hist_series=None):
     # Summary stats
     naik = sum(1 for p in data if (_parse_pct_float(p.get("pct_minggu", "")) or 0) > 0)
     turun = sum(1 for p in data if (_parse_pct_float(p.get("pct_minggu", "")) or 0) < 0)
+
+    # Popup payloads untuk summary cards (SC_DATA)
+    _mk = lambda p: {"nama": p["komoditas"], "size": p["size"],
+                     "tambak": p.get("tambak","—"), "kepercayaan": p.get("kepercayaan","Estimasi")}
+    _mn = lambda p: {"nama": p["komoditas"], "size": p["size"],
+                     "tambak": p.get("tambak","—"), "pct": _pct_str(p.get("pct_minggu",""))}
+    naik_list  = sorted([_mn(p) for p in data if (_parse_pct_float(p.get("pct_minggu","")) or 0) > 0],
+                        key=lambda x: _parse_pct_float(x["pct"]) or 0, reverse=True)
+    turun_list = sorted([_mn(p) for p in data if (_parse_pct_float(p.get("pct_minggu","")) or 0) < 0],
+                        key=lambda x: _parse_pct_float(x["pct"]) or 0)
+    budi_list  = [_mk(p) for p in budidaya]
+    tang_list  = [_mk(p) for p in tangkap]
+    alert_popup = [{"jenis": a.get("jenis",""), "komoditas": a.get("komoditas",""),
+                    "pct": a.get("pct",""), "sebelum": a.get("sebelum",""),
+                    "sekarang": a.get("sekarang",""), "rekomendasi": a.get("rekomendasi","")}
+                   for a in alerts]
+    sc_data = {
+        "_tgl": TGL,
+        "total": {"budidaya": budi_list, "tangkap": tang_list},
+        "alert": alert_popup,
+        "naik":  naik_list,
+        "turun": turun_list,
+        "budi":  budi_list,
+        "tang":  tang_list,
+    }
+    sc_data_js = json.dumps(sc_data, ensure_ascii=False)
 
     # Chart bar: harga tambak semua komoditas
     chart_items = []
@@ -582,7 +636,7 @@ def generate_html(prices, alerts, out_path, hist_series=None):
                 "sumber":           _parse_sources(p.get("sumber", "")),
                 "catatan":          p.get("catatan", ""),
                 "tren":             tren_pts,
-                "tanggal":          TANGGAL,
+                "tanggal":          TGL,
             }
             modal_json = _html.escape(json.dumps(modal_data, ensure_ascii=False))
             is_b = 'b' if _is_budidaya(p['komoditas']) else 't'
@@ -642,7 +696,7 @@ def generate_html(prices, alerts, out_path, hist_series=None):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Market Watch AJN &mdash; {TANGGAL}</title>
+<title>Market Watch AJN &mdash; {TGL}</title>
 <style>
 /* ── Reset & Base ── */
 *{{box-sizing:border-box;margin:0;padding:0}}
@@ -672,6 +726,10 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;f
 .sum-card.green .sum-num{{color:#1E7E34}}
 .sum-card.red .sum-num{{color:#721C24}}
 .sum-lbl{{font-size:.78rem;color:#666;font-weight:500}}
+.sum-hint{{font-size:.6rem;color:#ccc;margin-top:4px;letter-spacing:.2px}}
+.sc-click{{cursor:pointer;transition:transform .15s,box-shadow .15s}}
+.sc-click:hover{{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.14)}}
+.sc-click:focus-visible{{outline:2px solid #C9A84C;outline-offset:2px}}
 
 /* ── Section Title ── */
 .sec-title{{font-size:.92rem;font-weight:700;color:#1B3A6B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:8px}}
@@ -811,7 +869,7 @@ tr:hover td{{filter:brightness(.97)}}
       <div class="hdr-sub">PT Agrinas Jaladri Nusantara (Persero) &mdash; Pemantauan Harga Komoditas Perikanan Strategis</div>
     </div>
     <div class="hdr-meta">
-      <div class="hdr-date">Update: {TANGGAL}</div>
+      <div class="hdr-date">Update: {TGL}</div>
     </div>
   </div>
 </div>
@@ -820,29 +878,35 @@ tr:hover td{{filter:brightness(.97)}}
 
   <!-- Summary Cards -->
   <div class="summary-row">
-    <div class="sum-card">
+    <div class="sum-card sc-click" onclick="openSumCard('total')" role="button" tabindex="0">
       <div class="sum-num">{len(data)}</div>
       <div class="sum-lbl">Total Komoditas Dipantau</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
-    <div class="sum-card gold">
+    <div class="sum-card gold sc-click" onclick="openSumCard('alert')" role="button" tabindex="0">
       <div class="sum-num">{len(alerts)}</div>
       <div class="sum-lbl">Alert Aktif</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
-    <div class="sum-card green">
+    <div class="sum-card green sc-click" onclick="openSumCard('naik')" role="button" tabindex="0">
       <div class="sum-num">{naik}</div>
       <div class="sum-lbl">Komoditas Naik Minggu Ini</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
-    <div class="sum-card red">
+    <div class="sum-card red sc-click" onclick="openSumCard('turun')" role="button" tabindex="0">
       <div class="sum-num">{turun}</div>
       <div class="sum-lbl">Komoditas Turun Minggu Ini</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
-    <div class="sum-card">
+    <div class="sum-card sc-click" onclick="openSumCard('budi')" role="button" tabindex="0">
       <div class="sum-num">{len(budidaya)}</div>
       <div class="sum-lbl">Komoditas Budidaya</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
-    <div class="sum-card">
+    <div class="sum-card sc-click" onclick="openSumCard('tang')" role="button" tabindex="0">
       <div class="sum-num">{len(tangkap)}</div>
       <div class="sum-lbl">Komoditas Tangkap</div>
+      <div class="sum-hint">&#9432; klik detail</div>
     </div>
   </div>
 
@@ -875,7 +939,7 @@ tr:hover td{{filter:brightness(.97)}}
 
   <!-- Alert Aktif -->
   <div class="card-section">
-    <div class="ch ch-red">&#9888; Alert Aktif &mdash; {TANGGAL}</div>
+    <div class="ch ch-red">&#9888; Alert Aktif &mdash; {TGL}</div>
     <table>
       <thead><tr>
         <th>Jenis</th><th>Komoditas</th><th>% Perubahan</th>
@@ -890,7 +954,7 @@ tr:hover td{{filter:brightness(.97)}}
 </div>
 
 <div class="ftr">
-  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; {TANGGAL}
+  Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; {TGL}
 </div>
 
 <!-- Modal -->
@@ -912,6 +976,7 @@ tr:hover td{{filter:brightness(.97)}}
   </div>
 </div>
 
+<script>var SC_DATA={sc_data_js};</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 (function () {{
@@ -1170,6 +1235,111 @@ tr:hover td{{filter:brightness(.97)}}
     if (e.key === 'Escape' && document.getElementById('modalOv').classList.contains('active'))
       closeModal();
   }});
+
+  /* ── Summary Card Popups ─────────────────────────────────────────────── */
+  function kepClr(k) {{
+    return k === 'Tinggi' ? 'src-tinggi' : (k === 'Sedang' ? 'src-sedang' : 'src-estimasi');
+  }}
+  function pctSpan(p) {{
+    if (!p || p === '—') return '<span style="color:#aaa">—</span>';
+    var v = parseFloat(String(p).replace(',','.').replace('%','').replace('+',''));
+    var cl = isNaN(v) ? '' : (v > 0 ? 'color:#1E7E34;font-weight:700' : (v < 0 ? 'color:#721C24;font-weight:700' : ''));
+    return '<span style="' + cl + '">' + esc(p) + '</span>';
+  }}
+
+  function buildKomodTbl(arr, catBg) {{
+    if (!arr.length) return '<p style="color:#aaa;font-size:.8rem">Tidak ada data.</p>';
+    var h = '<table class="m-tbl"><thead><tr><th>Komoditas</th><th>Size/Grade</th><th>Harga Tambak</th><th>Data</th></tr></thead><tbody>';
+    arr.forEach(function(p) {{
+      h += '<tr>' +
+           '<td style="font-weight:600;color:#1B3A6B">' + esc(p.nama) + '</td>' +
+           '<td style="color:#666">' + esc(p.size) + '</td>' +
+           '<td>Rp ' + esc(p.tambak) + '/kg</td>' +
+           '<td><span class="m-src-badge ' + kepClr(p.kepercayaan) + '">' + esc(p.kepercayaan) + '</span></td>' +
+           '</tr>';
+    }});
+    return h + '</tbody></table>';
+  }}
+
+  function buildNaikTurunTbl(arr, dir) {{
+    if (!arr.length) return '<p style="color:#aaa;font-size:.8rem;padding:12px 0">Tidak ada komoditas yang ' + (dir==='naik'?'naik':'turun') + ' minggu ini.</p>';
+    var h = '<table class="m-tbl"><thead><tr><th>#</th><th>Komoditas</th><th>Size</th><th>Harga Tambak</th><th>% Minggu Ini</th></tr></thead><tbody>';
+    arr.forEach(function(p, i) {{
+      h += '<tr>' +
+           '<td style="color:#aaa">' + (i+1) + '</td>' +
+           '<td style="font-weight:600;color:#1B3A6B">' + esc(p.nama) + '</td>' +
+           '<td style="color:#666">' + esc(p.size) + '</td>' +
+           '<td>Rp ' + esc(p.tambak) + '/kg</td>' +
+           '<td>' + pctSpan(p.pct) + '</td>' +
+           '</tr>';
+    }});
+    return h + '</tbody></table>';
+  }}
+
+  function buildAlertTbl(arr) {{
+    if (!arr.length) return '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:.85rem">&#x2714; Tidak ada alert aktif dari update terakhir.</div>';
+    var jenisBadge = function(j) {{
+      j = (j||'').toUpperCase();
+      if (j.indexOf('MERAH')>=0) return '<span class="badge badge-merah">MERAH</span>';
+      if (j.indexOf('KUNING')>=0) return '<span class="badge badge-kuning">KUNING</span>';
+      if (j.indexOf('BIRU')>=0)   return '<span class="badge badge-biru">BIRU</span>';
+      return '<span class="badge badge-grey">INFO</span>';
+    }};
+    var h = '<table class="m-tbl"><thead><tr><th>Jenis</th><th>Komoditas</th><th>%</th><th>Rekomendasi</th></tr></thead><tbody>';
+    arr.forEach(function(a) {{
+      h += '<tr>' +
+           '<td>' + jenisBadge(a.jenis) + '</td>' +
+           '<td style="font-weight:600">' + esc(a.komoditas) + '</td>' +
+           '<td>' + pctSpan(a.pct) + '</td>' +
+           '<td style="font-size:.74rem;color:#555">' + esc(a.rekomendasi) + '</td>' +
+           '</tr>';
+    }});
+    return h + '</tbody></table>';
+  }}
+
+  window.openSumCard = function(type) {{
+    var d = SC_DATA[type];
+    if (!d) return;
+    var title = '', sub = '', bodyHtml = '';
+
+    if (type === 'total') {{
+      title = 'Total Komoditas Dipantau';
+      sub   = (d.budidaya.length + d.tangkap.length) + ' komoditas';
+      bodyHtml  = '<div class="m-sec"><div class="m-sec-ttl">Budidaya (' + d.budidaya.length + ')</div>' + buildKomodTbl(d.budidaya) + '</div>';
+      bodyHtml += '<div class="m-sec"><div class="m-sec-ttl">Perikanan Tangkap (' + d.tangkap.length + ')</div>' + buildKomodTbl(d.tangkap) + '</div>';
+    }} else if (type === 'alert') {{
+      title = 'Alert Aktif';
+      sub   = d.length ? d.length + ' alert terdeteksi' : 'Tidak ada alert';
+      bodyHtml = '<div class="m-sec">' + buildAlertTbl(d) + '</div>';
+    }} else if (type === 'naik') {{
+      title = 'Komoditas Naik Minggu Ini';
+      sub   = d.length + ' komoditas ↑ vs minggu lalu';
+      bodyHtml = '<div class="m-sec">' + buildNaikTurunTbl(d, 'naik') + '</div>';
+    }} else if (type === 'turun') {{
+      title = 'Komoditas Turun Minggu Ini';
+      sub   = d.length + ' komoditas ↓ vs minggu lalu';
+      bodyHtml = '<div class="m-sec">' + buildNaikTurunTbl(d, 'turun') + '</div>';
+    }} else if (type === 'budi') {{
+      title = 'Komoditas Budidaya';
+      sub   = d.length + ' komoditas';
+      bodyHtml = '<div class="m-sec">' + buildKomodTbl(d) + '</div>';
+    }} else if (type === 'tang') {{
+      title = 'Komoditas Tangkap';
+      sub   = d.length + ' komoditas';
+      bodyHtml = '<div class="m-sec">' + buildKomodTbl(d) + '</div>';
+    }}
+
+    document.getElementById('mNama').textContent = title;
+    document.getElementById('mSize').textContent = sub;
+    var katEl = document.getElementById('mKat');
+    katEl.textContent = '';
+    katEl.className   = 'm-kat';
+    document.getElementById('mDate').textContent = 'Data per ' + (SC_DATA._tgl || '');
+    document.getElementById('mBody').innerHTML = bodyHtml;
+    if (_mc) {{ _mc.destroy(); _mc = null; }}
+    document.getElementById('modalOv').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }};
 }})();
 </script>
 </body>
@@ -1298,15 +1468,34 @@ def main():
     ss     = client.open_by_key(SPREADSHEET_ID)
     print(f"Spreadsheet '{ss.title}' dibuka.")
 
-    today_alerts = alert_engine.get_today_alerts(ss)
-    print(f"Alert aktif hari ini: {len(today_alerts)}")
-
-    prices = _get_latest_prices(ss)
+    # Harga dari update terakhir (bukan hari ini)
+    prices, last_update_date = _get_latest_prices(ss)
     print(f"Data harga: {len(prices)} komoditas/size")
+    if last_update_date != date.min:
+        tanggal_data = f"{last_update_date.day} {_BULAN[last_update_date.month]} {last_update_date.year}"
+        print(f"Tanggal update terakhir: {tanggal_data}")
+    else:
+        tanggal_data = TANGGAL
 
     hist_series = _get_historical_series(ss)
 
-    # Google Sheet Infografis
+    # Alert dari tanggal update terakhir (bukan hari ini)
+    latest_alerts_raw = _get_latest_alerts(ss)
+    print(f"Alert dari update terakhir: {len(latest_alerts_raw)}")
+    alert_dicts = [
+        {
+            "jenis":       a[2] if len(a) > 2 else "",
+            "komoditas":   a[1] if len(a) > 1 else "",
+            "pct":         a[5] if len(a) > 5 else "",
+            "sebelum":     a[3] if len(a) > 3 else "",
+            "sekarang":    a[4] if len(a) > 4 else "",
+            "rekomendasi": a[6] if len(a) > 6 else "",
+        }
+        for a in latest_alerts_raw
+    ]
+
+    # Google Sheet Infografis (tetap pakai today_alerts agar up-to-date saat dijalankan hari H)
+    today_alerts = alert_engine.get_today_alerts(ss)
     try:
         ss.del_worksheet(ss.worksheet(SHEET_NAME))
         print(f"Sheet lama '{SHEET_NAME}' dihapus.")
@@ -1321,18 +1510,7 @@ def main():
 
     # HTML Dashboard
     html_path = os.path.join(OUTPUT_DIR, f"MarketWatch_AJN_{TANGGAL_FILE}.html")
-    alert_dicts = [
-        {
-            "jenis":       a[2] if len(a) > 2 else "",
-            "komoditas":   a[1] if len(a) > 1 else "",
-            "pct":         a[5] if len(a) > 5 else "",
-            "sebelum":     a[3] if len(a) > 3 else "",
-            "sekarang":    a[4] if len(a) > 4 else "",
-            "rekomendasi": a[6] if len(a) > 6 else "",
-        }
-        for a in today_alerts
-    ]
-    generate_html(prices, alert_dicts, html_path, hist_series)
+    generate_html(prices, alert_dicts, html_path, hist_series, tanggal_data)
 
     # Salin Dashboard.html ke index.html di root (untuk GitHub Pages)
     import shutil
