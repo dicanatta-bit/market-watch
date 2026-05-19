@@ -1168,7 +1168,7 @@ tr:hover td{{filter:brightness(.97)}}
     /* --- Section 2: Sumber Data --- */
     if (d.sumber && d.sumber.length) {{
       html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div>';
-      var tipTxt = 'Tinggi = sumber resmi pemerintah / lembaga internasional\nSedang = sumber industri / asosiasi\nEstimasi = kalkulasi berdasarkan tren';
+      var tipTxt = 'Tinggi = sumber resmi pemerintah / lembaga internasional\\nSedang = sumber industri / asosiasi\\nEstimasi = kalkulasi berdasarkan tren';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.67rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:0 0 5px;border-bottom:1px solid #f3f4f6;margin-bottom:7px">' +
               '<span>Sumber</span>' +
               '<span class="tip-wrap" data-tip="' + tipTxt + '">Tingkat Kepercayaan Data &#9432;</span></div>';
