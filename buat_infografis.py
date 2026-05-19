@@ -506,8 +506,7 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;f
 .hdr-sub{{font-size:.75rem;opacity:.85;color:#cbd5e1}}
 .hdr-meta{{text-align:right}}
 .hdr-date{{font-size:.8rem;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);color:#C9A84C;padding:5px 12px;border-radius:20px;white-space:nowrap}}
-.hdr-online{{display:inline-block;margin-top:7px;font-size:.75rem;font-weight:600;color:#1B3A6B;background:#C9A84C;padding:5px 13px;border-radius:20px;text-decoration:none;white-space:nowrap;transition:background .15s,transform .15s}}
-.hdr-online:hover{{background:#b8963f;transform:translateY(-1px)}}
+
 
 /* ── Wrap ── */
 .wrap{{max-width:1200px;margin:0 auto;padding:20px 14px}}
@@ -604,7 +603,6 @@ tr:hover td{{filter:brightness(.97)}}
     </div>
     <div class="hdr-meta">
       <div class="hdr-date">Update: {TANGGAL}</div>
-      <a class="hdr-online" href="https://market-watch-ajn.netlify.app" target="_blank" rel="noopener">&#128279; Buka Dashboard Online</a>
     </div>
   </div>
 </div>
@@ -812,11 +810,7 @@ def create_dashboard_sheet(ss):
     DS_NAME    = "Dashboard"
     URL_OUTPUT = "https://github.com/dicanatta-bit/market-watch/tree/main/output"
     URL_REPO   = "https://github.com/dicanatta-bit/market-watch"
-    URL_HTML   = (
-        "https://github.com/dicanatta-bit/market-watch/blob/main/output/"
-        f"MarketWatch_AJN_{TANGGAL_FILE}.html"
-    )
-    HTML_FILE  = f"MarketWatch_AJN_{TANGGAL_FILE}.html"
+    URL_HTML   = "https://market-watch-ajn.netlify.app"
 
     NAVY     = {"red": 0.02, "green": 0.15, "blue": 0.35}
     WHITE    = {"red": 1.00, "green": 1.00, "blue": 1.00}
@@ -841,13 +835,12 @@ def create_dashboard_sheet(ss):
         ["", "", "", ""],
         ["LAPORAN & INFOGRAFIS", "", "", ""],
         ["Folder Laporan (PDF & HTML)", f'=HYPERLINK("{URL_OUTPUT}","Buka folder output di GitHub")', "", ""],
-        ["Infografis HTML Terkini", f'=HYPERLINK("{URL_HTML}","Buka infografis {TANGGAL}")', "", ""],
+        ["Infografis HTML Terkini", f'=HYPERLINK("{URL_HTML}","market-watch-ajn.netlify.app")', "", ""],
         ["", "", "", ""],
         ["INFORMASI SISTEM", "", "", ""],
         ["Repository GitHub", f'=HYPERLINK("{URL_REPO}","dicanatta-bit/market-watch")', "", ""],
         ["Jadwal Update Otomatis", "Setiap Senin, 08:00 WIB (via GitHub Actions)", "", ""],
         ["Last Update", TANGGAL, "", ""],
-        ["File HTML Aktif", HTML_FILE, "", ""],
         ["", "", "", ""],
         ["KOMODITAS YANG DIPANTAU", "", "", ""],
         ["Budidaya", "Udang Vaname (Size 50/60/70/100)  |  Udang Windu (Size 20/30)  |  Nila  |  Patin  |  Bandeng  |  Rumput Laut", "", ""],
@@ -862,24 +855,24 @@ def create_dashboard_sheet(ss):
         col_px(sid, 0, 1, 210), col_px(sid, 1, 2, 400), col_px(sid, 2, 3, 12), col_px(sid, 3, 4, 12),
         row_px(sid, 0, 1, 54), row_px(sid, 1, 2, 26), row_px(sid, 2, 3, 8),
         row_px(sid, 3, 4, 28), row_px(sid, 4, 6, 28), row_px(sid, 6, 7, 8),
-        row_px(sid, 7, 8, 28), row_px(sid, 8, 12, 26), row_px(sid, 12, 13, 8),
-        row_px(sid, 13, 14, 28), row_px(sid, 14, 16, 28), row_px(sid, 16, 17, 8),
-        row_px(sid, 17, 18, 22),
+        row_px(sid, 7, 8, 28), row_px(sid, 8, 11, 26), row_px(sid, 11, 12, 8),
+        row_px(sid, 12, 13, 28), row_px(sid, 13, 15, 28), row_px(sid, 15, 16, 8),
+        row_px(sid, 16, 17, 22),
         merge(sid, 0, 1, 0, 4), merge(sid, 1, 2, 0, 4), merge(sid, 3, 4, 0, 4),
-        merge(sid, 7, 8, 0, 4), merge(sid, 13, 14, 0, 4), merge(sid, 17, 18, 0, 4),
+        merge(sid, 7, 8, 0, 4), merge(sid, 12, 13, 0, 4), merge(sid, 16, 17, 0, 4),
         fmt(sid, 0, 1, 0, 4, bg=NAVY, fg=WHITE, bold=True, size=15, halign="CENTER", valign="MIDDLE"),
         fmt(sid, 1, 2, 0, 4, bg=BLUE_HDR, fg=WHITE, size=9, halign="CENTER", valign="MIDDLE"),
         fmt(sid, 3, 4, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
         fmt(sid, 7, 8, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
-        fmt(sid, 13, 14, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
+        fmt(sid, 12, 13, 0, 4, bg=PALE_BG, fg=NAVY, bold=True, size=10, valign="MIDDLE"),
         fmt(sid, 4, 6, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
-        fmt(sid, 8, 12, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
-        fmt(sid, 14, 16, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
+        fmt(sid, 8, 11, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
+        fmt(sid, 13, 15, 0, 1, fg=LABEL_FG, bold=True, size=9, valign="MIDDLE"),
         fmt(sid, 4, 6, 1, 2, size=9, valign="MIDDLE"),
-        fmt(sid, 8, 12, 1, 2, size=9, valign="MIDDLE"),
-        fmt(sid, 14, 16, 1, 2, size=9, valign="MIDDLE", wrap="WRAP"),
+        fmt(sid, 8, 11, 1, 2, size=9, valign="MIDDLE"),
+        fmt(sid, 13, 15, 1, 2, size=9, valign="MIDDLE", wrap="WRAP"),
         fmt(sid, 10, 11, 1, 2, bg=KREM_HL, bold=True, size=9),
-        fmt(sid, 17, 18, 0, 4, fg=GREY_FG, size=8, halign="CENTER", valign="MIDDLE"),
+        fmt(sid, 16, 17, 0, 4, fg=GREY_FG, size=8, halign="CENTER", valign="MIDDLE"),
     ]
 
     ss.batch_update({"requests": [r for r in reqs if r is not None]})
