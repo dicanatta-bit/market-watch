@@ -213,7 +213,11 @@ def _get_latest_prices(ss):
         for row in rows[1:]:
             if len(row) < 5:
                 continue
-            key  = (row[1], row[2])
+            komod = row[1].strip() if len(row) > 1 else ""
+            tambak = row[3].strip() if len(row) > 3 else ""
+            if not komod or not tambak or tambak in ("—", "-"):
+                continue
+            key  = (komod, row[2])
             tgl  = _parse_tanggal(row[0]) if len(row) > 0 else date.min
             prev = latest.get(key)
             if prev is None or tgl > prev[0]:
@@ -225,6 +229,9 @@ def _get_latest_prices(ss):
         result = []
         latest_date = date.min
         for (_k, _s), (_tgl, row) in latest.items():
+            komod = row[1].strip() if len(row) > 1 else ""
+            if not komod:
+                continue
             if _tgl > latest_date:
                 latest_date = _tgl
             result.append({
