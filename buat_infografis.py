@@ -8,6 +8,7 @@ import io
 import os
 import re
 import json
+import html as _html
 from datetime import date
 
 # Pastikan UTF-8 di Windows agar karakter sheet (→, –, dll.) tidak error
@@ -125,6 +126,66 @@ def _pct_str(s):
     return s
 
 
+# ── Sumber data mapping ───────────────────────────────────────────────────────
+
+_SOURCE_URL = {
+    "JALA Tech":            "https://jala.tech",
+    "KKP DJPB":             "https://kkp.go.id/direktorat-jenderal/djpb",
+    "KKP":                  "https://kkp.go.id",
+    "DJPB":                 "https://kkp.go.id/direktorat-jenderal/djpb",
+    "UCN":                  "https://www.undercurrentnews.com",
+    "Undercurrent News":    "https://www.undercurrentnews.com",
+    "SeafoodSource":        "https://www.seafoodsource.com",
+    "ShrimpNews":           "https://www.shrimpnews.com",
+    "FAO GLOBEFISH":        "https://www.fao.org/in-action/globefish/en/",
+    "FAO":                  "https://www.fao.org",
+    "BPS ekspor":           "https://www.bps.go.id",
+    "BPS":                  "https://www.bps.go.id",
+    "ASTUIN":               "https://astuin.or.id",
+    "PPS Bitung":           "https://ppsbitung.kkp.go.id",
+    "Pelabuhan Perikanan":  "https://kkp.go.id",
+    "IndexMundi":           "https://www.indexmundi.com",
+    "Trobos Aqua":          "https://aqua.trobos.com",
+    "Agrina":               "https://www.agrina-online.com",
+    "VASEP":                "https://vasep.com.vn",
+    "IntraFish":            "https://www.intrafish.com",
+    "Antaranews":           "https://www.antaranews.com",
+    "Kontan":               "https://www.kontan.co.id",
+    "Kemenperin":           "https://kemenperin.go.id",
+}
+
+_SOURCE_TRUST = {
+    "KKP": "Tinggi", "BPS": "Tinggi", "FAO": "Tinggi",
+    "DJPB": "Tinggi", "Kemenperin": "Tinggi",
+    "JALA Tech": "Sedang", "Undercurrent News": "Sedang", "UCN": "Sedang",
+    "IntraFish": "Sedang", "SeafoodSource": "Sedang", "ShrimpNews": "Sedang",
+    "VASEP": "Sedang", "ASTUIN": "Sedang", "PPS": "Sedang",
+    "Pelabuhan": "Sedang", "IndexMundi": "Sedang",
+    "Trobos": "Estimasi", "Agrina": "Estimasi", "Kontan": "Estimasi",
+    "Antaranews": "Estimasi", "Asosiasi": "Estimasi",
+    "Pasar Ikan": "Estimasi", "FishInfo": "Estimasi", "ISWA": "Estimasi",
+}
+
+
+def _parse_sources(sumber_str):
+    if not sumber_str or str(sumber_str).strip() in ("", "—", "-"):
+        return [{"nama": "Estimasi internal", "url": "", "level": "Estimasi"}]
+    parts = [s.strip() for s in str(sumber_str).split(";") if s.strip()]
+    result = []
+    for part in parts:
+        url, level = "", "Sedang"
+        for key, u in _SOURCE_URL.items():
+            if key.lower() in part.lower():
+                url = u
+                break
+        for key, lv in _SOURCE_TRUST.items():
+            if key.lower() in part.lower():
+                level = lv
+                break
+        result.append({"nama": part, "url": url, "level": level})
+    return result
+
+
 # ── Google Sheet data ─────────────────────────────────────────────────────────
 
 def _parse_tanggal(s):
@@ -164,19 +225,59 @@ def _get_latest_prices(ss):
         result = []
         for (_k, _s), (_tgl, row) in latest.items():
             result.append({
-                "komoditas":   row[1]  if len(row) > 1  else "—",
-                "size":        row[2]  if len(row) > 2  else "—",
-                "tambak":      row[3]  if len(row) > 3  else "—",
-                "ekspor":      row[4]  if len(row) > 4  else "—",
-                "pct_minggu":  row[9]  if len(row) > 9  else "",
-                "pct_3bulan":  row[10] if len(row) > 10 else "",
-                "kepercayaan": row[12] if len(row) > 12 else "Estimasi",
+                "komoditas":        row[1]  if len(row) > 1  else "—",
+                "size":             row[2]  if len(row) > 2  else "—",
+                "tambak":           row[3]  if len(row) > 3  else "—",
+                "ekspor":           row[4]  if len(row) > 4  else "—",
+                "intl":             row[5]  if len(row) > 5  else "—",
+                "harga_minggu_lalu": row[6] if len(row) > 6  else "—",
+                "harga_1bulan_lalu": row[7] if len(row) > 7  else "—",
+                "harga_3bulan_lalu": row[8] if len(row) > 8  else "—",
+                "pct_minggu":       row[9]  if len(row) > 9  else "",
+                "pct_3bulan":       row[10] if len(row) > 10 else "",
+                "sumber":           row[11] if len(row) > 11 else "",
+                "kepercayaan":      row[12] if len(row) > 12 else "Estimasi",
+                "catatan":          row[13] if len(row) > 13 else "",
             })
         print(f"  Deduplikasi: {len(rows) - 1} baris → {len(result)} komoditas/size unik")
         return result
     except Exception as exc:
         print(f"  [WARN] Tidak bisa baca sheet: {exc} — pakai data statis")
         return STATIC_PRICES
+
+
+def _get_historical_series(ss):
+    """Baca semua baris historis; return {(komoditas,size): [{x,y},...]} maks 12 titik."""
+    _BULAN_S = ["","Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"]
+    try:
+        from collections import defaultdict
+        ws   = ss.worksheet("Harga Komoditas")
+        rows = ws.get_all_values()
+        raw  = defaultdict(list)
+        for row in rows[1:]:
+            if len(row) < 4:
+                continue
+            komod  = row[1].strip() if len(row) > 1 else ""
+            size   = row[2].strip() if len(row) > 2 else ""
+            tambak = row[3].strip() if len(row) > 3 else ""
+            tgl    = _parse_tanggal(row[0]) if row else date.min
+            mid    = _parse_mid(tambak)
+            if not komod or mid is None or tgl == date.min:
+                continue
+            raw[(komod, size)].append((tgl, int(mid)))
+        result = {}
+        for key, pts in raw.items():
+            pts.sort(key=lambda x: x[0])
+            pts = pts[-12:]
+            result[key] = [
+                {"x": f"{p[0].day} {_BULAN_S[p[0].month]} '{str(p[0].year)[2:]}", "y": p[1]}
+                for p in pts
+            ]
+        print(f"  Historis: {len(result)} seri komoditas/size ditemukan")
+        return result
+    except Exception as exc:
+        print(f"  [WARN] Gagal baca historis: {exc}")
+        return {}
 
 
 # ── Google Sheet Infografis (tetap dipertahankan) ────────────────────────────
@@ -366,8 +467,10 @@ def build_requests(sid, today_alerts):
 
 # ── HTML Dashboard ────────────────────────────────────────────────────────────
 
-def generate_html(prices, alerts, out_path):
+def generate_html(prices, alerts, out_path, hist_series=None):
     data = prices if prices else STATIC_PRICES
+    if hist_series is None:
+        hist_series = {}
 
     budidaya = [p for p in data if _is_budidaya(p["komoditas"])]
     tangkap  = [p for p in data if not _is_budidaya(p["komoditas"])]
@@ -438,8 +541,54 @@ def generate_html(prices, alerts, out_path):
             cat_badge = "cat-b" if _is_budidaya(p["komoditas"]) else "cat-t"
             kep       = p.get("kepercayaan", "Estimasi")
             kep_cls   = f"kep-{kep.lower()}"
+
+            # Hitung % vs 1 bulan
+            mid_now = _parse_mid(p.get("tambak", ""))
+            mid_bl  = _parse_mid(p.get("harga_1bulan_lalu", ""))
+            if mid_now and mid_bl and mid_bl != 0:
+                v = (mid_now - mid_bl) / mid_bl * 100
+                pct_1bulan_s = f"+{v:.1f}%" if v > 0 else f"{v:.1f}%"
+            else:
+                pct_1bulan_s = "—"
+
+            # Tren historis (fallback 3-titik jika tak ada data)
+            tren_pts = hist_series.get((p["komoditas"], p["size"]), [])
+            if len(tren_pts) < 2 and mid_now:
+                pw = _parse_pct_float(p.get("pct_minggu", "")) or 0
+                p3 = _parse_pct_float(p.get("pct_3bulan", "")) or 0
+                m3 = round(mid_now / (1 + p3 / 100)) if p3 else mid_now
+                mw = round(mid_now / (1 + pw / 100)) if pw else mid_now
+                tren_pts = [
+                    {"x": "3 Bln Lalu", "y": int(m3)},
+                    {"x": "Minggu Lalu", "y": int(mw)},
+                    {"x": "Sekarang",    "y": int(mid_now)},
+                ]
+
+            # Modal JSON payload
+            modal_data = {
+                "nama":             p["komoditas"],
+                "size":             p["size"],
+                "kategori":         cat_label,
+                "tambak":           p.get("tambak", "—"),
+                "ekspor":           p.get("ekspor", "—"),
+                "intl":             p.get("intl", "—"),
+                "minggu_lalu":      p.get("harga_minggu_lalu", "—"),
+                "bulan_lalu":       p.get("harga_1bulan_lalu", "—"),
+                "tiga_bulan_lalu":  p.get("harga_3bulan_lalu", "—"),
+                "pct_minggu":       pct_w_s,
+                "pct_1bulan":       pct_1bulan_s,
+                "pct_3bulan":       pct_3_s,
+                "kepercayaan":      kep,
+                "sumber":           _parse_sources(p.get("sumber", "")),
+                "catatan":          p.get("catatan", ""),
+                "tren":             tren_pts,
+                "tanggal":          TANGGAL,
+            }
+            modal_json = _html.escape(json.dumps(modal_data, ensure_ascii=False))
+            is_b = 'b' if _is_budidaya(p['komoditas']) else 't'
+
             cards.append(f"""
-      <div class="komod-card {cat_class}" data-cat="{'b' if _is_budidaya(p['komoditas']) else 't'}">
+      <div class="komod-card {cat_class}" data-cat="{is_b}" data-modal="{modal_json}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge {cat_badge}">{cat_label}</span>
           <span class="trend-icon {trend_cls}">{trend}</span>
@@ -453,6 +602,7 @@ def generate_html(prices, alerts, out_path):
           <span class="pct-badge {bcls_3}" title="% vs 3 Bulan Lalu">3M: {pct_3_s}</span>
           <span class="kep-badge {kep_cls}">{kep}</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>""")
         return "\n".join(cards)
 
@@ -538,10 +688,12 @@ body{{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;f
 @media(max-width:900px){{.komod-grid{{grid-template-columns:repeat(2,1fr)}}}}
 @media(max-width:580px){{.komod-grid{{grid-template-columns:1fr}}}}
 
-.komod-card{{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.09);border-top:3px solid #1B3A6B;display:flex;flex-direction:column;gap:5px;transition:transform .15s,box-shadow .15s}}
-.komod-card:hover{{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.13)}}
+.komod-card{{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.09);border-top:3px solid #1B3A6B;display:flex;flex-direction:column;gap:5px;transition:transform .18s,box-shadow .18s;cursor:pointer}}
+.komod-card:hover{{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.16)}}
+.komod-card:focus-visible{{outline:2px solid #C9A84C;outline-offset:2px}}
 .komod-card[data-cat="t"]{{border-top-color:#145A30}}
 .komod-card.hidden{{display:none}}
+.kcard-hint{{font-size:.6rem;color:#bbb;text-align:right;margin-top:auto;padding-top:6px;letter-spacing:.3px}}
 
 .kcard-top{{display:flex;justify-content:space-between;align-items:center}}
 .cat-badge{{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px}}
@@ -590,6 +742,63 @@ tr:hover td{{filter:brightness(.97)}}
 
 /* ── Footer ── */
 .ftr{{text-align:center;font-size:.72rem;color:#aaa;padding:16px 0 28px}}
+
+/* ── Modal ── */
+.modal-ov{{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:9000;align-items:center;justify-content:center;padding:16px}}
+.modal-ov.active{{display:flex;animation:mFade .18s ease}}
+@keyframes mFade{{from{{opacity:0}}to{{opacity:1}}}}
+.modal-card{{background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:mSlide .2s ease;display:flex;flex-direction:column}}
+@keyframes mSlide{{from{{transform:translateY(18px);opacity:0}}to{{transform:none;opacity:1}}}}
+
+.m-hdr{{background:#1B3A6B;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}}
+.m-hdr-left{{display:flex;flex-direction:column;gap:4px}}
+.m-nama{{font-size:1.05rem;font-weight:800;line-height:1.25}}
+.m-size{{font-size:.78rem;opacity:.75}}
+.m-kat{{display:inline-block;font-size:.63rem;font-weight:700;padding:2px 9px;border-radius:10px;margin-top:4px;width:fit-content}}
+.m-kat.cat-b{{background:#dbeafe;color:#1e3a8a}}
+.m-kat.cat-t{{background:#dcfce7;color:#14532d}}
+.m-close{{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:1rem;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;line-height:1}}
+.m-close:hover{{background:rgba(255,255,255,.32)}}
+
+.m-body{{padding:18px 20px;overflow-y:auto;flex:1}}
+.m-sec{{margin-bottom:18px}}
+.m-sec-ttl{{font-size:.72rem;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin-bottom:11px}}
+
+.m-harga-big{{font-size:1.9rem;font-weight:800;color:#1a1a1a;line-height:1}}
+.m-harga-big span{{font-size:.78rem;font-weight:400;color:#888}}
+.m-harga-sub{{display:flex;gap:18px;margin-top:8px;margin-bottom:12px;flex-wrap:wrap}}
+.m-harga-sub-item{{font-size:.79rem;color:#555}}
+.m-harga-sub-item strong{{color:#1B3A6B}}
+
+.m-tbl{{width:100%;border-collapse:collapse;font-size:.79rem}}
+.m-tbl th{{background:#f8fafc;padding:6px 10px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #e5e7eb}}
+.m-tbl td{{padding:6px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}}
+.m-tbl .pu{{color:#1E7E34;font-weight:700}}.m-tbl .pd{{color:#721C24;font-weight:700}}
+
+.m-src-list{{display:flex;flex-direction:column;gap:7px}}
+.m-src-item{{display:flex;align-items:center;gap:10px}}
+.m-src-link{{color:#1B3A6B;text-decoration:none;font-size:.79rem;font-weight:500;flex:1;line-height:1.3}}
+.m-src-link:hover{{text-decoration:underline}}
+.m-src-lbl{{font-size:.79rem;color:#555;flex:1;line-height:1.3}}
+.m-src-badge{{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0}}
+.src-tinggi{{background:#d1fae5;color:#065f46}}
+.src-sedang{{background:#fef3c7;color:#92400e}}
+.src-estimasi{{background:#f3f4f6;color:#6b7280}}
+
+.m-chart-wrap{{height:175px;position:relative;margin-bottom:8px}}
+.m-chart-meta{{display:flex;justify-content:space-between;font-size:.72rem;color:#666;gap:8px}}
+.m-catatan{{font-size:.74rem;color:#666;background:#f8fafc;border-radius:8px;padding:9px 12px;margin-top:10px;font-style:italic;line-height:1.5}}
+
+.m-ftr{{border-top:1px solid #e5e7eb;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}}
+.m-ftr-date{{font-size:.72rem;color:#999}}
+.m-ftr-btn{{background:#1B3A6B;color:#fff;border:none;border-radius:8px;padding:7px 22px;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .15s}}
+.m-ftr-btn:hover{{background:#0d2244}}
+
+@media(max-width:480px){{
+  .modal-ov{{align-items:flex-end;padding:0}}
+  .modal-card{{max-height:92vh;border-radius:12px 12px 0 0;max-width:100%}}
+  .m-harga-big{{font-size:1.55rem}}
+}}
 </style>
 </head>
 <body>
@@ -682,6 +891,25 @@ tr:hover td{{filter:brightness(.97)}}
 
 <div class="ftr">
   Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; {TANGGAL}
+</div>
+
+<!-- Modal -->
+<div class="modal-ov" id="modalOv">
+  <div class="modal-card" id="modalCard">
+    <div class="m-hdr">
+      <div class="m-hdr-left">
+        <div class="m-nama" id="mNama"></div>
+        <div class="m-size" id="mSize"></div>
+        <span class="m-kat" id="mKat"></span>
+      </div>
+      <button class="m-close" id="mCloseBtn" aria-label="Tutup">&#x2715;</button>
+    </div>
+    <div class="m-body" id="mBody"></div>
+    <div class="m-ftr">
+      <span class="m-ftr-date" id="mDate"></span>
+      <button class="m-ftr-btn" id="mFtrBtn">Tutup</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -786,6 +1014,162 @@ tr:hover td{{filter:brightness(.97)}}
     }}
   }} catch(e) {{ console.error('Line chart error:', e); }}
 
+}})();
+
+/* ── Modal ─────────────────────────────────────────────────────────────────── */
+(function() {{
+  'use strict';
+  var _mc = null;
+
+  function esc(s) {{
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }}
+  function fmtRp(n) {{
+    return n ? n.toLocaleString('id-ID') : '—';
+  }}
+  function pctClass(s) {{
+    if (!s || s === '—') return '';
+    var v = parseFloat(String(s).replace(',','.').replace('%','').replace('+',''));
+    return isNaN(v) ? '' : (v > 0 ? 'pu' : (v < 0 ? 'pd' : ''));
+  }}
+
+  window.openModal = function(card) {{
+    var d;
+    try {{ d = JSON.parse(card.dataset.modal); }} catch(e) {{ return; }}
+
+    document.getElementById('mNama').textContent = d.nama;
+    document.getElementById('mSize').textContent = d.size;
+    var katEl = document.getElementById('mKat');
+    katEl.textContent = d.kategori;
+    katEl.className = 'm-kat ' + (d.kategori === 'Budidaya' ? 'cat-b' : 'cat-t');
+    document.getElementById('mDate').textContent = 'Data per ' + d.tanggal;
+
+    var catClr = d.kategori === 'Budidaya' ? '#1B3A6B' : '#145A30';
+    var html = '';
+
+    /* --- Section 1: Harga --- */
+    html += '<div class="m-sec">';
+    html += '<div class="m-sec-ttl">Harga Terkini</div>';
+    html += '<div class="m-harga-big">Rp ' + esc(d.tambak) + '<span>/kg</span></div>';
+    html += '<div class="m-harga-sub">';
+    if (d.ekspor && d.ekspor !== '—')
+      html += '<div class="m-harga-sub-item"><strong>Ekspor:</strong> USD ' + esc(d.ekspor) + '/kg</div>';
+    if (d.intl && d.intl !== '—')
+      html += '<div class="m-harga-sub-item"><strong>Internasional:</strong> USD ' + esc(d.intl) + '/kg</div>';
+    html += '</div>';
+
+    /* Tabel perbandingan */
+    var tblRows = [
+      ['Minggu Lalu',   d.minggu_lalu,     d.pct_minggu],
+      ['1 Bulan Lalu',  d.bulan_lalu,      d.pct_1bulan],
+      ['3 Bulan Lalu',  d.tiga_bulan_lalu, d.pct_3bulan],
+    ];
+    html += '<table class="m-tbl"><thead><tr><th>Periode</th><th>Harga Tambak</th><th>Perubahan</th></tr></thead><tbody>';
+    tblRows.forEach(function(r) {{
+      var harga = (r[1] && r[1] !== '—') ? 'Rp ' + esc(r[1]) + '/kg' : '—';
+      var pc    = r[2] || '—';
+      html += '<tr><td>' + r[0] + '</td><td>' + harga + '</td>' +
+              '<td class="' + pctClass(pc) + '">' + esc(pc) + '</td></tr>';
+    }});
+    html += '</tbody></table>';
+    if (d.catatan)
+      html += '<div class="m-catatan">' + esc(d.catatan) + '</div>';
+    html += '</div>';
+
+    /* --- Section 2: Sumber Data --- */
+    if (d.sumber && d.sumber.length) {{
+      html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div><div class="m-src-list">';
+      d.sumber.forEach(function(s) {{
+        var bc = 'src-' + s.level.toLowerCase();
+        var nm = s.url && s.url !== '#'
+          ? '<a class="m-src-link" href="' + s.url + '" target="_blank" rel="noopener">' + esc(s.nama) + ' &#8599;</a>'
+          : '<span class="m-src-lbl">' + esc(s.nama) + '</span>';
+        html += '<div class="m-src-item">' + nm +
+                '<span class="m-src-badge ' + bc + '">' + s.level + '</span></div>';
+      }});
+      html += '</div></div>';
+    }}
+
+    /* --- Section 3: Tren --- */
+    html += '<div class="m-sec"><div class="m-sec-ttl">Tren Harga Tambak (Rp/kg)</div>';
+    html += '<div class="m-chart-wrap"><canvas id="mChartCvs"></canvas></div>';
+    if (d.tren && d.tren.length >= 2) {{
+      var vals = d.tren.map(function(p) {{ return p.y; }});
+      var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+      html += '<div class="m-chart-meta">' +
+              '<span>&#9650; Tertinggi: Rp ' + fmtRp(mx) + '</span>' +
+              '<span>&#9660; Terendah: Rp ' + fmtRp(mn) + '</span>' +
+              '</div>';
+    }}
+    html += '</div>';
+
+    document.getElementById('mBody').innerHTML = html;
+    document.getElementById('modalOv').classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    /* Render mini chart */
+    if (d.tren && d.tren.length >= 2) {{
+      setTimeout(function() {{
+        var cvs = document.getElementById('mChartCvs');
+        if (!cvs) return;
+        if (_mc) {{ _mc.destroy(); _mc = null; }}
+        _mc = new Chart(cvs, {{
+          type: 'line',
+          data: {{
+            labels: d.tren.map(function(p) {{ return p.x; }}),
+            datasets: [{{
+              label: 'Harga Tambak',
+              data: d.tren.map(function(p) {{ return p.y; }}),
+              borderColor: catClr,
+              backgroundColor: catClr + '28',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              borderWidth: 2,
+            }}]
+          }},
+          options: {{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {{
+              legend: {{ display: false }},
+              tooltip: {{
+                callbacks: {{
+                  label: function(ctx) {{
+                    return 'Rp ' + ctx.parsed.y.toLocaleString('id-ID') + '/kg';
+                  }}
+                }}
+              }}
+            }},
+            scales: {{
+              y: {{
+                ticks: {{ callback: function(v) {{ return 'Rp '+(v/1000).toFixed(0)+'rb'; }}, font:{{size:9}} }},
+                grid: {{ color: 'rgba(0,0,0,.05)' }}
+              }},
+              x: {{ ticks: {{ font:{{size:9}}, maxRotation:40 }} }}
+            }}
+          }}
+        }});
+      }}, 30);
+    }}
+  }};
+
+  function closeModal() {{
+    document.getElementById('modalOv').classList.remove('active');
+    document.body.style.overflow = '';
+    if (_mc) {{ _mc.destroy(); _mc = null; }}
+  }}
+
+  document.getElementById('mCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('mFtrBtn').addEventListener('click', closeModal);
+  document.getElementById('modalOv').addEventListener('click', function(e) {{
+    if (e.target === this) closeModal();
+  }});
+  document.addEventListener('keydown', function(e) {{
+    if (e.key === 'Escape' && document.getElementById('modalOv').classList.contains('active'))
+      closeModal();
+  }});
 }})();
 </script>
 </body>
@@ -920,6 +1304,8 @@ def main():
     prices = _get_latest_prices(ss)
     print(f"Data harga: {len(prices)} komoditas/size")
 
+    hist_series = _get_historical_series(ss)
+
     # Google Sheet Infografis
     try:
         ss.del_worksheet(ss.worksheet(SHEET_NAME))
@@ -946,7 +1332,7 @@ def main():
         }
         for a in today_alerts
     ]
-    generate_html(prices, alert_dicts, html_path)
+    generate_html(prices, alert_dicts, html_path, hist_series)
 
     # Salin Dashboard.html ke index.html di root (untuk GitHub Pages)
     import shutil

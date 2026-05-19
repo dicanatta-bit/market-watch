@@ -49,10 +49,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;fo
 @media(max-width:900px){.komod-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:580px){.komod-grid{grid-template-columns:1fr}}
 
-.komod-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.09);border-top:3px solid #1B3A6B;display:flex;flex-direction:column;gap:5px;transition:transform .15s,box-shadow .15s}
-.komod-card:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.13)}
+.komod-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.09);border-top:3px solid #1B3A6B;display:flex;flex-direction:column;gap:5px;transition:transform .18s,box-shadow .18s;cursor:pointer}
+.komod-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.komod-card:focus-visible{outline:2px solid #C9A84C;outline-offset:2px}
 .komod-card[data-cat="t"]{border-top-color:#145A30}
 .komod-card.hidden{display:none}
+.kcard-hint{font-size:.6rem;color:#bbb;text-align:right;margin-top:auto;padding-top:6px;letter-spacing:.3px}
 
 .kcard-top{display:flex;justify-content:space-between;align-items:center}
 .cat-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px}
@@ -101,6 +103,63 @@ tr:hover td{filter:brightness(.97)}
 
 /* ── Footer ── */
 .ftr{text-align:center;font-size:.72rem;color:#aaa;padding:16px 0 28px}
+
+/* ── Modal ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:9000;align-items:center;justify-content:center;padding:16px}
+.modal-ov.active{display:flex;animation:mFade .18s ease}
+@keyframes mFade{from{opacity:0}to{opacity:1}}
+.modal-card{background:#fff;border-radius:14px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:mSlide .2s ease;display:flex;flex-direction:column}
+@keyframes mSlide{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+
+.m-hdr{background:#1B3A6B;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-shrink:0}
+.m-hdr-left{display:flex;flex-direction:column;gap:4px}
+.m-nama{font-size:1.05rem;font-weight:800;line-height:1.25}
+.m-size{font-size:.78rem;opacity:.75}
+.m-kat{display:inline-block;font-size:.63rem;font-weight:700;padding:2px 9px;border-radius:10px;margin-top:4px;width:fit-content}
+.m-kat.cat-b{background:#dbeafe;color:#1e3a8a}
+.m-kat.cat-t{background:#dcfce7;color:#14532d}
+.m-close{background:rgba(255,255,255,.18);border:none;color:#fff;font-size:1rem;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;line-height:1}
+.m-close:hover{background:rgba(255,255,255,.32)}
+
+.m-body{padding:18px 20px;overflow-y:auto;flex:1}
+.m-sec{margin-bottom:18px}
+.m-sec-ttl{font-size:.72rem;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin-bottom:11px}
+
+.m-harga-big{font-size:1.9rem;font-weight:800;color:#1a1a1a;line-height:1}
+.m-harga-big span{font-size:.78rem;font-weight:400;color:#888}
+.m-harga-sub{display:flex;gap:18px;margin-top:8px;margin-bottom:12px;flex-wrap:wrap}
+.m-harga-sub-item{font-size:.79rem;color:#555}
+.m-harga-sub-item strong{color:#1B3A6B}
+
+.m-tbl{width:100%;border-collapse:collapse;font-size:.79rem}
+.m-tbl th{background:#f8fafc;padding:6px 10px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #e5e7eb}
+.m-tbl td{padding:6px 10px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.m-tbl .pu{color:#1E7E34;font-weight:700}.m-tbl .pd{color:#721C24;font-weight:700}
+
+.m-src-list{display:flex;flex-direction:column;gap:7px}
+.m-src-item{display:flex;align-items:center;gap:10px}
+.m-src-link{color:#1B3A6B;text-decoration:none;font-size:.79rem;font-weight:500;flex:1;line-height:1.3}
+.m-src-link:hover{text-decoration:underline}
+.m-src-lbl{font-size:.79rem;color:#555;flex:1;line-height:1.3}
+.m-src-badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.src-tinggi{background:#d1fae5;color:#065f46}
+.src-sedang{background:#fef3c7;color:#92400e}
+.src-estimasi{background:#f3f4f6;color:#6b7280}
+
+.m-chart-wrap{height:175px;position:relative;margin-bottom:8px}
+.m-chart-meta{display:flex;justify-content:space-between;font-size:.72rem;color:#666;gap:8px}
+.m-catatan{font-size:.74rem;color:#666;background:#f8fafc;border-radius:8px;padding:9px 12px;margin-top:10px;font-style:italic;line-height:1.5}
+
+.m-ftr{border-top:1px solid #e5e7eb;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.m-ftr-date{font-size:.72rem;color:#999}
+.m-ftr-btn{background:#1B3A6B;color:#fff;border:none;border-radius:8px;padding:7px 22px;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .15s}
+.m-ftr-btn:hover{background:#0d2244}
+
+@media(max-width:480px){
+  .modal-ov{align-items:flex-end;padding:0}
+  .modal-card{max-height:92vh;border-radius:12px 12px 0 0;max-width:100%}
+  .m-harga-big{font-size:1.55rem}
+}
 </style>
 </head>
 <body>
@@ -157,7 +216,7 @@ tr:hover td{filter:brightness(.97)}
   </div>
   <div class="komod-grid" id="komodGrid">
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Vaname (Litopenaeus vannamei)&quot;, &quot;size&quot;: &quot;Size 50&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;60.000 – 65.000&quot;, &quot;ekspor&quot;: &quot;3,55 – 3,64&quot;, &quot;intl&quot;: &quot;3,55 – 3,64&quot;, &quot;minggu_lalu&quot;: &quot;58.000 – 68.000&quot;, &quot;bulan_lalu&quot;: &quot;58.000 – 68.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;56.000 – 66.000&quot;, &quot;pct_minggu&quot;: &quot;-0.79%&quot;, &quot;pct_1bulan&quot;: &quot;-0.8%&quot;, &quot;pct_3bulan&quot;: &quot;+2.46%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;UCN Global Shrimp Index&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;SeafoodSource&quot;, &quot;url&quot;: &quot;https://www.seafoodsource.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;ShrimpNews Asia&quot;, &quot;url&quot;: &quot;https://www.shrimpnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Harga tambak Jawa Tengah. Naik 1-3% vs bulan lalu.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 62500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 62500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -171,9 +230,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.46%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Vaname (Litopenaeus vannamei)&quot;, &quot;size&quot;: &quot;Size 60&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;55.000 – 60.000&quot;, &quot;ekspor&quot;: &quot;3,55&quot;, &quot;intl&quot;: &quot;3,55&quot;, &quot;minggu_lalu&quot;: &quot;53.000 – 62.000&quot;, &quot;bulan_lalu&quot;: &quot;53.000 – 62.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;52.000 – 61.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+1.77%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;UCN Global Shrimp Index&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;ShrimpNews Asia&quot;, &quot;url&quot;: &quot;https://www.shrimpnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Global turun 5,6% YoY (Mar 2026). Indonesia relatif stabil.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 57500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 57500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -187,9 +247,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.77%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Vaname (Litopenaeus vannamei)&quot;, &quot;size&quot;: &quot;Size 70&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;50.000 – 55.000&quot;, &quot;ekspor&quot;: &quot;—&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;48.000 – 57.000&quot;, &quot;bulan_lalu&quot;: &quot;48.000 – 57.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;47.000 – 56.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+1.94%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;ShrimpNews Asia&quot;, &quot;url&quot;: &quot;https://www.shrimpnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}], &quot;catatan&quot;: &quot;Stabil. Produksi diperkirakan meningkat Apr-Mei.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 52500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 52500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -203,9 +264,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.94%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Vaname (Litopenaeus vannamei)&quot;, &quot;size&quot;: &quot;Size 100&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;40.000 – 45.000&quot;, &quot;ekspor&quot;: &quot;—&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;39.000 – 46.000&quot;, &quot;bulan_lalu&quot;: &quot;39.000 – 46.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;38.000 – 45.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.41%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Estimasi berdasarkan gradasi harga antar ukuran.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 42500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 42500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -219,9 +281,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.41%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Windu (Penaeus monodon)&quot;, &quot;size&quot;: &quot;Size 20&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;100.000 – 120.000&quot;, &quot;ekspor&quot;: &quot;8,00 – 10,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;101.000 – 119.000&quot;, &quot;bulan_lalu&quot;: &quot;101.000 – 119.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;99.000 – 116.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.33%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;SeafoodSource&quot;, &quot;url&quot;: &quot;https://www.seafoodsource.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;ShrimpNews Asia&quot;, &quot;url&quot;: &quot;https://www.shrimpnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Produksi terbatas; harga premium vs vaname.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 110000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 110000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -235,9 +298,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.33%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Udang Windu (Penaeus monodon)&quot;, &quot;size&quot;: &quot;Size 30&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;80.000 – 100.000&quot;, &quot;ekspor&quot;: &quot;6,00 – 8,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;83.000 – 97.000&quot;, &quot;bulan_lalu&quot;: &quot;83.000 – 97.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;81.000 – 95.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.27%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;JALA Tech&quot;, &quot;url&quot;: &quot;https://jala.tech&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;ShrimpNews Asia&quot;, &quot;url&quot;: &quot;https://www.shrimpnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Dominan dari Sulawesi &amp; Kalimantan.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 90000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 90000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -251,9 +315,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.27%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Nila (Oreochromis niloticus)&quot;, &quot;size&quot;: &quot;300-500 g&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;22.000 – 28.000&quot;, &quot;ekspor&quot;: &quot;3,00 – 4,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;23.000 – 27.000&quot;, &quot;bulan_lalu&quot;: &quot;23.000 – 27.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;23.000 – 27.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.00%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Trobos Aqua&quot;, &quot;url&quot;: &quot;https://aqua.trobos.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Antaranews&quot;, &quot;url&quot;: &quot;https://www.antaranews.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;Ekspor fillet ke AS &amp; Eropa.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 25000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 25000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -267,9 +332,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: +0.00%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Tuna Sirip Kuning / Yellowfin (Thunnus albacares)&quot;, &quot;size&quot;: &quot;Sashimi grade&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;60.000 – 80.000&quot;, &quot;ekspor&quot;: &quot;5,00 – 8,00&quot;, &quot;intl&quot;: &quot;6,50 – 9,00&quot;, &quot;minggu_lalu&quot;: &quot;64.000 – 76.000&quot;, &quot;bulan_lalu&quot;: &quot;64.000 – 76.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;64.000 – 75.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.72%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;ASTUIN&quot;, &quot;url&quot;: &quot;https://astuin.or.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;PPS Bitung&quot;, &quot;url&quot;: &quot;https://ppsbitung.kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;IntraFish&quot;, &quot;url&quot;: &quot;https://www.intrafish.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Ekspor utama ke Jepang dan Eropa.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 70000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 70000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -283,9 +349,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +0.72%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Tuna Sirip Kuning / Yellowfin (Thunnus albacares)&quot;, &quot;size&quot;: &quot;Loin/beku&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;30.000 – 45.000&quot;, &quot;ekspor&quot;: &quot;2,50 – 4,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;34.000 – 40.000&quot;, &quot;bulan_lalu&quot;: &quot;34.000 – 40.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;34.000 – 40.000&quot;, &quot;pct_minggu&quot;: &quot;+1.35%&quot;, &quot;pct_1bulan&quot;: &quot;+1.4%&quot;, &quot;pct_3bulan&quot;: &quot;+1.35%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;ASTUIN&quot;, &quot;url&quot;: &quot;https://astuin.or.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Grade industri untuk pengalengan dan loin beku.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 37500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 37500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-up">↑</span>
@@ -299,9 +366,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.35%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Tuna Cakalang (Katsuwonus pelamis)&quot;, &quot;size&quot;: &quot;-&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;15.000 – 25.000&quot;, &quot;ekspor&quot;: &quot;1,50 – 2,50&quot;, &quot;intl&quot;: &quot;1,80 – 2,20&quot;, &quot;minggu_lalu&quot;: &quot;18.000 – 22.000&quot;, &quot;bulan_lalu&quot;: &quot;18.000 – 22.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;18.000 – 21.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.56%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;PPS Bitung&quot;, &quot;url&quot;: &quot;https://ppsbitung.kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;ASTUIN&quot;, &quot;url&quot;: &quot;https://astuin.or.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Antaranews&quot;, &quot;url&quot;: &quot;https://www.antaranews.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;Bahan baku utama pengalengan. Harga dipengaruhi musim tangkapan.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 20000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 20000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -315,9 +383,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.56%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Kakap Merah (Lutjanus spp.)&quot;, &quot;size&quot;: &quot;-&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;50.000 – 70.000&quot;, &quot;ekspor&quot;: &quot;5,00 – 8,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;55.000 – 65.000&quot;, &quot;bulan_lalu&quot;: &quot;55.000 – 65.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;55.000 – 64.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.84%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pelabuhan Perikanan&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Permintaan ekspor ke China &amp; Singapura tinggi.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 60000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 60000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -331,9 +400,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +0.84%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Kerapu (Epinephelus spp.)&quot;, &quot;size&quot;: &quot;Hidup (&gt;500 g)&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;100.000 – 150.000&quot;, &quot;ekspor&quot;: &quot;8,00 – 12,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;115.000 – 135.000&quot;, &quot;bulan_lalu&quot;: &quot;115.000 – 135.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;112.000 – 131.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.88%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pelabuhan Perikanan&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Ekspor hidup ke China dominan.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 125000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 125000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -347,9 +417,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.88%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Kerapu (Epinephelus spp.)&quot;, &quot;size&quot;: &quot;Beku/segar&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;60.000 – 90.000&quot;, &quot;ekspor&quot;: &quot;5,00 – 7,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;69.000 – 81.000&quot;, &quot;bulan_lalu&quot;: &quot;69.000 – 81.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;67.000 – 79.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.74%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Pasar lokal dan ekspor grade beku.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 75000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 75000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -363,9 +434,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.74%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Rumput Laut (Eucheuma cottonii)&quot;, &quot;size&quot;: &quot;Kering&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;6.000 – 7.000&quot;, &quot;ekspor&quot;: &quot;0,40 – 0,50&quot;, &quot;intl&quot;: &quot;0,35 – 0,45&quot;, &quot;minggu_lalu&quot;: &quot;6.000 – 7.000&quot;, &quot;bulan_lalu&quot;: &quot;6.000 – 7.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;6.000 – 7.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.00%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Asosiasi Rumput Laut Indonesia&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;IndexMundi&quot;, &quot;url&quot;: &quot;https://www.indexmundi.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Harga kering di tingkat pembudidaya. Produksi dominan NTT, Sulawesi, Maluku. Rasio kering:basah ~1:8.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 6500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 6500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -379,9 +451,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: +0.00%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Rumput Laut (Eucheuma cottonii)&quot;, &quot;size&quot;: &quot;Basah&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;1.000 – 1.500&quot;, &quot;ekspor&quot;: &quot;—&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;1.000 – 1.000&quot;, &quot;bulan_lalu&quot;: &quot;1.000 – 1.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;1.000 – 1.000&quot;, &quot;pct_minggu&quot;: &quot;+25.00%&quot;, &quot;pct_1bulan&quot;: &quot;+25.0%&quot;, &quot;pct_3bulan&quot;: &quot;+25.00%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Asosiasi Rumput Laut Indonesia&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Trobos Aqua&quot;, &quot;url&quot;: &quot;https://aqua.trobos.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;Harga basah di tingkat pembudidaya. Dijual ke pengepul untuk dikeringkan.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 1250}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 1250}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-up">↑</span>
@@ -395,9 +468,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +25.00%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Lobster (Panulirus ornatus) / Mutiara&quot;, &quot;size&quot;: &quot;&gt;200 g&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;280.000 – 380.000&quot;, &quot;ekspor&quot;: &quot;18,00 – 22,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;299.000 – 351.000&quot;, &quot;bulan_lalu&quot;: &quot;299.000 – 351.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;290.000 – 340.000&quot;, &quot;pct_minggu&quot;: &quot;+1.54%&quot;, &quot;pct_1bulan&quot;: &quot;+1.5%&quot;, &quot;pct_3bulan&quot;: &quot;+4.76%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pelabuhan Perikanan&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;Asosiasi Lobster Indonesia&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Ekspor hidup ke Vietnam &amp; China. Harga sangat sensitif terhadap kuota ekspor KKP.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 330000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 330000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-up">↑</span>
@@ -411,9 +485,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +4.76%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Lobster (Panulirus homarus) / Pasir&quot;, &quot;size&quot;: &quot;&gt;100 g&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;150.000 – 220.000&quot;, &quot;ekspor&quot;: &quot;10,00 – 15,00&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;184.000 – 216.000&quot;, &quot;bulan_lalu&quot;: &quot;184.000 – 216.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;178.000 – 210.000&quot;, &quot;pct_minggu&quot;: &quot;-7.50%&quot;, &quot;pct_1bulan&quot;: &quot;-7.5%&quot;, &quot;pct_3bulan&quot;: &quot;-4.64%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pelabuhan Perikanan&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Ekspor hidup dan beku. Harga lebih rendah dari lobster mutiara.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 185000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 185000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-dn">↓</span>
@@ -427,9 +502,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-dn" title="% vs 3 Bulan Lalu">3M: -4.64%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Bandeng (Chanos chanos)&quot;, &quot;size&quot;: &quot;250-500 g&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;20.000 – 28.000&quot;, &quot;ekspor&quot;: &quot;1,80 – 2,50&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;22.000 – 26.000&quot;, &quot;bulan_lalu&quot;: &quot;22.000 – 26.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;22.000 – 26.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.00%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pasar Ikan Nasional&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Trobos Aqua&quot;, &quot;url&quot;: &quot;https://aqua.trobos.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Agrina&quot;, &quot;url&quot;: &quot;https://www.agrina-online.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;Harga tambak Jawa Tengah &amp; Jawa Timur. Stabil sepanjang tahun; sedikit premium menjelang Lebaran.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 24000}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 24000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -443,9 +519,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: +0.00%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;Cumi-cumi (Loligo spp.)&quot;, &quot;size&quot;: &quot;-&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;35.000 – 50.000&quot;, &quot;ekspor&quot;: &quot;3,50 – 5,00&quot;, &quot;intl&quot;: &quot;3,00 – 4,50&quot;, &quot;minggu_lalu&quot;: &quot;39.000 – 46.000&quot;, &quot;bulan_lalu&quot;: &quot;39.000 – 46.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;39.000 – 45.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+1.19%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Pelabuhan Perikanan&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;ASTUIN&quot;, &quot;url&quot;: &quot;https://astuin.or.id&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;IndexMundi&quot;, &quot;url&quot;: &quot;https://www.indexmundi.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}], &quot;catatan&quot;: &quot;Harga nelayan fluktuatif mengikuti musim tangkapan. Ekspor beku ke Eropa &amp; Asia Timur.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;15 Mei &#x27;26&quot;, &quot;y&quot;: 42500}, {&quot;x&quot;: &quot;18 Mei &#x27;26&quot;, &quot;y&quot;: 42500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -459,9 +536,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.19%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Rumput Laut ATC/SRC (E. cottonii processed)&quot;, &quot;size&quot;: &quot;ATC/SRC&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;40.000 – 70.000&quot;, &quot;ekspor&quot;: &quot;2,50 – 5,00&quot;, &quot;intl&quot;: &quot;3,00 – 5,00&quot;, &quot;minggu_lalu&quot;: &quot;51.000 – 59.000&quot;, &quot;bulan_lalu&quot;: &quot;51.000 – 59.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;49.000 – 58.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+2.80%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Kemenperin&quot;, &quot;url&quot;: &quot;https://kemenperin.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;ISWA&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor HS120991&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;IndexMundi&quot;, &quot;url&quot;: &quot;https://www.indexmundi.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}], &quot;catatan&quot;: &quot;ATC=Alkali Treated Cottonii; SRC=Semi-Refined Carrageenan. Nilai tambah 5–8x vs kering. Ekspor ke China, AS, Eropa.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;3 Bln Lalu&quot;, &quot;y&quot;: 53502}, {&quot;x&quot;: &quot;Minggu Lalu&quot;, &quot;y&quot;: 55000}, {&quot;x&quot;: &quot;Sekarang&quot;, &quot;y&quot;: 55000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -475,9 +553,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +2.80%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Patin (Pangasianodon hypophthalmus)&quot;, &quot;size&quot;: &quot;Utuh/Hidup&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;15.000 – 22.000&quot;, &quot;ekspor&quot;: &quot;—&quot;, &quot;intl&quot;: &quot;—&quot;, &quot;minggu_lalu&quot;: &quot;17.000 – 20.000&quot;, &quot;bulan_lalu&quot;: &quot;17.000 – 20.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;17.000 – 20.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+0.00%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP DJPB&quot;, &quot;url&quot;: &quot;https://kkp.go.id/direktorat-jenderal/djpb&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS produksi budidaya&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;Trobos Aqua&quot;, &quot;url&quot;: &quot;https://aqua.trobos.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Agrina&quot;, &quot;url&quot;: &quot;https://www.agrina-online.com&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;Kontan perikanan&quot;, &quot;url&quot;: &quot;https://www.kontan.co.id&quot;, &quot;level&quot;: &quot;Estimasi&quot;}, {&quot;nama&quot;: &quot;FishInfo Jatim&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;Sentra budidaya: Jawa Barat (Subang, Cianjur), Kalimantan Selatan. Harga stabil; dipengaruhi harga pakan.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;3 Bln Lalu&quot;, &quot;y&quot;: 18500}, {&quot;x&quot;: &quot;Minggu Lalu&quot;, &quot;y&quot;: 18500}, {&quot;x&quot;: &quot;Sekarang&quot;, &quot;y&quot;: 18500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -491,9 +570,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: +0.00%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Patin (Pangasianodon hypophthalmus)&quot;, &quot;size&quot;: &quot;Fillet Segar&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;28.000 – 38.000&quot;, &quot;ekspor&quot;: &quot;2,20 – 2,80&quot;, &quot;intl&quot;: &quot;2,50 – 3,00&quot;, &quot;minggu_lalu&quot;: &quot;30.000 – 36.000&quot;, &quot;bulan_lalu&quot;: &quot;30.000 – 36.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;30.000 – 35.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+1.54%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;VASEP&quot;, &quot;url&quot;: &quot;https://vasep.com.vn&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;SeafoodSource&quot;, &quot;url&quot;: &quot;https://www.seafoodsource.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Pasar ekspor: China, AS, ASEAN. Harga dipengaruhi benchmark Vietnam. Konversi fillet ~40% dari bobot utuh.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;3 Bln Lalu&quot;, &quot;y&quot;: 32500}, {&quot;x&quot;: &quot;Minggu Lalu&quot;, &quot;y&quot;: 33000}, {&quot;x&quot;: &quot;Sekarang&quot;, &quot;y&quot;: 33000}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -507,9 +587,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.54%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="b">
+      <div class="komod-card " data-cat="b" data-modal="{&quot;nama&quot;: &quot;Patin (Pangasianodon hypophthalmus)&quot;, &quot;size&quot;: &quot;Fillet Beku Ekspor&quot;, &quot;kategori&quot;: &quot;Budidaya&quot;, &quot;tambak&quot;: &quot;32.000 – 45.000&quot;, &quot;ekspor&quot;: &quot;2,80 – 3,50&quot;, &quot;intl&quot;: &quot;2,80 – 3,50&quot;, &quot;minggu_lalu&quot;: &quot;35.000 – 42.000&quot;, &quot;bulan_lalu&quot;: &quot;35.000 – 42.000&quot;, &quot;tiga_bulan_lalu&quot;: &quot;35.000 – 41.000&quot;, &quot;pct_minggu&quot;: &quot;+0.00%&quot;, &quot;pct_1bulan&quot;: &quot;0.0%&quot;, &quot;pct_3bulan&quot;: &quot;+1.32%&quot;, &quot;kepercayaan&quot;: &quot;Estimasi&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;KKP&quot;, &quot;url&quot;: &quot;https://kkp.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;BPS ekspor HS0304&quot;, &quot;url&quot;: &quot;https://www.bps.go.id&quot;, &quot;level&quot;: &quot;Tinggi&quot;}, {&quot;nama&quot;: &quot;VASEP&quot;, &quot;url&quot;: &quot;https://vasep.com.vn&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;SeafoodSource&quot;, &quot;url&quot;: &quot;https://www.seafoodsource.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;Undercurrent News&quot;, &quot;url&quot;: &quot;https://www.undercurrentnews.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;IntraFish&quot;, &quot;url&quot;: &quot;https://www.intrafish.com&quot;, &quot;level&quot;: &quot;Sedang&quot;}, {&quot;nama&quot;: &quot;FAO GLOBEFISH&quot;, &quot;url&quot;: &quot;https://www.fao.org/in-action/globefish/en/&quot;, &quot;level&quot;: &quot;Tinggi&quot;}], &quot;catatan&quot;: &quot;Harga fillet beku Vietnam capai rekor 2025 (&gt;USD 2 miliar/tahun ekspor). Indonesia genjot ekspor patin.&quot;, &quot;tren&quot;: [{&quot;x&quot;: &quot;3 Bln Lalu&quot;, &quot;y&quot;: 37998}, {&quot;x&quot;: &quot;Minggu Lalu&quot;, &quot;y&quot;: 38500}, {&quot;x&quot;: &quot;Sekarang&quot;, &quot;y&quot;: 38500}], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-b">Budidaya</span>
           <span class="trend-icon trend-flat">→</span>
@@ -523,9 +604,10 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-up" title="% vs 3 Bulan Lalu">3M: +1.32%</span>
           <span class="kep-badge kep-estimasi">Estimasi</span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
 
-      <div class="komod-card " data-cat="t">
+      <div class="komod-card " data-cat="t" data-modal="{&quot;nama&quot;: &quot;&quot;, &quot;size&quot;: &quot;&quot;, &quot;kategori&quot;: &quot;Tangkap&quot;, &quot;tambak&quot;: &quot;&quot;, &quot;ekspor&quot;: &quot;&quot;, &quot;intl&quot;: &quot;&quot;, &quot;minggu_lalu&quot;: &quot;&quot;, &quot;bulan_lalu&quot;: &quot;&quot;, &quot;tiga_bulan_lalu&quot;: &quot;&quot;, &quot;pct_minggu&quot;: &quot;—&quot;, &quot;pct_1bulan&quot;: &quot;—&quot;, &quot;pct_3bulan&quot;: &quot;—&quot;, &quot;kepercayaan&quot;: &quot;&quot;, &quot;sumber&quot;: [{&quot;nama&quot;: &quot;Estimasi internal&quot;, &quot;url&quot;: &quot;&quot;, &quot;level&quot;: &quot;Estimasi&quot;}], &quot;catatan&quot;: &quot;&quot;, &quot;tren&quot;: [], &quot;tanggal&quot;: &quot;19 Mei 2026&quot;}" onclick="openModal(this)" role="button" tabindex="0">
         <div class="kcard-top">
           <span class="cat-badge cat-t">Tangkap</span>
           <span class="trend-icon trend-flat">→</span>
@@ -539,6 +621,7 @@ tr:hover td{filter:brightness(.97)}
           <span class="pct-badge badge-neutral" title="% vs 3 Bulan Lalu">3M: —</span>
           <span class="kep-badge kep-"></span>
         </div>
+        <div class="kcard-hint">&#9432; klik untuk detail</div>
       </div>
   </div>
 
@@ -576,6 +659,25 @@ tr:hover td{filter:brightness(.97)}
 
 <div class="ftr">
   Dibuat otomatis oleh Market Watch AJN &bull; Data bersifat indikatif, bukan harga resmi &bull; 19 Mei 2026
+</div>
+
+<!-- Modal -->
+<div class="modal-ov" id="modalOv">
+  <div class="modal-card" id="modalCard">
+    <div class="m-hdr">
+      <div class="m-hdr-left">
+        <div class="m-nama" id="mNama"></div>
+        <div class="m-size" id="mSize"></div>
+        <span class="m-kat" id="mKat"></span>
+      </div>
+      <button class="m-close" id="mCloseBtn" aria-label="Tutup">&#x2715;</button>
+    </div>
+    <div class="m-body" id="mBody"></div>
+    <div class="m-ftr">
+      <span class="m-ftr-date" id="mDate"></span>
+      <button class="m-ftr-btn" id="mFtrBtn">Tutup</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -680,6 +782,162 @@ tr:hover td{filter:brightness(.97)}
     }
   } catch(e) { console.error('Line chart error:', e); }
 
+})();
+
+/* ── Modal ─────────────────────────────────────────────────────────────────── */
+(function() {
+  'use strict';
+  var _mc = null;
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function fmtRp(n) {
+    return n ? n.toLocaleString('id-ID') : '—';
+  }
+  function pctClass(s) {
+    if (!s || s === '—') return '';
+    var v = parseFloat(String(s).replace(',','.').replace('%','').replace('+',''));
+    return isNaN(v) ? '' : (v > 0 ? 'pu' : (v < 0 ? 'pd' : ''));
+  }
+
+  window.openModal = function(card) {
+    var d;
+    try { d = JSON.parse(card.dataset.modal); } catch(e) { return; }
+
+    document.getElementById('mNama').textContent = d.nama;
+    document.getElementById('mSize').textContent = d.size;
+    var katEl = document.getElementById('mKat');
+    katEl.textContent = d.kategori;
+    katEl.className = 'm-kat ' + (d.kategori === 'Budidaya' ? 'cat-b' : 'cat-t');
+    document.getElementById('mDate').textContent = 'Data per ' + d.tanggal;
+
+    var catClr = d.kategori === 'Budidaya' ? '#1B3A6B' : '#145A30';
+    var html = '';
+
+    /* --- Section 1: Harga --- */
+    html += '<div class="m-sec">';
+    html += '<div class="m-sec-ttl">Harga Terkini</div>';
+    html += '<div class="m-harga-big">Rp ' + esc(d.tambak) + '<span>/kg</span></div>';
+    html += '<div class="m-harga-sub">';
+    if (d.ekspor && d.ekspor !== '—')
+      html += '<div class="m-harga-sub-item"><strong>Ekspor:</strong> USD ' + esc(d.ekspor) + '/kg</div>';
+    if (d.intl && d.intl !== '—')
+      html += '<div class="m-harga-sub-item"><strong>Internasional:</strong> USD ' + esc(d.intl) + '/kg</div>';
+    html += '</div>';
+
+    /* Tabel perbandingan */
+    var tblRows = [
+      ['Minggu Lalu',   d.minggu_lalu,     d.pct_minggu],
+      ['1 Bulan Lalu',  d.bulan_lalu,      d.pct_1bulan],
+      ['3 Bulan Lalu',  d.tiga_bulan_lalu, d.pct_3bulan],
+    ];
+    html += '<table class="m-tbl"><thead><tr><th>Periode</th><th>Harga Tambak</th><th>Perubahan</th></tr></thead><tbody>';
+    tblRows.forEach(function(r) {
+      var harga = (r[1] && r[1] !== '—') ? 'Rp ' + esc(r[1]) + '/kg' : '—';
+      var pc    = r[2] || '—';
+      html += '<tr><td>' + r[0] + '</td><td>' + harga + '</td>' +
+              '<td class="' + pctClass(pc) + '">' + esc(pc) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (d.catatan)
+      html += '<div class="m-catatan">' + esc(d.catatan) + '</div>';
+    html += '</div>';
+
+    /* --- Section 2: Sumber Data --- */
+    if (d.sumber && d.sumber.length) {
+      html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div><div class="m-src-list">';
+      d.sumber.forEach(function(s) {
+        var bc = 'src-' + s.level.toLowerCase();
+        var nm = s.url && s.url !== '#'
+          ? '<a class="m-src-link" href="' + s.url + '" target="_blank" rel="noopener">' + esc(s.nama) + ' &#8599;</a>'
+          : '<span class="m-src-lbl">' + esc(s.nama) + '</span>';
+        html += '<div class="m-src-item">' + nm +
+                '<span class="m-src-badge ' + bc + '">' + s.level + '</span></div>';
+      });
+      html += '</div></div>';
+    }
+
+    /* --- Section 3: Tren --- */
+    html += '<div class="m-sec"><div class="m-sec-ttl">Tren Harga Tambak (Rp/kg)</div>';
+    html += '<div class="m-chart-wrap"><canvas id="mChartCvs"></canvas></div>';
+    if (d.tren && d.tren.length >= 2) {
+      var vals = d.tren.map(function(p) { return p.y; });
+      var mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+      html += '<div class="m-chart-meta">' +
+              '<span>&#9650; Tertinggi: Rp ' + fmtRp(mx) + '</span>' +
+              '<span>&#9660; Terendah: Rp ' + fmtRp(mn) + '</span>' +
+              '</div>';
+    }
+    html += '</div>';
+
+    document.getElementById('mBody').innerHTML = html;
+    document.getElementById('modalOv').classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    /* Render mini chart */
+    if (d.tren && d.tren.length >= 2) {
+      setTimeout(function() {
+        var cvs = document.getElementById('mChartCvs');
+        if (!cvs) return;
+        if (_mc) { _mc.destroy(); _mc = null; }
+        _mc = new Chart(cvs, {
+          type: 'line',
+          data: {
+            labels: d.tren.map(function(p) { return p.x; }),
+            datasets: [{
+              label: 'Harga Tambak',
+              data: d.tren.map(function(p) { return p.y; }),
+              borderColor: catClr,
+              backgroundColor: catClr + '28',
+              tension: 0.35,
+              fill: true,
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return 'Rp ' + ctx.parsed.y.toLocaleString('id-ID') + '/kg';
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                ticks: { callback: function(v) { return 'Rp '+(v/1000).toFixed(0)+'rb'; }, font:{size:9} },
+                grid: { color: 'rgba(0,0,0,.05)' }
+              },
+              x: { ticks: { font:{size:9}, maxRotation:40 } }
+            }
+          }
+        });
+      }, 30);
+    }
+  };
+
+  function closeModal() {
+    document.getElementById('modalOv').classList.remove('active');
+    document.body.style.overflow = '';
+    if (_mc) { _mc.destroy(); _mc = null; }
+  }
+
+  document.getElementById('mCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('mFtrBtn').addEventListener('click', closeModal);
+  document.getElementById('modalOv').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('modalOv').classList.contains('active'))
+      closeModal();
+  });
 })();
 </script>
 </body>
