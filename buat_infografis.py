@@ -869,7 +869,7 @@ tr:hover td{{filter:brightness(.97)}}
       <div class="hdr-sub">PT Agrinas Jaladri Nusantara (Persero) &mdash; Pemantauan Harga Komoditas Perikanan Strategis</div>
     </div>
     <div class="hdr-meta">
-      <div class="hdr-date">Update: {TGL}</div>
+      <div class="hdr-date">Last Update: {TGL}</div>
     </div>
   </div>
 </div>
@@ -1143,7 +1143,10 @@ tr:hover td{{filter:brightness(.97)}}
 
     /* --- Section 2: Sumber Data --- */
     if (d.sumber && d.sumber.length) {{
-      html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div><div class="m-src-list">';
+      html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:.67rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:0 0 5px;border-bottom:1px solid #f3f4f6;margin-bottom:7px">' +
+              '<span>Sumber</span><span>Kepercayaan</span></div>';
+      html += '<div class="m-src-list">';
       d.sumber.forEach(function(s) {{
         var bc = 'src-' + s.level.toLowerCase();
         var nm = s.url && s.url !== '#'
