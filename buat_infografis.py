@@ -857,6 +857,30 @@ tr:hover td{{filter:brightness(.97)}}
   .modal-card{{max-height:92vh;border-radius:12px 12px 0 0;max-width:100%}}
   .m-harga-big{{font-size:1.55rem}}
 }}
+
+/* ── CSS Tooltip ── */
+.tip-wrap{{position:relative;cursor:help;display:inline-flex;align-items:center;gap:3px;border-bottom:1px dashed #d1d5db}}
+.tip-wrap::after{{
+  content:attr(data-tip);
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:#1f2937;color:#f9fafb;
+  font-size:.72rem;font-weight:400;text-transform:none;letter-spacing:0;line-height:1.55;
+  padding:9px 13px;border-radius:7px;
+  white-space:pre-line;width:260px;
+  opacity:0;pointer-events:none;
+  transition:opacity .15s ease;
+  z-index:9999;
+  box-shadow:0 6px 18px rgba(0,0,0,.3);
+}}
+.tip-wrap::before{{
+  content:'';
+  position:absolute;top:calc(100% + 2px);right:14px;
+  border:5px solid transparent;border-bottom-color:#1f2937;
+  opacity:0;pointer-events:none;
+  transition:opacity .15s ease;
+  z-index:9999;
+}}
+.tip-wrap:hover::after,.tip-wrap:hover::before{{opacity:1}}
 </style>
 </head>
 <body>
@@ -1144,10 +1168,10 @@ tr:hover td{{filter:brightness(.97)}}
     /* --- Section 2: Sumber Data --- */
     if (d.sumber && d.sumber.length) {{
       html += '<div class="m-sec"><div class="m-sec-ttl">Sumber Data</div>';
-      var ttip = 'Tinggi = sumber resmi pemerintah/lembaga internasional&#10;Sedang = sumber industri/asosiasi&#10;Estimasi = kalkulasi berdasarkan tren';
-      html += '<div style="display:flex;justify-content:space-between;font-size:.67rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:0 0 5px;border-bottom:1px solid #f3f4f6;margin-bottom:7px">' +
+      var tipTxt = 'Tinggi = sumber resmi pemerintah / lembaga internasional\nSedang = sumber industri / asosiasi\nEstimasi = kalkulasi berdasarkan tren';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:.67rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:0 0 5px;border-bottom:1px solid #f3f4f6;margin-bottom:7px">' +
               '<span>Sumber</span>' +
-              '<span title="' + ttip + '" style="cursor:help;border-bottom:1px dashed #d1d5db">Tingkat Kepercayaan Data &#9432;</span></div>';
+              '<span class="tip-wrap" data-tip="' + tipTxt + '">Tingkat Kepercayaan Data &#9432;</span></div>';
       html += '<div class="m-src-list">';
       d.sumber.forEach(function(s) {{
         var bc = 'src-' + s.level.toLowerCase();
