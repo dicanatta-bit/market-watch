@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Peta KNMP Operasional — PT Agrinas Jaladri Nusantara</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:#0d2244;overflow:hidden}
+
+/* ── Header ── */
+#hdr{
+  position:fixed;top:0;left:0;right:0;z-index:1000;height:56px;
+  background:linear-gradient(135deg,#1B3A6B 0%,#0d2244 100%);
+  display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  border-bottom:1px solid rgba(201,168,76,.35);
+}
+#hdr-brand{display:flex;flex-direction:column;gap:1px}
+#hdr-title{font-size:1.05rem;font-weight:700;color:#C9A84C;letter-spacing:.3px}
+#hdr-sub{font-size:.68rem;color:rgba(203,213,225,.75)}
+#hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-chip{font-size:.75rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:#C9A84C;padding:4px 11px;border-radius:20px;white-space:nowrap}
+#hdr-date{font-size:.7rem;color:#64748b}
+
+/* ── Layout ── */
+#layout{display:flex;height:100vh;padding-top:56px}
+
+/* ── Sidebar ── */
+#sidebar{
+  width:285px;flex-shrink:0;background:#162d55;
+  overflow-y:auto;overflow-x:hidden;padding:12px;
+  display:flex;flex-direction:column;gap:10px;
+  border-right:1px solid rgba(201,168,76,.15);
+}
+#sidebar::-webkit-scrollbar{width:3px}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(201,168,76,.35);border-radius:2px}
+
+.panel{background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.18);border-radius:8px;padding:10px 12px}
+.ptitle{font-size:.66rem;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px}
+
+/* ── Stats grid ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:8px 10px}
+.stat-num{font-size:1.4rem;font-weight:800;color:#C9A84C;line-height:1}
+.stat-lbl{font-size:.64rem;color:#94a3b8;margin-top:2px}
+.stat-box.wide{grid-column:1/-1}
+.stat-num.sm{font-size:1rem}
+
+/* ── Search ── */
+#search{
+  width:100%;padding:7px 10px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  border-radius:6px;color:#fff;font-size:.82rem;outline:none;
+}
+#search::placeholder{color:rgba(255,255,255,.32)}
+#search:focus{border-color:rgba(201,168,76,.55)}
+
+/* ── Filters ── */
+.flbl{display:block;font-size:.7rem;color:#94a3b8;margin-bottom:3px}
+.fgap{height:8px}
+select{
+  width:100%;padding:7px 10px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);
+  border-radius:6px;color:#fff;font-size:.79rem;
+  outline:none;cursor:pointer;-webkit-appearance:none;
+}
+select option{background:#1B3A6B}
+select:focus{border-color:rgba(201,168,76,.55)}
+
+#btn-reset{
+  width:100%;padding:7px;margin-top:10px;
+  background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.38);
+  border-radius:6px;color:#C9A84C;font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:background .15s;letter-spacing:.3px;
+}
+#btn-reset:hover{background:rgba(201,168,76,.25)}
+
+/* ── Filter count ── */
+#filter-count{font-size:.75rem;color:#60a5fa;margin-top:8px;display:none;text-align:center}
+
+/* ── Legend ── */
+.leg-item{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.77rem;color:#cbd5e1}
+.leg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,.22)}
+.leg-cnt{margin-left:auto;font-size:.68rem;color:#94a3b8;font-variant-numeric:tabular-nums}
+
+/* ── Map ── */
+#map{flex:1;z-index:0}
+
+/* ── Popup ── */
+.leaflet-popup-content-wrapper{border-radius:9px;padding:0;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.leaflet-popup-content{margin:0;min-width:240px;max-width:320px}
+.pu-head{
+  background:linear-gradient(135deg,#1B3A6B,#0d2244);
+  color:#C9A84C;font-weight:700;font-size:.82rem;
+  padding:9px 13px;border-radius:9px 9px 0 0;line-height:1.35;
+}
+.pu-prog-wrap{height:5px;background:#e2e8f0}
+.pu-prog-bar{height:5px;transition:width .3s;border-radius:0 2px 2px 0}
+.pu-tbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.pu-tbl td{padding:4px 11px;vertical-align:top}
+.pu-tbl tr:nth-child(even){background:#f1f5f9}
+.pu-tbl td:first-child{font-weight:600;color:#475569;width:90px;white-space:nowrap}
+.pu-tbl td:last-child{color:#1e293b;word-break:break-word}
+.pu-badge{
+  display:inline-block;padding:1px 8px;border-radius:10px;
+  font-size:.7rem;font-weight:700;color:#fff;
+}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  #sidebar{display:none}
+  #hdr-date{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="hdr-brand">
+    <div id="hdr-title">Peta KNMP Operasional</div>
+    <div id="hdr-sub">PT Agrinas Jaladri Nusantara (Persero)</div>
+  </div>
+  <div id="hdr-right">
+    <div class="hdr-chip">100 Lokasi</div>
+    <div id="hdr-date">20 May 2026</div>
+  </div>
+</div>
+
+<div id="layout">
+  <div id="sidebar">
+
+    <!-- Stats -->
+    <div class="panel">
+      <div class="ptitle">Ringkasan</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-total">100</div>
+          <div class="stat-lbl">Total KNMP</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-selesai">61</div>
+          <div class="stat-lbl">Selesai 100%</div>
+        </div>
+        <div class="stat-box wide">
+          <div class="stat-num sm">Rp 1,27 T</div>
+          <div class="stat-lbl">Total Nilai Kontrak Penyedia</div>
+        </div>
+      </div>
+      <div id="filter-count"></div>
+    </div>
+
+    <!-- Search -->
+    <div class="panel">
+      <div class="ptitle">Cari KNMP</div>
+      <input type="text" id="search" placeholder="Nama, kabupaten, penyedia…">
+    </div>
+
+    <!-- Filters -->
+    <div class="panel">
+      <div class="ptitle">Filter</div>
+      <label class="flbl">Provinsi</label>
+      <select id="filter-prov">
+        <option value="">Semua Provinsi</option>
+          <option value="ACEH">Aceh</option>
+          <option value="BALI">Bali</option>
+          <option value="BANGKA BELITUNG">Bangka Belitung</option>
+          <option value="BANTEN">Banten</option>
+          <option value="BENGKULU">Bengkulu</option>
+          <option value="DI YOGYAKARTA">Di Yogyakarta</option>
+          <option value="GORONTALO">Gorontalo</option>
+          <option value="JAWA BARAT">Jawa Barat</option>
+          <option value="JAWA TENGAH">Jawa Tengah</option>
+          <option value="JAWA TIMUR">Jawa Timur</option>
+          <option value="KALIMANTAN BARAT">Kalimantan Barat</option>
+          <option value="KALIMANTAN TENGAH">Kalimantan Tengah</option>
+          <option value="KALIMANTAN UTARA">Kalimantan Utara</option>
+          <option value="KEPULAUAN RIAU">Kepulauan Riau</option>
+          <option value="LAMPUNG">Lampung</option>
+          <option value="MALUKU">Maluku</option>
+          <option value="MALUKU UTARA">Maluku Utara</option>
+          <option value="NUSA TENGGARA BARAT">Nusa Tenggara Barat</option>
+          <option value="NUSA TENGGARA TIMUR">Nusa Tenggara Timur</option>
+          <option value="PAPUA BARAT DAYA">Papua Barat Daya</option>
+          <option value="PAPUA SELATAN">Papua Selatan</option>
+          <option value="RIAU">Riau</option>
+          <option value="SULAWESI BARAT">Sulawesi Barat</option>
+          <option value="SULAWESI SELATAN">Sulawesi Selatan</option>
+          <option value="SULAWESI TENGAH">Sulawesi Tengah</option>
+          <option value="SULAWESI TENGGARA">Sulawesi Tenggara</option>
+          <option value="SULAWESI UTARA">Sulawesi Utara</option>
+          <option value="SUMATERA BARAT">Sumatera Barat</option>
+          <option value="SUMATERA SELATAN">Sumatera Selatan</option>
+          <option value="SUMATERA UTARA">Sumatera Utara</option>
+      </select>
+      <div class="fgap"></div>
+      <label class="flbl">Tahap</label>
+      <select id="filter-tahap">
+        <option value="">Semua Tahap</option>
+          <option value="1">Tahap 1</option>
+          <option value="2">Tahap 2</option>
+      </select>
+      <div class="fgap"></div>
+      <label class="flbl">Status Progres</label>
+      <select id="filter-status">
+        <option value="">Semua Status</option>
+        <option value="selesai">Selesai (100%)</option>
+        <option value="berjalan">Berjalan (1–99%)</option>
+        <option value="belum">Belum Mulai (0%)</option>
+      </select>
+      <button id="btn-reset">&#x21BA; Reset Filter</button>
+    </div>
+
+    <!-- Legend -->
+    <div class="panel">
+      <div class="ptitle">Legenda</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#10B981"></span><span>Selesai (100%)</span><span class="leg-cnt" id="lcnt-selesai"></span></div>
+      <div class="leg-item"><span class="leg-dot" style="background:#F59E0B"></span><span>Berjalan (1–99%)</span><span class="leg-cnt" id="lcnt-berjalan"></span></div>
+      <div class="leg-item"><span class="leg-dot" style="background:#EF4444"></span><span>Belum Mulai (0%)</span><span class="leg-cnt" id="lcnt-belum"></span></div>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+const DATA = [{"id":1,"nama":"Lancok","desa":"Lancok","kecamatan":"Syamtalira Bayu","kabupaten":"Aceh Utara","provinsi":"ACEH","tahap":"1","tahun":"2025","lat":5.1410428,"lon":97.1874659,"penyedia":"PT. Viola Cipta Mahakarya","nilai_p":13373065535,"pengawas":"CV. POLO CONSULTANT","realisasi":5488980360,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":1},{"id":2,"nama":"Lhok Pawoh","desa":"Lhok Pawoh","kecamatan":"Manggeng","kabupaten":"Aceh Barat Daya","provinsi":"ACEH","tahap":"1","tahun":"2025","lat":3.6227205,"lon":96.8965556,"penyedia":"PT. Viola Cipta Mahakarya","nilai_p":12740035803,"pengawas":"CV. ARION ADONAY CONSULTANT","realisasi":15681009002,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":28,"sarNA":0},{"id":3,"nama":"Birem Puntong","desa":"Birem Puntong","kecamatan":"Langsa Baro","kabupaten":"Kota Langsa","provinsi":"ACEH","tahap":"1","tahun":"2025","lat":4.5059354,"lon":97.9546614,"penyedia":"PT. Viola Cipta Mahakarya","nilai_p":10703510776,"pengawas":"CV. PELITA BUANA","realisasi":8562808621,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":28,"sarNA":0},{"id":4,"nama":"Tanjung Putri","desa":"Tanjung Putri","kecamatan":"Arut Selatan","kabupaten":"Kotawaringin Barat","provinsi":"KALIMANTAN TENGAH","tahap":"1","tahun":"2025","lat":-2.8770015,"lon":111.4453718,"penyedia":"CV. Clara Benefecia","nilai_p":10725000522,"pengawas":"PT. HARDJA MOEKTI CONSULTANT","realisasi":8580000417,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":5,"nama":"Leato Selatan","desa":"Leato Selatan","kecamatan":"Dumbo Raya","kabupaten":"Kota Gorontalo","provinsi":"GORONTALO","tahap":"1","tahun":"2025","lat":0.4976395,"lon":123.0716604,"penyedia":"PT. Nila Nasra Nina","nilai_p":11208847833,"pengawas":"PT. PARADHIGUNA DWIPANTARA LOKA","realisasi":8967078264,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":6,"nama":"Banagan","desa":"Banagan","kecamatan":"Dampal Utara","kabupaten":"Tolitoli","provinsi":"SULAWESI TENGAH","tahap":"1","tahun":"2025","lat":0.8650839,"lon":120.3292222,"penyedia":"PT. Nila Nasra Nina","nilai_p":10996758374,"pengawas":"PT. PARADHIGUNA DWIPANTARA LOKA","realisasi":8515486244,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Telah Selesai 100%","sarAda":27,"sarNA":7},{"id":7,"nama":"Waelihang","desa":"Waelihang","kecamatan":"Waplau","kabupaten":"Buru","provinsi":"MALUKU","tahap":"1","tahun":"2025","lat":-3.0578992,"lon":126.7345151,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11879738104,"pengawas":"CV. Rizky Utama Consultan","realisasi":5400920584,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":16,"sarNA":0},{"id":8,"nama":"Labetawi","desa":"Labetawi","kecamatan":"Pulau Dullah Utara","kabupaten":"Kota Tual","provinsi":"MALUKU","tahap":"1","tahun":"2025","lat":-5.5574103,"lon":132.7809104,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":13625679920,"pengawas":"CV. PUTRA TUNGGAL DESIGN","realisasi":15658219945,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":39,"sarNA":0},{"id":9,"nama":"Warmasen","desa":"Warmasen","kecamatan":"Kota Waisai","kabupaten":"Raja Ampat","provinsi":"PAPUA BARAT DAYA","tahap":"1","tahun":"2025","lat":-0.421762,"lon":130.8408548,"penyedia":"PT. Artamakmur Permai","nilai_p":14008144327,"pengawas":"CV. MASAJI 18","realisasi":14099142748,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":42,"sarNA":0},{"id":10,"nama":"Samkai","desa":"Samkai","kecamatan":"Merauke","kabupaten":"Merauke","provinsi":"PAPUA SELATAN","tahap":"1","tahun":"2025","lat":-8.4962191,"lon":140.3708333,"penyedia":"PT. Artamakmur Permai","nilai_p":13949510550,"pengawas":"CV. PILLAR PERSADA SELATAN","realisasi":11280035520,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":11,"nama":"Sekanak Raya","desa":"Sekanak Raya","kecamatan":"Belakang Padang","kabupaten":"Kota Batam","provinsi":"KEPULAUAN RIAU","tahap":"1","tahun":"2025","lat":1.1433338,"lon":103.8880726,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":15772867312,"pengawas":"PT. SUCOFINDO","realisasi":12618293848,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":20,"sarNA":0},{"id":12,"nama":"Kasu","desa":"Kasu","kecamatan":"Belakang Padang","kabupaten":"Kota Batam","provinsi":"KEPULAUAN RIAU","tahap":"1","tahun":"2025","lat":1.0719602,"lon":103.8284337,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":6751150728,"pengawas":"PT. SUCOFINDO","realisasi":10801841168,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":31,"sarNA":0},{"id":13,"nama":"Sembulang","desa":"Sembulang","kecamatan":"Galang","kabupaten":"Kota Batam","provinsi":"KEPULAUAN RIAU","tahap":"1","tahun":"2025","lat":0.8084753,"lon":104.223406,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":17960451662,"pengawas":"PT. SUCOFINDO","realisasi":12080351276,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":14,"nama":"Poncosari","desa":"Poncosari","kecamatan":"Srandakan","kabupaten":"Bantul","provinsi":"DI YOGYAKARTA","tahap":"1","tahun":"2025","lat":-7.9880759,"lon":110.2198271,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":8951000326,"pengawas":"CV. INTISHAR KARYA","realisasi":7160800262,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":31,"sarNA":2},{"id":15,"nama":"Ketapang","desa":"Ketapang","kecamatan":"Ketapang","kabupaten":"Lampung Selatan","provinsi":"LAMPUNG","tahap":"1","tahun":"2025","lat":-5.741389,"lon":105.7974167,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":15144232222,"pengawas":"PT. WAHANA KRIDA KONSOLINDO","realisasi":12202697390,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":24,"sarNA":3},{"id":16,"nama":"Seraya Timur","desa":"Seraya Timur","kecamatan":"Karangasem","kabupaten":"Karangasem","provinsi":"BALI","tahap":"1","tahun":"2025","lat":-8.4144201,"lon":115.6988523,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":10445009854,"pengawas":"CV. GEOSENTRIS NUSANTARA","realisasi":8356007881,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":17,"nama":"Aeng Batu Batu","desa":"Aeng Batu Batu","kecamatan":"Galesong Utara","kabupaten":"Takalar","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.2357025,"lon":119.3828727,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":12515291187,"pengawas":"PT. TRIMAKO ABDI KONSULINDO","realisasi":10012232948,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":18,"nama":"Sumare","desa":"Sumare","kecamatan":"Simboro","kabupaten":"Mamuju","provinsi":"SULAWESI BARAT","tahap":"1","tahun":"2025","lat":-2.6384738,"lon":118.811844,"penyedia":"PT. Aisha Bangun Raya","nilai_p":9041710369,"pengawas":"PT. TATA INDOKARYA KONSULTAN","realisasi":7233368294,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":19,"nama":"Babana","desa":"Babana","kecamatan":"Budong-Budong","kabupaten":"Mamuju Tengah","provinsi":"SULAWESI BARAT","tahap":"1","tahun":"2025","lat":-2.07448,"lon":119.1998782,"penyedia":"PT. Aisha Bangun Raya","nilai_p":12611994650,"pengawas":"CV. APHAS KONSULTAN","realisasi":10089595720,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":20,"nama":"Balangloe Tarowang","desa":"Balangloe Tarowang","kecamatan":"Tarowang","kabupaten":"Jeneponto","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.6022287,"lon":119.8796667,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":9017401255,"pengawas":"PT. SULAPAAPPA MEDIA UTAMA","realisasi":8739373701,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":21,"nama":"Untia","desa":"Untia","kecamatan":"Biringkanaya","kabupaten":"Kota Makassar","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.0673568,"lon":119.4740726,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":7712554837,"pengawas":"PT. PUTRA KAHU PERKASA","realisasi":5922548154,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":22,"nama":"Tongke-Tongke","desa":"Tongke-Tongke","kecamatan":"Sinjai Timur","kabupaten":"Sinjai","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.1586966,"lon":120.2742222,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":12070140580,"pengawas":"PT. IDEAWARNA KONSULTAN NUSANTARA","realisasi":9656112463,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":23,"nama":"Angkue","desa":"Angkue","kecamatan":"Kajuara","kabupaten":"Bone","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.0631965,"lon":120.2941326,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":14664846036,"pengawas":"CV. MITRA RANCANG CONSULINDO","realisasi":11731876828,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":24,"nama":"Bentengnge","desa":"Bentengnge","kecamatan":"Ujung Bulu","kabupaten":"Bulukumba","provinsi":"SULAWESI SELATAN","tahap":"1","tahun":"2025","lat":-5.5616475,"lon":120.1957715,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":12796092066,"pengawas":"PT. IDEAWARNA KONSULTAN NUSANTARA","realisasi":10236873652,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":25,"nama":"Terapung","desa":"Terapung","kecamatan":"Poleang Tenggara","kabupaten":"Bombana","provinsi":"SULAWESI TENGGARA","tahap":"1","tahun":"2025","lat":-4.8844358,"lon":121.9393933,"penyedia":"PT. Wirabaya Nusantara Permai","nilai_p":12495195896,"pengawas":"CV. KAINAYA KARYA KONSULTAN","realisasi":9996156716,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":26,"nama":"Anaiwoi","desa":"Anaiwoi","kecamatan":"Tanggetada","kabupaten":"Kolaka","provinsi":"SULAWESI TENGGARA","tahap":"1","tahun":"2025","lat":-4.3720724,"lon":121.5187007,"penyedia":"PT. Wirabaya Nusantara Permai","nilai_p":13037861658,"pengawas":"CV. Zenith Engineering Consultant","realisasi":12747680682,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":40,"sarNA":0},{"id":27,"nama":"Sorue Jaya","desa":"Sorue Jaya","kecamatan":"Soropia","kabupaten":"Konawe","provinsi":"SULAWESI TENGGARA","tahap":"1","tahun":"2025","lat":-3.9393116,"lon":122.6262715,"penyedia":"PT. Wirabaya Nusantara Permai","nilai_p":11039264625,"pengawas":"CV. KOSONG TIGA BELAS CONSULTANT","realisasi":8831411697,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":28,"nama":"Gerak Makmur","desa":"Gerak Makmur","kecamatan":"Sampolawa","kabupaten":"Buton Selatan","provinsi":"SULAWESI TENGGARA","tahap":"1","tahun":"2025","lat":-5.6457095,"lon":122.7604337,"penyedia":"PT. Wirabaya Nusantara Permai","nilai_p":14060471714,"pengawas":"CV. BHARATA MAHAKARYA CONSULTANT","realisasi":11248377371,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":29,"nama":"Malalanda","desa":"Malalanda","kecamatan":"Kulisusu","kabupaten":"Buton Utara","provinsi":"SULAWESI TENGGARA","tahap":"1","tahun":"2025","lat":-4.8452606,"lon":123.1808271,"penyedia":"PT. Wirabaya Nusantara Permai","nilai_p":10485256921,"pengawas":"CV. JUANG KARYA KONSOLINDO","realisasi":8388205537,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":38,"sarNA":0},{"id":30,"nama":"Pulau Bungin","desa":"Pulau Bungin","kecamatan":"Alas","kabupaten":"Sumbawa","provinsi":"NUSA TENGGARA BARAT","tahap":"1","tahun":"2025","lat":-8.477608,"lon":116.9947285,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11224517071,"pengawas":"PT. ASRIGUNA KREASI SAMAWA","realisasi":8979613656,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":31,"nama":"Bilelando","desa":"Bilelando","kecamatan":"Praya Timur","kabupaten":"Lombok Tengah","provinsi":"NUSA TENGGARA BARAT","tahap":"1","tahun":"2025","lat":-8.8550764,"lon":116.3980878,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11395000029,"pengawas":"CV.Lentera Design Consultant","realisasi":9116000025,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":32,"nama":"Ekas Buana","desa":"Ekas Buana","kecamatan":"Jerowaru","kabupaten":"Lombok Timur","provinsi":"NUSA TENGGARA BARAT","tahap":"1","tahun":"2025","lat":-8.8721637,"lon":116.4555556,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11385000661,"pengawas":"CV. DOME CONSULTANT","realisasi":9108000530,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":33,"nama":"Adang","desa":"Adang","kecamatan":"Alor Barat Laut","kabupaten":"Alor","provinsi":"NUSA TENGGARA TIMUR","tahap":"1","tahun":"2025","lat":-8.1610433,"lon":124.4473226,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":10506791705,"pengawas":"CV. CAHAYA KURNIA ENGINEERING","realisasi":8411329239,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":34,"nama":"Mudakaputu","desa":"Mudakaputu","kecamatan":"Ile Mandiri","kabupaten":"Flores Timur","provinsi":"NUSA TENGGARA TIMUR","tahap":"1","tahun":"2025","lat":-8.2618922,"lon":122.991844,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":10306681786,"pengawas":"PT. SPATIUM ARTEM CONSULTANTS","realisasi":8245345428,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":35,"nama":"Warloka","desa":"Warloka","kecamatan":"Komodo","kabupaten":"Manggarai Barat","provinsi":"NUSA TENGGARA TIMUR","tahap":"1","tahun":"2025","lat":-8.6018965,"lon":119.8093118,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11562634768,"pengawas":"CV. SAHABAT ENGINEERING","realisasi":9250107812,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":35,"sarNA":0},{"id":36,"nama":"Sulamu","desa":"Sulamu","kecamatan":"Sulamu","kabupaten":"Kupang","provinsi":"NUSA TENGGARA TIMUR","tahap":"1","tahun":"2025","lat":-10.0354315,"lon":123.6025429,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":11279118766,"pengawas":"CV. DUNIA TEKNIK CONSULT","realisasi":9023295011,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":37,"nama":"Wasileo","desa":"Wasileo","kecamatan":"Maba Utara","kabupaten":"Halmahera Timur","provinsi":"MALUKU UTARA","tahap":"1","tahun":"2025","lat":1.380678,"lon":128.7469104,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":13810227675,"pengawas":"CV. KETNA WIRANDANI","realisasi":11048182140,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":34,"sarNA":0},{"id":38,"nama":"Supu","desa":"Supu","kecamatan":"Loloda Utara","kabupaten":"Halmahera Utara","provinsi":"MALUKU UTARA","tahap":"1","tahun":"2025","lat":2.1870005,"lon":127.9788163,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":13878104991,"pengawas":"CV. AUFARI DWICIPTA UTAMA","realisasi":11102483993,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":39,"nama":"Sangowo Timur","desa":"Sangowo Timur","kecamatan":"Morotai Timur","kabupaten":"Kepulauan Morotai","provinsi":"MALUKU UTARA","tahap":"1","tahun":"2025","lat":2.1047934,"lon":128.5680833,"penyedia":"PT. Adhi Karya (Persero) Tbk.","nilai_p":12960473853,"pengawas":"PT. BARUGA BULAENG INDOTAMA","realisasi":10368379081,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":40,"nama":"Sungsang IV","desa":"Sungsang IV","kecamatan":"Banyuasin II","kabupaten":"Banyuasin","provinsi":"SUMATERA SELATAN","tahap":"1","tahun":"2025","lat":-2.350082,"lon":104.904486,"penyedia":"PT. Naurah Dinamika Nusantara","nilai_p":12222568399,"pengawas":"PT. ARDIANA DWI YASA CONSULTANT","realisasi":11705384630,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":30,"sarNA":0},{"id":41,"nama":"Bandar Agung","desa":"Bandar Agung","kecamatan":"Sragi","kabupaten":"Lampung Selatan","provinsi":"LAMPUNG","tahap":"1","tahun":"2025","lat":-5.6249189,"lon":105.7883163,"penyedia":"PT. Naurah Dinamika Nusantara","nilai_p":10439123501,"pengawas":"CV. Auzora Mandiri Consultant","realisasi":8351298800,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":28,"sarNA":0},{"id":42,"nama":"Sukorahayu","desa":"Sukorahayu","kecamatan":"Labuhan Maringgai","kabupaten":"Lampung Timur","provinsi":"LAMPUNG","tahap":"1","tahun":"2025","lat":-5.2314958,"lon":105.8474489,"penyedia":"PT. Naurah Dinamika Nusantara","nilai_p":9879896384,"pengawas":"CV. SAGARA GIRI REJEKI","realisasi":7903917108,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":28,"sarNA":0},{"id":43,"nama":"Margasari","desa":"Margasari","kecamatan":"Labuhan Maringgai","kabupaten":"Lampung Timur","provinsi":"LAMPUNG","tahap":"1","tahun":"2025","lat":-5.2636196,"lon":105.8591389,"penyedia":"PT. Naurah Dinamika Nusantara","nilai_p":17909346006,"pengawas":"CV. CITRA NUSA KONSULINDO","realisasi":14327476804,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":31,"sarNA":0},{"id":44,"nama":"Cikiruhwetan","desa":"Cikiruhwetan","kecamatan":"Cikeusik","kabupaten":"Pandegelang","provinsi":"BANTEN","tahap":"1","tahun":"2025","lat":-6.8384278,"lon":105.8824551,"penyedia":"PT. Tirtha Wandhira Utama","nilai_p":12107705724,"pengawas":"CV. AJIZTAMA RAYA CONSULTAN","realisasi":9686164579,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":45,"nama":"Wanasari","desa":"Wanasari","kecamatan":"Agrabinta","kabupaten":"Cianjur","provinsi":"JAWA BARAT","tahap":"1","tahun":"2025","lat":-7.4440969,"lon":106.9860171,"penyedia":"PT. Tirtha Wandhira Utama","nilai_p":10488754033,"pengawas":"CV. MULTICON ENGINEERING","realisasi":8391003226,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Telah Selesai 100%.","sarAda":28,"sarNA":0},{"id":46,"nama":"Gebang Mekar","desa":"Gebang Mekar","kecamatan":"Gebang","kabupaten":"Cirebon","provinsi":"JAWA BARAT","tahap":"1","tahun":"2025","lat":-6.8147291,"lon":108.7281155,"penyedia":"PT. Bumi Delta Hatten","nilai_p":15087412350,"pengawas":"CV. RAVENTAMA","realisasi":12069929878,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":30,"sarNA":0},{"id":47,"nama":"Ciwaru","desa":"Ciwaru","kecamatan":"Ciemas","kabupaten":"Sukabumi","provinsi":"JAWA BARAT","tahap":"1","tahun":"2025","lat":-7.1873084,"lon":106.4555044,"penyedia":"PT. Bumi Delta Hatten","nilai_p":14340305966,"pengawas":"CV. SUBANG RAYA KONSULTAN","realisasi":11472244772,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":28,"sarNA":0},{"id":48,"nama":"Lateng","desa":"Lateng","kecamatan":"Banyuwangi","kabupaten":"Banyuwangi","provinsi":"JAWA TIMUR","tahap":"1","tahun":"2025","lat":-8.1988645,"lon":114.3812222,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":10432167495,"pengawas":"CV. YUSATA TECHNIKA","realisasi":11465760785,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":40,"sarNA":0},{"id":49,"nama":"Pujiharjo","desa":"Pujiharjo","kecamatan":"Tirtoyudo","kabupaten":"Malang","provinsi":"JAWA TIMUR","tahap":"1","tahun":"2025","lat":-8.3787085,"lon":112.9006622,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":12087040108,"pengawas":"CV. ARCHIGO CONSULTAN","realisasi":9669632084,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":35,"sarNA":0},{"id":50,"nama":"Bulumeduro","desa":"Bulumeduro","kecamatan":"Bancar","kabupaten":"Tuban","provinsi":"JAWA TIMUR","tahap":"1","tahun":"2025","lat":-6.7705559,"lon":111.722344,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":10042390319,"pengawas":"CV. RUANG KOTA","realisasi":7854113858,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":31,"sarNA":0},{"id":51,"nama":"Ujung Said","desa":"Ujung Said","kecamatan":"Jongkong","kabupaten":"Kapuas Hulu","provinsi":"KALIMANTAN BARAT","tahap":"1","tahun":"2025","lat":0.6720433,"lon":112.3784747,"penyedia":"PT. Duta Tunggal Jaya","nilai_p":10576798282,"pengawas":"CV. RAFFAN DESIGN","realisasi":8461438627,"progres":94.72,"kondisi":"Terkendala pendanaan. Mulai percepatan penyelesaian target 2 minggu selesai","sarAda":33,"sarNA":0},{"id":52,"nama":"Sungai Nyirih","desa":"Sungai Nyirih","kecamatan":"Selakau","kabupaten":"Sambas","provinsi":"KALIMANTAN BARAT","tahap":"1","tahun":"2025","lat":1.0586438,"lon":108.9708226,"penyedia":"PT. Duta Tunggal Jaya","nilai_p":10551236847,"pengawas":"PT. WIDYA AIKA BERKARYA","realisasi":8440989476,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":53,"nama":"Bumiharjo","desa":"Bumiharjo","kecamatan":"Keling","kabupaten":"Jepara","provinsi":"JAWA TENGAH","tahap":"1","tahun":"2025","lat":-6.4080196,"lon":110.8371111,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":10959430670,"pengawas":"CV. NUSAKON","realisasi":8767544535,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":54,"nama":"Karangduwur","desa":"Karangduwur","kecamatan":"Ayah","kabupaten":"Kebumen","provinsi":"JAWA TENGAH","tahap":"1","tahun":"2025","lat":-7.7702915,"lon":109.4138996,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":10105182103,"pengawas":"PT. MARINDO UTAMA PENATA KAWASAN","realisasi":8084145680,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":55,"nama":"Banyutowo","desa":"Banyutowo","kecamatan":"Dukuhseti","kabupaten":"Pati","provinsi":"JAWA TENGAH","tahap":"1","tahun":"2025","lat":-6.4598336,"lon":111.0493782,"penyedia":"PT. Rukun Jaya Madura Group","nilai_p":10071361229,"pengawas":"CV. KINTAN MAHARDHIKA","realisasi":8057088981,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":33,"sarNA":0},{"id":56,"nama":"Kertojayan","desa":"Kertojayan","kecamatan":"Grabag","kabupaten":"Purworejo","provinsi":"JAWA TENGAH","tahap":"1","tahun":"2025","lat":-7.830941,"lon":109.82494,"penyedia":"PT. Tirai Megah Utama","nilai_p":11139700355,"pengawas":"PT. PILAREMPAT CONSULTAN","realisasi":13375887875,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":53,"sarNA":0},{"id":57,"nama":"Jatimalang","desa":"Jatimalang","kecamatan":"Purwodadi","kabupaten":"Purworejo","provinsi":"JAWA TENGAH","tahap":"1","tahun":"2025","lat":-7.8795309,"lon":109.9841989,"penyedia":"PT. Tirai Megah Utama","nilai_p":11219652832,"pengawas":"PT. MULTI CITRA GRAHA","realisasi":8833325455,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":32,"sarNA":0},{"id":58,"nama":"Karangjaladri","desa":"Karangjaladri","kecamatan":"Parigi","kabupaten":"Pangandaran","provinsi":"JAWA BARAT","tahap":"1","tahun":"2025","lat":-7.7129197,"lon":108.5014444,"penyedia":"PT. Wirakarsa Konstruksi","nilai_p":10697084884,"pengawas":"PT Delta Maratama Globalindo","realisasi":8557667904,"progres":87.97,"kondisi":"1. Mobilisasi material menuju ke lokasi tidak berjalan dengan lancar. 2. Material lokal lainya seperti pasir juga tidak menentu datanya dengan jumlah kubikasi yang berbeda untuk bisa di angkut lewat jalur air. 3. Material yang sedikit di lokasi_x000D_\n4. Administrasi tidak di jalankan seperti VO material, approvile dan Riques, sehingga pekerjaan yang dilaksanakan tanpa sepengetahuan konsultan pengawas","sarAda":27,"sarNA":0},{"id":59,"nama":"Karangsari","desa":"Karangsari","kecamatan":"Pakenjeng","kabupaten":"Garut","provinsi":"JAWA BARAT","tahap":"1","tahun":"2025","lat":-7.58274,"lon":107.6170385,"penyedia":"PT. Wirakarsa Konstruksi","nilai_p":11036660633,"pengawas":"PT. UTA ENGINEERING CONSULTANT","realisasi":8829328504,"progres":88.19,"kondisi":"Terkendala pendanaan. Mulai percepatan penyelesaian target 2 minggu selesai","sarAda":28,"sarNA":0},{"id":60,"nama":"Merpas","desa":"Merpas","kecamatan":"Nasal","kabupaten":"Kaur","provinsi":"BENGKULU","tahap":"1","tahun":"2025","lat":-4.9139743,"lon":103.5337329,"penyedia":"PT. Karsa Prabala","nilai_p":13263235860,"pengawas":"CV. PRAMA KARYA NUSANTARA","realisasi":10610588687,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":61,"nama":"Penago I","desa":"Penago I","kecamatan":"Ilir Talo","kabupaten":"Seluma","provinsi":"BENGKULU","tahap":"1","tahun":"2025","lat":-4.2479784,"lon":102.6635063,"penyedia":"PT. Karsa Prabala","nilai_p":12024191444,"pengawas":"CV. DINAMIKA CONSULTANT","realisasi":9619353155,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":29,"sarNA":0},{"id":62,"nama":"Padang Sarai","desa":"Padang Sarai","kecamatan":"Koto Tangah","kabupaten":"Kota Padang","provinsi":"SUMATERA BARAT","tahap":"1","tahun":"2025","lat":-0.8109716,"lon":100.2955341,"penyedia":"PT. Indopenta Bumi Permai","nilai_p":13187057483,"pengawas":"PT. DELTA ARSITEKTUR PERSADA","realisasi":10187227136,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":63,"nama":"Katapiang","desa":"Katapiang","kecamatan":"Batang Anai","kabupaten":"Padang Pariaman","provinsi":"SUMATERA BARAT","tahap":"1","tahun":"2025","lat":-0.7565891,"lon":100.2447885,"penyedia":"PT. Indopenta Bumi Permai","nilai_p":13742937489,"pengawas":"CV. ARIZ KARYA KONSULTAN","realisasi":10622949544,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":64,"nama":"Dapenda","desa":"Dapenda","kecamatan":"Sumenep","kabupaten":"Sumenep","provinsi":"JAWA TIMUR","tahap":"1","tahun":"2025","lat":-6.9172291,"lon":114.0413952,"penyedia":"CV. Cendana Indah","nilai_p":10252411536,"pengawas":"CV. RESKINDO WASA","realisasi":8201929228,"progres":93.35,"kondisi":"- Batching plant terbatas harus indent\n- Material paving dan tutup udict harus mendatangkan dari luar Sumenep\n- Tenaga kerja sering ganti ganti\n- Curah hujan tinggi","sarAda":33,"sarNA":0},{"id":65,"nama":"Kuala Raja","desa":"Kuala Raja","kecamatan":"Kuala","kabupaten":"Bireuen","provinsi":"ACEH","tahap":"1","tahun":"2025","lat":5.2475417,"lon":96.7295048,"penyedia":"PT. Toleransi Aceh","nilai_p":14009398974,"pengawas":"CV. BALAKOSA CONSULTANT","realisasi":10823616736,"progres":100.0,"kondisi":"Kegiatan Pembangunan Lokasi KNMP Terlah Selesai 100%","sarAda":27,"sarNA":0},{"id":66,"nama":"Bagan Kuala","desa":"Bagan Kuala","kecamatan":"Tanjung Beringin","kabupaten":"Serdang Bedagai","provinsi":"SUMATERA UTARA","tahap":"2","tahun":"2026","lat":3.5074741,"lon":99.2322011,"penyedia":"PT. Mitra Agung Indonesia - CV. Baladwipa KSO","nilai_p":10661859000,"pengawas":"Pengawas KNMP Bagan Kuala","realisasi":0,"progres":0.0,"kondisi":"","sarAda":23,"sarNA":0},{"id":67,"nama":"Pematang Sei Baru","desa":"Pematang Sei Baru","kecamatan":"Tanjung Balai","kabupaten":"Asahan","provinsi":"SUMATERA UTARA","tahap":"2","tahun":"2026","lat":3.0147029,"lon":99.8607634,"penyedia":"PT. Mitra Agung Indonesia - CV. Baladwipa KSO","nilai_p":11154317000,"pengawas":"Pengawas KNMP Pematang Sei Baru","realisasi":0,"progres":0.0,"kondisi":"","sarAda":23,"sarNA":0},{"id":68,"nama":"Perupuk","desa":"Perupuk","kecamatan":"Lima Puluh Pesisir","kabupaten":"Batu Bara","provinsi":"SUMATERA UTARA","tahap":"2","tahun":"2026","lat":3.2847695,"lon":99.5107318,"penyedia":"PT. Mitra Agung Indonesia - CV. Baladwipa KSO","nilai_p":14013702000,"pengawas":"Pengawas KNMP Perupuk","realisasi":0,"progres":0.0,"kondisi":"","sarAda":27,"sarNA":0},{"id":69,"nama":"Kwala Gebang","desa":"Kwala Gebang","kecamatan":"Gebang","kabupaten":"Langkat","provinsi":"SUMATERA UTARA","tahap":"2","tahun":"2026","lat":4.0340825,"lon":98.4351906,"penyedia":"PT. Mitra Agung Indonesia - CV. Baladwipa KSO","nilai_p":12804820000,"pengawas":"Pengawas KNMP Kwala Gebang","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":70,"nama":"Kahyapu","desa":"Kahyapu","kecamatan":"Enggano","kabupaten":"Bengkulu Utara","provinsi":"BENGKULU","tahap":"2","tahun":"2026","lat":-5.4275525,"lon":102.378445,"penyedia":"CV. Putra Diwa Adyatama","nilai_p":12601576000,"pengawas":"Pengawas KNMP Kahyapu","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":71,"nama":"Cemaga Utara","desa":"Cemaga Utara","kecamatan":"Bunguran Selatan","kabupaten":"Natuna","provinsi":"KEPULAUAN RIAU","tahap":"2","tahun":"2026","lat":3.8144595,"lon":108.390865,"penyedia":"PT. Aset Prima Konstruksi","nilai_p":13249213000,"pengawas":"Pengawas KNMP Cemaga Utara","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":72,"nama":"Pambang Pesisir","desa":"Pambang Pesisir","kecamatan":"Bantan","kabupaten":"Kota Solok","provinsi":"RIAU","tahap":"2","tahun":"2026","lat":1.4956034,"lon":102.476488,"penyedia":"CV. Sonta Abadi","nilai_p":14746453000,"pengawas":"Pengawas KNMP Pambang Pesisir","realisasi":0,"progres":0.0,"kondisi":"","sarAda":26,"sarNA":0},{"id":73,"nama":"Sungai Padang","desa":"Sungai Padang","kecamatan":"Sijuk","kabupaten":"Belitung","provinsi":"BANGKA BELITUNG","tahap":"2","tahun":"2026","lat":-2.5818849,"lon":107.901163,"penyedia":"PT. Sinar Habib Agung Putra","nilai_p":14019567000,"pengawas":"Pengawas KNMP Sungai Padang","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":74,"nama":"Tukak","desa":"Tukak","kecamatan":"Tukak Sadai","kabupaten":"Bangka Selatan","provinsi":"BANGKA BELITUNG","tahap":"2","tahun":"2026","lat":-2.9758605,"lon":106.649804,"penyedia":"PT. Sinar Habib Agung Putra","nilai_p":13060044000,"pengawas":"Pengawas KNMP Tukak","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0},{"id":75,"nama":"Tegineneng","desa":"Tegineneng","kecamatan":"Limau","kabupaten":"Tanggamus","provinsi":"LAMPUNG","tahap":"2","tahun":"2026","lat":-5.6119873,"lon":104.800131,"penyedia":"PT. Nara Tunas Karya","nilai_p":11655000000,"pengawas":"Pengawas KNMP Tegineneng","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":76,"nama":"Durian","desa":"Durian","kecamatan":"Padang Cermin","kabupaten":"Pesawaran","provinsi":"LAMPUNG","tahap":"2","tahun":"2026","lat":-5.6198137,"lon":105.183297,"penyedia":"PT. Nara Tunas Karya","nilai_p":14023569000,"pengawas":"Pengawas KNMP Durian","realisasi":0,"progres":0.0,"kondisi":"","sarAda":26,"sarNA":0},{"id":77,"nama":"Labuhan Sangoro","desa":"Labuhan Sangoro","kecamatan":"Maronge","kabupaten":"Sumbawa","provinsi":"NUSA TENGGARA BARAT","tahap":"2","tahun":"2026","lat":-8.6126904,"lon":117.752998,"penyedia":"PT. Tolping Jaya","nilai_p":11103880000,"pengawas":"Pengawas KNMP Labuhan Sangoro","realisasi":0,"progres":0.0,"kondisi":"","sarAda":23,"sarNA":0},{"id":78,"nama":"Jala","desa":"Jala","kecamatan":"Hu u","kabupaten":"Dompu","provinsi":"NUSA TENGGARA BARAT","tahap":"2","tahun":"2026","lat":-8.671061,"lon":118.215344,"penyedia":"PT. Aulia Berlian Konstruksi","nilai_p":11110299000,"pengawas":"Pengawas KNMP Jala","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0},{"id":79,"nama":"Bintaro","desa":"Bintaro","kecamatan":"Bintaro","kabupaten":"Kota Mataram","provinsi":"NUSA TENGGARA BARAT","tahap":"2","tahun":"2026","lat":-8.5619271,"lon":116.072969,"penyedia":"PT. Berkah Rizki Jaya","nilai_p":11915382000,"pengawas":"Pengawas KNMP Bintaro","realisasi":0,"progres":0.0,"kondisi":"","sarAda":23,"sarNA":0},{"id":80,"nama":"Kamalaputi","desa":"Kamalaputi","kecamatan":"kota waingapu","kabupaten":"Sumba Timur","provinsi":"NUSA TENGGARA TIMUR","tahap":"2","tahun":"2026","lat":-9.6398235,"lon":120.257379,"penyedia":"PT. Dewata Teknik","nilai_p":11547757000,"pengawas":"Pengawas KNMP Kamalaputi","realisasi":0,"progres":0.0,"kondisi":"","sarAda":20,"sarNA":0},{"id":81,"nama":"Bunyu Selatan","desa":"Bunyu Selatan","kecamatan":"Bunyu","kabupaten":"Bulungan","provinsi":"KALIMANTAN UTARA","tahap":"2","tahun":"2026","lat":3.4533281,"lon":117.851703,"penyedia":"CV. Tiga Dara Indah","nilai_p":11766000000,"pengawas":"Pengawas KNMP Bunyu Selatan","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0},{"id":82,"nama":"Nisombalia","desa":"Nisombalia","kecamatan":"Marusu","kabupaten":"Maros","provinsi":"SULAWESI SELATAN","tahap":"2","tahun":"2026","lat":-5.0251489,"lon":119.468943,"penyedia":"PT. Gunung Landoli Jaya","nilai_p":10025297000,"pengawas":"Pengawas KNMP Nisombalia","realisasi":0,"progres":0.0,"kondisi":"","sarAda":22,"sarNA":0},{"id":83,"nama":"Baurung","desa":"Baurung","kecamatan":"Baurung","kabupaten":"Bulukumba","provinsi":"SULAWESI BARAT","tahap":"2","tahun":"2026","lat":-3.5630686,"lon":118.999009,"penyedia":"CV. Galung Lombok Indah","nilai_p":9052000000,"pengawas":"Pengawas KNMP Baurung","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0},{"id":84,"nama":"Bambakoro","desa":"Bambakoro","kecamatan":"Bambakoro","kabupaten":"Pasangkayu","provinsi":"SULAWESI BARAT","tahap":"2","tahun":"2026","lat":-1.4195902,"lon":119.292976,"penyedia":"CV. Cakra Mas","nilai_p":13487763000,"pengawas":"Pengawas KNMP Bambakoro","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":85,"nama":"Ghone Bhalano","desa":"Ghone Bhalano","kecamatan":"Ghone Bhalano","kabupaten":"Muna","provinsi":"SULAWESI TENGGARA","tahap":"2","tahun":"2026","lat":-4.8608349,"lon":122.733704,"penyedia":"PT. Kreasindo Bangun Persada","nilai_p":12992430000,"pengawas":"Pengawas KNMP Ghone Bhalano","realisasi":0,"progres":0.0,"kondisi":"","sarAda":29,"sarNA":0},{"id":86,"nama":"Bolano Tengah","desa":"Bolano Tengah","kecamatan":"Bolano Tengah","kabupaten":"Parigi Moutong","provinsi":"SULAWESI TENGAH","tahap":"2","tahun":"2026","lat":0.4262264,"lon":120.950838,"penyedia":"PT. Tiga Surya Katulistiwa","nilai_p":11976519000,"pengawas":"Pengawas KNMP Bolano Tengah","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":87,"nama":"Labuan","desa":"Labuan","kecamatan":"Labuan","kabupaten":"Poso","provinsi":"SULAWESI TENGAH","tahap":"2","tahun":"2026","lat":-1.3901435,"lon":120.841821,"penyedia":"CV. Surya Utama","nilai_p":11727820000,"pengawas":"Pengawas KNMP Labuan","realisasi":0,"progres":0.0,"kondisi":"","sarAda":26,"sarNA":0},{"id":88,"nama":"Kalumbatan","desa":"Kalumbatan","kecamatan":"Kalumbatan","kabupaten":"Banggai Kepulauan","provinsi":"SULAWESI TENGAH","tahap":"2","tahun":"2026","lat":-1.4691326,"lon":123.488467,"penyedia":"PT. Bumi Permata Kendari","nilai_p":12395380000,"pengawas":"Pengawas KNMP Kalumbatan","realisasi":0,"progres":0.0,"kondisi":"","sarAda":28,"sarNA":0},{"id":89,"nama":"Kalupapi","desa":"Kalupapi","kecamatan":"Kalupapi","kabupaten":"Banggai Laut","provinsi":"SULAWESI TENGAH","tahap":"2","tahun":"2026","lat":-1.8880236,"lon":123.068468,"penyedia":"PT. Bumi Permata Kendari","nilai_p":113689506000,"pengawas":"Pengawas KNMP Kalupapi","realisasi":0,"progres":0.0,"kondisi":"","sarAda":26,"sarNA":0},{"id":90,"nama":"Lamu","desa":"Lamu","kecamatan":"Batuda a Pantai","kabupaten":"Gorontalo","provinsi":"GORONTALO","tahap":"2","tahun":"2026","lat":0.4975642,"lon":123.038029,"penyedia":"PT. Bina Mandiri Mukti","nilai_p":11545721000,"pengawas":"Pengawas KNMP Lamu","realisasi":0,"progres":0.0,"kondisi":"","sarAda":25,"sarNA":0},{"id":91,"nama":"Maitara Tengah","desa":"Maitara Tengah","kecamatan":"Maitara Tengah","kabupaten":"Kota Tidore Kepulauan","provinsi":"MALUKU UTARA","tahap":"2","tahun":"2026","lat":0.7311134,"lon":127.378908,"penyedia":"PT. Lesindo Bersinar","nilai_p":15102924000,"pengawas":"Pengawas KNMP Maitara Tengah","realisasi":0,"progres":0.0,"kondisi":"","sarAda":26,"sarNA":0},{"id":92,"nama":"Bajo","desa":"Bajo","kecamatan":"Bajo","kabupaten":"Kepulauan Sula","provinsi":"MALUKU UTARA","tahap":"2","tahun":"2026","lat":-2.0053991,"lon":125.97558,"penyedia":"PT. Lesindo Bersinar","nilai_p":12272402000,"pengawas":"Pengawas KNMP Bajo","realisasi":0,"progres":0.0,"kondisi":"","sarAda":21,"sarNA":0},{"id":93,"nama":"Kaye","desa":"Kaye","kecamatan":"Asmat","kabupaten":"Asmat","provinsi":"PAPUA SELATAN","tahap":"2","tahun":"2026","lat":-5.5457864,"lon":138.125881,"penyedia":"PT. Zegar Inti Papus","nilai_p":17702392000,"pengawas":"Pengawas KNMP Kaye","realisasi":0,"progres":0.0,"kondisi":"","sarAda":18,"sarNA":0},{"id":94,"nama":"Cabang","desa":"Cabang","kecamatan":"Bandar Surabaya","kabupaten":"Lampung Tengah","provinsi":"LAMPUNG","tahap":"2","tahun":"2026","lat":-4.6522202,"lon":105.814736,"penyedia":"PT. Nara Tunas Karya","nilai_p":0,"pengawas":"Pengawas KNMP Cabang","realisasi":0,"progres":0.0,"kondisi":"","sarAda":63,"sarNA":0},{"id":95,"nama":"Kunjir","desa":"Kunjir","kecamatan":"Rajabasa","kabupaten":"Lampung Selatan","provinsi":"LAMPUNG","tahap":"2","tahun":"2026","lat":-5.8365349,"lon":105.649386,"penyedia":"PT. Nara Tunas Karya","nilai_p":10439029000,"pengawas":"Pengawas KNMP Kunjir","realisasi":0,"progres":0.0,"kondisi":"","sarAda":28,"sarNA":0},{"id":96,"nama":"Kebirangga","desa":"Kebirangga","kecamatan":"Maukaro","kabupaten":"Ende","provinsi":"NUSA TENGGARA TIMUR","tahap":"2","tahun":"2026","lat":-8.6138096,"lon":121.524343,"penyedia":"PT. Sembada Tiga Abadi","nilai_p":12081498000,"pengawas":"Pengawas KNMP Kebirangga","realisasi":0,"progres":0.0,"kondisi":"","sarAda":28,"sarNA":0},{"id":97,"nama":"Tanete","desa":"Tanete","kecamatan":"Tanete Rilau","kabupaten":"Barru","provinsi":"SULAWESI SELATAN","tahap":"2","tahun":"2026","lat":-4.4508236,"lon":119.596739,"penyedia":"PT. Gunung Landoli Jaya","nilai_p":0,"pengawas":"Pengawas KNMP Tanete","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0},{"id":98,"nama":"Momalia II","desa":"Momalia II","kecamatan":"Posigadan","kabupaten":"Bolaang Mongondow Selatan","provinsi":"SULAWESI UTARA","tahap":"2","tahun":"2026","lat":0.3209203,"lon":123.567579,"penyedia":"CV. Barlia Citra Mandiri","nilai_p":12531437000,"pengawas":"Pengawas KNMP Momalia II","realisasi":0,"progres":0.0,"kondisi":"","sarAda":27,"sarNA":0},{"id":99,"nama":"Pentadu Barat","desa":"Pentadu Barat","kecamatan":"Tilamuta","kabupaten":"Boalemo","provinsi":"GORONTALO","tahap":"2","tahun":"2026","lat":0.5054448,"lon":122.347863,"penyedia":"PT. Bina Mandiri Mukti","nilai_p":0,"pengawas":"Pengawas KNMP Pentadu Barat","realisasi":0,"progres":0.0,"kondisi":"","sarAda":23,"sarNA":0},{"id":100,"nama":"Mootinelo","desa":"Mootinelo","kecamatan":"Mootinelo","kabupaten":"Bone Bolango","provinsi":"GORONTALO","tahap":"2","tahun":"2026","lat":0.3095814,"lon":123.336653,"penyedia":"CV. Cahaya Lima Mandiri","nilai_p":10390638000,"pengawas":"Pengawas KNMP Mootinelo","realisasi":0,"progres":0.0,"kondisi":"","sarAda":24,"sarNA":0}];
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function fmtRp(n){
+  if(!n || n===0) return '-';
+  if(n>=1e12) return 'Rp '+(n/1e12).toFixed(2).replace('.',',')+' T';
+  if(n>=1e9)  return 'Rp '+(n/1e9).toFixed(2).replace('.',',')+' M';
+  if(n>=1e6)  return 'Rp '+(n/1e6).toFixed(0)+' Jt';
+  return 'Rp '+n.toLocaleString('id');
+}
+
+function statusOf(p){
+  if(p>=100) return 'selesai';
+  if(p>0)    return 'berjalan';
+  return 'belum';
+}
+const STATUS_COLOR = {selesai:'#10B981',berjalan:'#F59E0B',belum:'#EF4444'};
+const STATUS_LABEL = {selesai:'Selesai',berjalan:'Berjalan',belum:'Belum Mulai'};
+
+// ── Init map ──────────────────────────────────────────────────────────────────
+const map = L.map('map',{center:[-2.5,118],zoom:5});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd',maxZoom:19
+}).addTo(map);
+
+// ── Cluster group ─────────────────────────────────────────────────────────────
+const cluster = L.markerClusterGroup({
+  chunkedLoading:true,
+  maxClusterRadius:55,
+  iconCreateFunction:function(c){
+    const n=c.getChildCount();
+    const sz=n<10?30:n<30?36:n<70?42:48;
+    return L.divIcon({
+      html:`<div style="background:#1B3A6B;border:2.5px solid #C9A84C;border-radius:50%;width:${sz}px;height:${sz}px;display:flex;align-items:center;justify-content:center;color:#C9A84C;font-size:${sz<36?11:13}px;font-weight:800;">${n}</div>`,
+      className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+    });
+  }
+});
+
+// ── Build markers ─────────────────────────────────────────────────────────────
+const allMarkers = DATA.map(d=>{
+  const status = statusOf(d.progres);
+  const color  = STATUS_COLOR[status];
+  const m = L.circleMarker([d.lat,d.lon],{
+    radius:8,fillColor:color,color:'#fff',weight:1.5,opacity:1,fillOpacity:.88
+  });
+
+  const progPct  = Math.round(d.progres);
+  const progBar  = `<div class="pu-prog-wrap"><div class="pu-prog-bar" style="width:${progPct}%;background:${color}"></div></div>`;
+  const kondisi  = d.kondisi ? `<tr><td>Kondisi</td><td>${esc(d.kondisi.slice(0,120))}</td></tr>` : '';
+  const sarRow   = `<tr><td>Sarpras</td><td>Ada: ${d.sarAda} &nbsp;|&nbsp; N/A: ${d.sarNA}</td></tr>`;
+  const nilaiRow = d.nilai_p ? `<tr><td>Nilai Kontrak</td><td>${fmtRp(d.nilai_p)}</td></tr>` : '';
+  const rlsRow   = d.realisasi ? `<tr><td>Realisasi</td><td>${fmtRp(d.realisasi)}</td></tr>` : '';
+
+  m.bindPopup(`
+    <div class="pu-head">KNMP #${esc(d.id)} &mdash; ${esc(d.nama)}</div>
+    ${progBar}
+    <table class="pu-tbl">
+      <tr><td>Tahap</td><td>Tahap ${esc(d.tahap)} &middot; ${esc(d.tahun)} &nbsp;<span class="pu-badge" style="background:${color}">${STATUS_LABEL[status]} ${progPct}%</span></td></tr>
+      <tr><td>Desa/Kel.</td><td>${esc(d.desa)}</td></tr>
+      <tr><td>Kecamatan</td><td>${esc(d.kecamatan)}</td></tr>
+      <tr><td>Kabupaten</td><td>${esc(d.kabupaten)}</td></tr>
+      <tr><td>Provinsi</td><td>${esc(d.provinsi)}</td></tr>
+      <tr><td>Penyedia</td><td>${esc(d.penyedia)}</td></tr>
+      ${nilaiRow}
+      ${rlsRow}
+      <tr><td>Pengawas</td><td>${esc(d.pengawas)}</td></tr>
+      ${sarRow}
+      ${kondisi}
+    </table>
+  `,{maxWidth:320});
+
+  m._d = d;
+  return m;
+});
+
+cluster.addLayers(allMarkers);
+map.addLayer(cluster);
+
+// ── Legend counts ─────────────────────────────────────────────────────────────
+const LCNT = {selesai:0,berjalan:0,belum:0};
+DATA.forEach(d=>{ LCNT[statusOf(d.progres)]++; });
+document.getElementById('lcnt-selesai').textContent  = LCNT.selesai;
+document.getElementById('lcnt-berjalan').textContent = LCNT.berjalan;
+document.getElementById('lcnt-belum').textContent    = LCNT.belum;
+
+// ── Filter logic ──────────────────────────────────────────────────────────────
+const searchEl  = document.getElementById('search');
+const provEl    = document.getElementById('filter-prov');
+const tahapEl   = document.getElementById('filter-tahap');
+const statusEl  = document.getElementById('filter-status');
+const btnReset  = document.getElementById('btn-reset');
+const fcountEl  = document.getElementById('filter-count');
+const statTotal = document.getElementById('stat-total');
+const statSel   = document.getElementById('stat-selesai');
+
+function applyFilters(){
+  const q     = searchEl.value.toLowerCase().trim();
+  const prov  = provEl.value;
+  const tahap = tahapEl.value;
+  const sts   = statusEl.value;
+
+  const filtered = allMarkers.filter(m=>{
+    const d = m._d;
+    if(prov  && d.provinsi!==prov)       return false;
+    if(tahap && d.tahap!==tahap)         return false;
+    if(sts   && statusOf(d.progres)!==sts) return false;
+    if(q && ![d.nama,d.kabupaten,d.kecamatan,d.desa,d.penyedia]
+             .some(v=>v.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  cluster.clearLayers();
+  cluster.addLayers(filtered);
+
+  const n = filtered.length;
+  statTotal.textContent = n;
+  statSel.textContent   = filtered.filter(m=>m._d.progres>=100).length;
+
+  if(n < allMarkers.length){
+    fcountEl.style.display='block';
+    fcountEl.textContent=`dari ${allMarkers.length} total`;
+  } else {
+    fcountEl.style.display='none';
+  }
+
+  if(n>0 && n<allMarkers.length){
+    const bounds = L.featureGroup(filtered).getBounds();
+    if(bounds.isValid()) map.fitBounds(bounds,{padding:[40,40],maxZoom:13});
+  }
+}
+
+searchEl.addEventListener('input',  applyFilters);
+provEl.addEventListener('change',   applyFilters);
+tahapEl.addEventListener('change',  applyFilters);
+statusEl.addEventListener('change', applyFilters);
+
+btnReset.addEventListener('click',()=>{
+  searchEl.value=''; provEl.value=''; tahapEl.value=''; statusEl.value='';
+  statTotal.textContent = allMarkers.length;
+  statSel.textContent   = allMarkers.filter(m=>m._d.progres>=100).length;
+  fcountEl.style.display='none';
+  cluster.clearLayers(); cluster.addLayers(allMarkers);
+  map.setView([-2.5,118],5);
+});
+</script>
+</body>
+</html>
