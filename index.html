@@ -12,11 +12,11 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;color:#1a1a1a;fo
 /* ── Header ── */
 .hdr{background:linear-gradient(135deg,#1B3A6B 0%,#0d2244 100%);color:#fff;padding:0}
 .hdr-inner{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-.hdr-left{display:flex;align-items:center;gap:16px}
+.hdr-left{display:flex;align-items:center;gap:16px;min-width:0}
 .hdr-logos{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.hdr-logos .logo-danantara{height:64px;width:auto;display:block;filter:brightness(0) invert(1)}
+.hdr-logos .logo-danantara{height:64px;width:auto;display:block;filter:invert(1);mix-blend-mode:screen}
 .hdr-logos .logo-jaladri{height:64px;width:auto;display:block}
-.hdr-brand{display:flex;flex-direction:column;gap:4px;text-align:left}
+.hdr-brand{display:flex;flex-direction:column;gap:4px;text-align:left;min-width:0}
 .hdr-logo{font-size:1.5rem;font-weight:800;letter-spacing:.5px;color:#C9A84C}
 .hdr-sub{font-size:.75rem;opacity:.85;color:#cbd5e1}
 .hdr-right{flex-shrink:0}
