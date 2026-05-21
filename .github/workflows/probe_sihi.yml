@@ -1,0 +1,29 @@
+name: Probe SIHI KKP - Cek Akses dari Runner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scrape_sihi.py'
+      - '.github/workflows/probe_sihi.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 -q
+
+      - name: Probe SIHI KKP
+        run: python scrape_sihi.py --probe --verbose
