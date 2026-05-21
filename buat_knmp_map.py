@@ -1,13 +1,140 @@
 """
 Gabungkan sheet "KNMP Survey" + "KNMP Operasional" dari Lokasi KNMP.xlsx
--> peta Leaflet interaktif 1322 marker.
+→ peta Leaflet interaktif dengan integrasi harga komoditas per wilayah.
 
 Output: output/knmp_YYYYMMDD.html  dan  knmp.html (root)
 """
-import openpyxl, json, os
+import openpyxl, json, os, re, sys
 from datetime import datetime
 
-def _s(v): return str(v).strip() if v is not None else ''
+try:
+    from google.oauth2.service_account import Credentials
+    import gspread
+    GSPREAD = True
+except ImportError:
+    GSPREAD = False
+
+# ── Konstanta ─────────────────────────────────────────────────────────────────
+
+SPREADSHEET_ID   = "1qAn5AsxdL5CliEQltMuqN1hkAy6L-FIcMb1YqMFbUyw"
+SHEET_HARGA_WIL  = "Harga per Wilayah"
+CREDENTIALS_FILE = "credentials.json"
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+
+# Faktor wilayah (sama dengan generate_harga_wilayah.py — untuk fallback statis)
+WILAYAH_FAKTOR = {
+    "Jawa-Bali":  1.00,
+    "Sumatera":   0.95,
+    "Kalimantan": 0.92,
+    "Sulawesi":   0.90,
+    "NTT-NTB":    0.88,
+    "Maluku":     0.85,
+    "Papua":      0.85,
+}
+
+# Mapping PROVINSI (uppercase) → WILAYAH
+PROVINSI_WILAYAH = {
+    # Sumatera
+    "ACEH": "Sumatera", "NANGGROE ACEH DARUSSALAM": "Sumatera",
+    "SUMATERA UTARA": "Sumatera", "SUMATRA UTARA": "Sumatera",
+    "SUMATERA BARAT": "Sumatera", "SUMATRA BARAT": "Sumatera",
+    "RIAU": "Sumatera", "KEPULAUAN RIAU": "Sumatera",
+    "JAMBI": "Sumatera",
+    "SUMATERA SELATAN": "Sumatera", "SUMATRA SELATAN": "Sumatera",
+    "BENGKULU": "Sumatera", "LAMPUNG": "Sumatera",
+    "KEPULAUAN BANGKA BELITUNG": "Sumatera", "BANGKA BELITUNG": "Sumatera",
+    # Jawa-Bali
+    "DKI JAKARTA": "Jawa-Bali", "JAKARTA": "Jawa-Bali",
+    "JAWA BARAT": "Jawa-Bali", "JAWA TENGAH": "Jawa-Bali",
+    "DI YOGYAKARTA": "Jawa-Bali", "DAERAH ISTIMEWA YOGYAKARTA": "Jawa-Bali",
+    "JAWA TIMUR": "Jawa-Bali", "BANTEN": "Jawa-Bali", "BALI": "Jawa-Bali",
+    # Kalimantan
+    "KALIMANTAN BARAT": "Kalimantan", "KALIMANTAN TENGAH": "Kalimantan",
+    "KALIMANTAN SELATAN": "Kalimantan", "KALIMANTAN TIMUR": "Kalimantan",
+    "KALIMANTAN UTARA": "Kalimantan",
+    # Sulawesi
+    "SULAWESI UTARA": "Sulawesi", "SULAWESI TENGAH": "Sulawesi",
+    "SULAWESI SELATAN": "Sulawesi", "SULAWESI TENGGARA": "Sulawesi",
+    "GORONTALO": "Sulawesi", "SULAWESI BARAT": "Sulawesi",
+    # NTT-NTB
+    "NUSA TENGGARA BARAT": "NTT-NTB", "NTB": "NTT-NTB",
+    "NUSA TENGGARA TIMUR": "NTT-NTB", "NTT": "NTT-NTB",
+    # Maluku
+    "MALUKU": "Maluku", "MALUKU UTARA": "Maluku",
+    # Papua
+    "PAPUA": "Papua", "PAPUA BARAT": "Papua",
+    "PAPUA PEGUNUNGAN": "Papua", "PAPUA SELATAN": "Papua",
+    "PAPUA TENGAH": "Papua", "PAPUA BARAT DAYA": "Papua",
+    "IRIAN JAYA BARAT": "Papua",
+}
+
+# Nama pendek komoditas untuk tampilan popup
+_SHORT_NAMES = {
+    "Udang Vaname (Litopenaeus vannamei)":              "Udang Vaname",
+    "Udang Windu (Penaeus monodon)":                    "Udang Windu",
+    "Nila (Oreochromis niloticus)":                     "Nila",
+    "Tuna Sirip Kuning / Yellowfin (Thunnus albacares)":"Tuna Yellowfin",
+    "Tuna Cakalang (Katsuwonus pelamis)":               "Tuna Cakalang",
+    "Kakap Merah (Lutjanus spp.)":                      "Kakap Merah",
+    "Kerapu (Epinephelus spp.)":                        "Kerapu",
+    "Rumput Laut (Eucheuma cottonii)":                  "Rumput Laut",
+    "Rumput Laut ATC/SRC (E. cottonii processed)":      "RL ATC/SRC",
+    "Lobster (Panulirus ornatus) / Mutiara":            "Lobster Mutiara",
+    "Lobster (Panulirus homarus) / Pasir":              "Lobster Pasir",
+    "Bandeng (Chanos chanos)":                          "Bandeng",
+    "Cumi-cumi (Loligo spp.)":                          "Cumi-cumi",
+    "Patin (Pangasianodon hypophthalmus)":              "Patin",
+}
+
+# 3 komoditas prioritas per wilayah (tampil di popup)
+PRIORITY_PER_WILAYAH = {
+    "Jawa-Bali":  [("Udang Vaname (Litopenaeus vannamei)", "Size 50"),
+                   ("Udang Vaname (Litopenaeus vannamei)", "Size 60"),
+                   ("Bandeng (Chanos chanos)", "250-500 g")],
+    "Sumatera":   [("Udang Vaname (Litopenaeus vannamei)", "Size 50"),
+                   ("Udang Windu (Penaeus monodon)", "Size 20"),
+                   ("Tuna Cakalang (Katsuwonus pelamis)", "-")],
+    "Kalimantan": [("Udang Vaname (Litopenaeus vannamei)", "Size 50"),
+                   ("Udang Windu (Penaeus monodon)", "Size 20"),
+                   ("Patin (Pangasianodon hypophthalmus)", "Utuh/Hidup")],
+    "Sulawesi":   [("Udang Windu (Penaeus monodon)", "Size 20"),
+                   ("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Sashimi grade"),
+                   ("Rumput Laut (Eucheuma cottonii)", "Kering")],
+    "NTT-NTB":    [("Rumput Laut (Eucheuma cottonii)", "Kering"),
+                   ("Lobster (Panulirus ornatus) / Mutiara", ">200 g"),
+                   ("Tuna Cakalang (Katsuwonus pelamis)", "-")],
+    "Maluku":     [("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Sashimi grade"),
+                   ("Tuna Cakalang (Katsuwonus pelamis)", "-"),
+                   ("Lobster (Panulirus ornatus) / Mutiara", ">200 g")],
+    "Papua":      [("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Sashimi grade"),
+                   ("Udang Windu (Penaeus monodon)", "Size 20"),
+                   ("Lobster (Panulirus ornatus) / Mutiara", ">200 g")],
+}
+
+# Harga nasional Jawa-Bali (fallback jika Google Sheets tidak tersedia)
+_BASE_HARGA = {
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 50"):               ("60.000 – 65.000", "3,55 – 3,64"),
+    ("Udang Vaname (Litopenaeus vannamei)", "Size 60"):               ("55.000 – 60.000", "3,55"),
+    ("Udang Windu (Penaeus monodon)", "Size 20"):                     ("100.000 – 120.000", "8,00 – 10,00"),
+    ("Nila (Oreochromis niloticus)", "300-500 g"):                    ("22.000 – 28.000", "3,00 – 4,00"),
+    ("Tuna Sirip Kuning / Yellowfin (Thunnus albacares)", "Sashimi grade"): ("60.000 – 80.000", "5,00 – 8,00"),
+    ("Tuna Cakalang (Katsuwonus pelamis)", "-"):                      ("15.000 – 25.000", "1,50 – 2,50"),
+    ("Kakap Merah (Lutjanus spp.)", "-"):                             ("50.000 – 70.000", "5,00 – 8,00"),
+    ("Kerapu (Epinephelus spp.)", "Hidup (>500 g)"):                  ("100.000 – 150.000", "8,00 – 12,00"),
+    ("Rumput Laut (Eucheuma cottonii)", "Kering"):                    ("6.000 – 7.000", "0,40 – 0,50"),
+    ("Lobster (Panulirus ornatus) / Mutiara", ">200 g"):              ("280.000 – 380.000", "18,00 – 22,00"),
+    ("Bandeng (Chanos chanos)", "250-500 g"):                         ("20.000 – 28.000", "1,80 – 2,50"),
+    ("Patin (Pangasianodon hypophthalmus)", "Utuh/Hidup"):            ("15.000 – 22.000", "—"),
+    ("Cumi-cumi (Loligo spp.)", "-"):                                 ("35.000 – 50.000", "3,50 – 5,00"),
+}
+
+
+# ── Helper functions ──────────────────────────────────────────────────────────
+
+def _s(v): return str(v).strip() if v is not None else ""
 def _f(v, d=0.0):
     try: return float(v) if v is not None else d
     except: return d
@@ -15,63 +142,197 @@ def _i(v, d=0):
     try: return int(v) if v is not None else d
     except: return d
 
-XLSX = 'Lokasi KNMP.xlsx'
+
+def _parse_range_idr(s):
+    if not s or str(s).strip() in ("", "—", "-"):
+        return []
+    s = re.sub(r"[Rp\s]", "", str(s).strip())
+    s = s.replace(".", "").replace(",", ".")
+    parts = re.split(r"\s*[–\-]\s*", s)
+    try:
+        return [float(p.strip()) for p in parts if p.strip()]
+    except ValueError:
+        return []
+
+
+def _apply_faktor_idr(harga_str, faktor):
+    nums = _parse_range_idr(harga_str)
+    if not nums:
+        return "—"
+    adj = sorted(n * faktor for n in nums)
+    if len(adj) == 2:
+        lo = f"{adj[0]:,.0f}".replace(",", ".")
+        hi = f"{adj[1]:,.0f}".replace(",", ".")
+        return f"{lo} – {hi}"
+    return f"{adj[0]:,.0f}".replace(",", ".")
+
+
+# ── Load harga wilayah dari Google Sheets ─────────────────────────────────────
+
+def load_harga_wilayah(spreadsheet_id):
+    """
+    Coba baca sheet 'Harga per Wilayah' dari Google Sheets.
+    Returns dict: {wilayah: [{"k": short_name, "s": size, "t": tambak_str}]}
+    Falls back ke _BASE_HARGA × WILAYAH_FAKTOR jika tidak tersedia.
+    """
+    if not GSPREAD or not os.path.exists(CREDENTIALS_FILE):
+        print("[KNMP Map] credentials.json tidak ada — pakai data harga statis.")
+        return _build_static_harga()
+
+    try:
+        creds  = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+        client = gspread.Client(auth=creds)
+        ss     = client.open_by_key(spreadsheet_id)
+        ws     = ss.worksheet(SHEET_HARGA_WIL)
+        data   = ws.get_all_values()
+        print(f"[KNMP Map] Sheet '{SHEET_HARGA_WIL}' dibaca: {len(data) - 1} baris.")
+        return _parse_harga_sheet(data)
+    except gspread.exceptions.WorksheetNotFound:
+        print(f"[KNMP Map] Sheet '{SHEET_HARGA_WIL}' belum ada — pakai data harga statis.")
+    except Exception as e:
+        print(f"[KNMP Map] Gagal membaca harga wilayah: {type(e).__name__} — pakai statis.")
+    return _build_static_harga()
+
+
+def _parse_harga_sheet(data):
+    """
+    Parse sheet 'Harga per Wilayah' (header row + data rows).
+    Kolom: Tanggal(0), Komoditas(1), Size(2), Wilayah(3), Tambak(4), Ekspor(5), ...
+    """
+    result = {w: [] for w in WILAYAH_FAKTOR}
+    seen   = {w: set() for w in WILAYAH_FAKTOR}  # deduplikasi per (komoditas, size)
+
+    for row in data[1:]:
+        if len(row) < 5:
+            continue
+        komoditas = row[1].strip()
+        size      = row[2].strip()
+        wilayah   = row[3].strip()
+        tambak    = row[4].strip()
+
+        if wilayah not in result:
+            continue
+        key = (komoditas, size)
+        if key in seen[wilayah]:
+            continue
+        seen[wilayah].add(key)
+
+        short = _SHORT_NAMES.get(komoditas, komoditas.split("(")[0].strip()[:20])
+        result[wilayah].append({"k": short, "s": size, "t": tambak or "—"})
+
+    # Urutkan sesuai PRIORITY_PER_WILAYAH, ambil max 5 per wilayah
+    for wilayah, prio in PRIORITY_PER_WILAYAH.items():
+        rows = result.get(wilayah, [])
+        if not rows:
+            continue
+        rows_map = {r["k"] + "|" + r["s"]: r for r in rows}
+        ordered  = []
+        for komoditas, size in prio:
+            short = _SHORT_NAMES.get(komoditas, komoditas.split("(")[0].strip()[:20])
+            k = short + "|" + size
+            if k in rows_map:
+                ordered.append(rows_map[k])
+        # Tambah sisa hingga 5 entri
+        for r in rows:
+            if len(ordered) >= 5:
+                break
+            if r not in ordered:
+                ordered.append(r)
+        result[wilayah] = ordered[:5]
+
+    return result
+
+
+def _build_static_harga():
+    """Bangun harga wilayah dari BASE_HARGA × WILAYAH_FAKTOR sebagai fallback."""
+    result = {}
+    for wilayah, faktor in WILAYAH_FAKTOR.items():
+        prio = PRIORITY_PER_WILAYAH.get(wilayah, [])
+        rows = []
+        for komoditas, size in prio:
+            base = _BASE_HARGA.get((komoditas, size))
+            if not base:
+                continue
+            tambak_est = _apply_faktor_idr(base[0], faktor)
+            short      = _SHORT_NAMES.get(komoditas, komoditas.split("(")[0].strip()[:20])
+            rows.append({"k": short, "s": size, "t": tambak_est})
+        result[wilayah] = rows
+    return result
+
+
+# ── Baca XLSX ─────────────────────────────────────────────────────────────────
+
+XLSX = "Lokasi KNMP.xlsx"
 wb   = openpyxl.load_workbook(XLSX, read_only=True, data_only=True)
 markers = []
 
 # Survey: No=0,ID=1,Nama=2,Desa=3,Kec=4,Kab=5,Prov=6,Tahap=7,Kat=8,Lat=9,Lon=10,Luas=11,Pend=12
-ws_sv = wb['KNMP Survey']
+ws_sv = wb["KNMP Survey"]
 for row in ws_sv.iter_rows(min_row=2, values_only=True):
     if row[0] is None or not _s(row[0]).isdigit(): continue
     lat, lon = row[9], row[10]
     if lat is None or lon is None: continue
     markers.append({
-        'sumber':'survey','id':_s(row[1]),'nama':_s(row[2]),
-        'desa':_s(row[3]),'kecamatan':_s(row[4]),'kabupaten':_s(row[5]),
-        'provinsi':_s(row[6]).upper(),'tahap':_s(row[7]),'kategori':_s(row[8]),
-        'lat':float(lat),'lon':float(lon),'luas':_s(row[11]),'pendamping':_s(row[12]),
-        'tahun':'','penyedia':'','nilai_p':0,'pengawas':'',
-        'realisasi':0,'progres':None,'kondisi':'','sarAda':0,'sarNA':0,
+        "sumber": "survey", "id": _s(row[1]), "nama": _s(row[2]),
+        "desa": _s(row[3]), "kecamatan": _s(row[4]), "kabupaten": _s(row[5]),
+        "provinsi": _s(row[6]).upper(), "tahap": _s(row[7]), "kategori": _s(row[8]),
+        "lat": float(lat), "lon": float(lon), "luas": _s(row[11]), "pendamping": _s(row[12]),
+        "tahun": "", "penyedia": "", "nilai_p": 0, "pengawas": "",
+        "realisasi": 0, "progres": None, "kondisi": "", "sarAda": 0, "sarNA": 0,
     })
 
 # Operasional: No=0,ID=1,Nama=2,Desa=3,Kec=4,Kab=5,Prov=6,Tahap=7,Tahun=8,
 #   Lat=9,Lon=10,Penyedia=11,NoKP=12,NilaiP=13,Pengawas=14,NoKW=15,NilaiW=16,
 #   RealP=17,RealW=18,Progres=19,Kondisi=20,Kat=21,SarAda=22,SarNA=23
-ws_op = wb['KNMP Operasional']
+ws_op = wb["KNMP Operasional"]
 for row in ws_op.iter_rows(min_row=2, values_only=True):
     if row[0] is None or not _s(row[0]).isdigit(): continue
     lat, lon = row[9], row[10]
     if lat is None or lon is None: continue
     markers.append({
-        'sumber':'operasional','id':_s(row[1]),'nama':_s(row[2]),
-        'desa':_s(row[3]),'kecamatan':_s(row[4]),'kabupaten':_s(row[5]),
-        'provinsi':_s(row[6]).upper(),'tahap':_s(row[7]),'kategori':_s(row[21]),
-        'lat':float(lat),'lon':float(lon),'luas':'','pendamping':'',
-        'tahun':_s(row[8]),'penyedia':_s(row[11]),'nilai_p':_i(row[13]),
-        'pengawas':_s(row[14]),'realisasi':_i(row[17]),'progres':_f(row[19]),
-        'kondisi':_s(row[20]),'sarAda':_i(row[22]),'sarNA':_i(row[23]),
+        "sumber": "operasional", "id": _s(row[1]), "nama": _s(row[2]),
+        "desa": _s(row[3]), "kecamatan": _s(row[4]), "kabupaten": _s(row[5]),
+        "provinsi": _s(row[6]).upper(), "tahap": _s(row[7]), "kategori": _s(row[21]),
+        "lat": float(lat), "lon": float(lon), "luas": "", "pendamping": "",
+        "tahun": _s(row[8]), "penyedia": _s(row[11]), "nilai_p": _i(row[13]),
+        "pengawas": _s(row[14]), "realisasi": _i(row[17]), "progres": _f(row[19]),
+        "kondisi": _s(row[20]), "sarAda": _i(row[22]), "sarNA": _i(row[23]),
     })
 
 wb.close()
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
 total     = len(markers)
-n_sv      = sum(1 for m in markers if m['sumber']=='survey')
-n_op      = sum(1 for m in markers if m['sumber']=='operasional')
-selesai   = sum(1 for m in markers if m['sumber']=='operasional' and (m['progres'] or 0)>=100)
-tot_nilai = sum(m['nilai_p'] for m in markers)
-prov_all  = sorted(set(m['provinsi'] for m in markers if m['provinsi']))
+n_sv      = sum(1 for m in markers if m["sumber"] == "survey")
+n_op      = sum(1 for m in markers if m["sumber"] == "operasional")
+selesai   = sum(1 for m in markers if m["sumber"] == "operasional" and (m["progres"] or 0) >= 100)
+tot_nilai = sum(m["nilai_p"] for m in markers)
+prov_all  = sorted(set(m["provinsi"] for m in markers if m["provinsi"]))
+
 
 def fmt_rp(n):
-    if n>=1e12: return f"Rp {n/1e12:.2f} T".replace('.',',')
-    if n>=1e9:  return f"Rp {n/1e9:.2f} M".replace('.',',')
-    if n>=1e6:  return f"Rp {n/1e6:.0f} Jt"
+    if n >= 1e12: return f"Rp {n/1e12:.2f} T".replace(".", ",")
+    if n >= 1e9:  return f"Rp {n/1e9:.2f} M".replace(".", ",")
+    if n >= 1e6:  return f"Rp {n/1e6:.0f} Jt"
     return f"Rp {n:,.0f}"
 
-tgl      = datetime.now().strftime('%d %B %Y')
-tgl_file = datetime.now().strftime('%Y%m%d')
-mrk_json = json.dumps(markers, ensure_ascii=False, separators=(',',':'))
-prov_opts = '\n          '.join(
+
+# ── Load harga wilayah ────────────────────────────────────────────────────────
+spreadsheet_id_arg = next(
+    (a for a in sys.argv[1:] if not a.startswith("--")),
+    SPREADSHEET_ID,
+)
+harga_wilayah = load_harga_wilayah(spreadsheet_id_arg)
+tgl_harga     = datetime.now().strftime("%d/%m/%Y")
+
+# Serialisasi ke JSON untuk embed di HTML
+harga_wil_json  = json.dumps(harga_wilayah, ensure_ascii=False, separators=(",", ":"))
+prov_wil_json   = json.dumps(PROVINSI_WILAYAH, ensure_ascii=False, separators=(",", ":"))
+
+tgl      = datetime.now().strftime("%d %B %Y")
+tgl_file = datetime.now().strftime("%Y%m%d")
+mrk_json = json.dumps(markers, ensure_ascii=False, separators=(",", ":"))
+prov_opts = "\n          ".join(
     f'<option value="{p}">{p.title()}</option>' for p in prov_all
 )
 
@@ -125,7 +386,7 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
 .leg-sep{{font-size:.6rem;color:#C9A84C;font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin:5px 0 2px}}
 #map{{flex:1;z-index:0}}
 .leaflet-popup-content-wrapper{{border-radius:9px;padding:0;box-shadow:0 6px 24px rgba(0,0,0,.35)}}
-.leaflet-popup-content{{margin:0;min-width:240px;max-width:320px}}
+.leaflet-popup-content{{margin:0;min-width:240px;max-width:340px}}
 .pu-head{{color:#C9A84C;font-weight:700;font-size:.82rem;padding:9px 13px;border-radius:9px 9px 0 0;line-height:1.35;background:linear-gradient(135deg,#1B3A6B,#0d2244)}}
 .pu-tbl{{width:100%;border-collapse:collapse;font-size:.76rem}}
 .pu-tbl td{{padding:4px 11px;vertical-align:top}}
@@ -133,6 +394,12 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
 .pu-tbl td:first-child{{font-weight:600;color:#475569;width:90px;white-space:nowrap}}
 .pu-tbl td:last-child{{color:#1e293b;word-break:break-word}}
 .pu-badge{{display:inline-block;padding:1px 8px;border-radius:10px;font-size:.7rem;font-weight:700;color:#fff}}
+.pu-harga{{padding:6px 11px 8px;background:#f0f7ff;border-top:1px solid #dbeafe}}
+.pu-harga-title{{font-size:.67rem;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}}
+.pu-harga-row{{display:flex;justify-content:space-between;align-items:baseline;font-size:.71rem;padding:2px 0;border-bottom:1px dotted #e2e8f0}}
+.pu-harga-k{{color:#475569;flex:1}}
+.pu-harga-v{{color:#1B3A6B;font-weight:700;white-space:nowrap;margin-left:6px}}
+.pu-harga-note{{font-size:.6rem;color:#94a3b8;margin-top:4px}}
 @media(max-width:600px){{#sidebar{{display:none}}#hdr-date{{display:none}}}}
 </style>
 </head>
@@ -215,6 +482,9 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 const DATA = {mrk_json};
+const HARGA_WILAYAH   = {harga_wil_json};
+const PROVINSI_WILAYAH = {prov_wil_json};
+const HARGA_TGL = '{tgl_harga}';
 
 const KAT_COLOR = {{'2':'#10B981','1':'#F59E0B','0':'#6B7280','':'#94a3b8'}};
 const KAT_LABEL = {{'2':'Kat 2 · Prioritas','1':'Kat 1 · Potensial','0':'Kat 0 · Observasi','':'—'}};
@@ -236,6 +506,16 @@ function statusOf(p){{
   if(p>=100)return'selesai';
   if(p>0)return'berjalan';
   return'belum';
+}}
+
+function buildHargaHtml(provinsi){{
+  const wil=PROVINSI_WILAYAH[provinsi]||null;
+  if(!wil||!HARGA_WILAYAH[wil]||!HARGA_WILAYAH[wil].length)return'';
+  const rows=HARGA_WILAYAH[wil].slice(0,3);
+  const rowsHtml=rows.map(h=>
+    `<div class="pu-harga-row"><span class="pu-harga-k">${{esc(h.k)}} <em style="color:#94a3b8;font-style:normal">${{esc(h.s)}}</em></span><span class="pu-harga-v">Rp ${{esc(h.t)}}/kg</span></div>`
+  ).join('');
+  return`<div class="pu-harga"><div class="pu-harga-title">&#128722; Harga Komoditas &mdash; ${{esc(wil)}}</div>${{rowsHtml}}<div class="pu-harga-note">Per ${{HARGA_TGL}} &middot; Estimasi harga di tingkat nelayan/tambak</div></div>`;
 }}
 
 const map = L.map('map',{{center:[-2.5,118],zoom:5}});
@@ -260,6 +540,7 @@ const cluster = L.markerClusterGroup({{
 const allMarkers = DATA.map(d=>{{
   const color = KAT_COLOR[d.kategori]||'#94a3b8';
   let m;
+  const hargaHtml = buildHargaHtml(d.provinsi);
 
   if(d.sumber==='operasional'){{
     m = L.marker([d.lat,d.lon],{{
@@ -294,7 +575,8 @@ const allMarkers = DATA.map(d=>{{
         <tr><td>Sarpras</td><td>Ada: ${{d.sarAda}} &nbsp; N/A: ${{d.sarNA}}</td></tr>
         ${{kondRow}}
       </table>
-    `,{{maxWidth:320}});
+      ${{hargaHtml}}
+    `,{{maxWidth:340}});
   }} else {{
     m = L.circleMarker([d.lat,d.lon],{{
       radius:5,fillColor:color,color:'#fff',weight:1.5,opacity:1,fillOpacity:.85
@@ -311,7 +593,8 @@ const allMarkers = DATA.map(d=>{{
         <tr><td>Luas</td><td>${{esc(d.luas)||'—'}}</td></tr>
         <tr><td>Pendamping</td><td>${{esc(d.pendamping)||'—'}}</td></tr>
       </table>
-    `,{{maxWidth:300}});
+      ${{hargaHtml}}
+    `,{{maxWidth:340}});
   }}
   m._d = d;
   return m;
@@ -408,16 +691,17 @@ btnReset.addEventListener('click',()=>{{
 </html>"""
 
 # ── Write output ──────────────────────────────────────────────────────────────
-os.makedirs('output', exist_ok=True)
-out_dated = f'output/knmp_{tgl_file}.html'
-out_root  = 'knmp.html'
+os.makedirs("output", exist_ok=True)
+out_dated = f"output/knmp_{tgl_file}.html"
+out_root  = "knmp.html"
 
-with open(out_dated, 'w', encoding='utf-8') as f: f.write(html)
-with open(out_root,  'w', encoding='utf-8') as f: f.write(html)
+with open(out_dated, "w", encoding="utf-8") as f: f.write(html)
+with open(out_root,  "w", encoding="utf-8") as f: f.write(html)
 
-kb = len(html.encode('utf-8')) // 1024
-kat_debug = sorted(set(m['kategori'] for m in markers))
+kb = len(html.encode("utf-8")) // 1024
+kat_debug = sorted(set(m["kategori"] for m in markers))
 print(f"Generated {out_root} ({kb} KB)")
 print(f"Generated {out_dated}")
 print(f"Total: {total}  Survey: {n_sv}  Ops: {n_op}  Selesai: {selesai}  Kontrak: {fmt_rp(tot_nilai)}")
 print(f"Kategori unik: {kat_debug}  Provinsi: {len(prov_all)}")
+print(f"Harga wilayah: {len(harga_wilayah)} wilayah dimuat.")

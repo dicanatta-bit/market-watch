@@ -48,6 +48,6 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions [Market Watch AJN]"
-          git add output/ index.html || true
-          git diff --cached --quiet || git commit -m "auto: laporan & infografis $(date +%Y-%m-%d)"
+          git add output/ index.html knmp.html || true
+          git diff --cached --quiet || git commit -m "auto: laporan, infografis & peta $(date +%Y-%m-%d)"
           git push || true

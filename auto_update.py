@@ -39,14 +39,20 @@ if __name__ == "__main__":
     # 2. Update harga semua komoditas ke sheet "Harga Komoditas"
     run("update_harga.py", SPREADSHEET_ID, max_retries=2, retry_delay=60)
 
-    # 3. Cek alert & tulis ke sheet "Alert Log"
+    # 3. Generate harga per wilayah ke sheet "Harga per Wilayah"
+    run("generate_harga_wilayah.py", SPREADSHEET_ID)
+
+    # 4. Cek alert & tulis ke sheet "Alert Log"
     run("alert_engine.py", SPREADSHEET_ID)
 
-    # 4. Build infografis GSheet + ekspor HTML ke /output
+    # 5. Build infografis GSheet + ekspor HTML ke /output
     run("buat_infografis.py")
 
-    # 5. Generate laporan mingguan PDF ke /output
+    # 6. Generate laporan mingguan PDF ke /output
     run("laporan_mingguan.py", SPREADSHEET_ID)
+
+    # 7. Generate peta KNMP dengan integrasi harga wilayah
+    run("buat_knmp_map.py", SPREADSHEET_ID)
 
     print("\n" + "="*55)
     print("Auto update selesai.")

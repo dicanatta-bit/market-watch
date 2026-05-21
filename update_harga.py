@@ -34,8 +34,9 @@ HEADERS = [
     "Harga Minggu Lalu (Rp/kg)", "Harga 1 Bulan Lalu (Rp/kg)", "Harga 3 Bulan Lalu (Rp/kg)",
     "% vs Minggu Lalu", "% vs 3 Bulan Lalu",
     "Sumber", "Tingkat Kepercayaan", "Catatan",
+    "Wilayah", "Faktor Wilayah",
 ]
-HEADER_COL = chr(64 + len(HEADERS))   # 'N'
+HEADER_COL = chr(64 + len(HEADERS))   # 'P'
 
 TANGGAL = date.today().strftime("%d/%m/%Y")
 
@@ -648,6 +649,8 @@ def main():
             enrich_sumber(entry, web),
             determine_kepercayaan(entry, web),
             entry["catatan"],
+            "Jawa-Bali",  # Wilayah — basis nasional
+            1.00,         # Faktor Wilayah
         ]
         baris_baru.append(baris)
         print(f"  [ANTRIAN] {k} | {s}")
