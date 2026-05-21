@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Probe SIHI KKP (opsional — cek akses dari runner)
+        continue-on-error: true
+        run: python scrape_sihi.py --probe
+
       - name: Tulis credentials.json dari secret
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
 
