@@ -22,6 +22,7 @@ import argparse
 import csv
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -40,7 +41,7 @@ CSV_FIELDNAMES = [
     "komoditas", "harga", "tanggal", "satuan",
 ]
 
-TIMEOUT    = 18
+TIMEOUT    = int(os.environ.get("SIHI_TIMEOUT", 18))
 DELAY      = 1.2   # detik antar request (hormati rate limit KKP)
 MAX_PAGES  = 50    # batas halaman DataTables per endpoint
 

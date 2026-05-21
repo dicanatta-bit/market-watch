@@ -12,7 +12,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repo
@@ -43,6 +43,20 @@ jobs:
       - name: Format sheet Harga Komoditas (Senin)
         run: python sheet_formatter.py
 
+      - name: Generate harga wilayah
+        continue-on-error: true
+        run: python generate_harga_wilayah.py
+
+      - name: Scrape TPI SIHI (ambil harga ikan aktual)
+        continue-on-error: true
+        env:
+          SIHI_TIMEOUT: 30
+        run: python scrape_sihi.py
+
+      - name: Match TPI ke KNMP
+        continue-on-error: true
+        run: python match_tpi_knmp.py --skip-scrape
+
       - name: Hapus credentials (cleanup)
         if: always()
         run: rm -f credentials.json
@@ -52,6 +66,6 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions [Market Watch AJN]"
-          git add output/ index.html knmp.html || true
+          git add output/ data/ index.html knmp.html || true
           git diff --cached --quiet || git commit -m "auto: laporan, infografis & peta $(date +%Y-%m-%d)"
           git push || true
