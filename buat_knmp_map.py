@@ -356,7 +356,7 @@ html,body{{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:#0
 #hdr-right{{display:flex;align-items:center;gap:10px}}
 .hdr-chip{{font-size:.75rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:#C9A84C;padding:4px 11px;border-radius:20px;white-space:nowrap}}
 #hdr-date{{font-size:.7rem;color:#64748b}}
-#layout{{display:flex;height:100vh;padding-top:56px}}
+#layout{{display:flex;height:100vh;padding-top:92px}}
 #sidebar{{width:275px;flex-shrink:0;background:#162d55;overflow-y:auto;overflow-x:hidden;padding:12px;display:flex;flex-direction:column;gap:9px;border-right:1px solid rgba(201,168,76,.15)}}
 #sidebar::-webkit-scrollbar{{width:3px}}
 #sidebar::-webkit-scrollbar-thumb{{background:rgba(201,168,76,.35);border-radius:2px}}
@@ -401,6 +401,11 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
 .pu-harga-v{{color:#1B3A6B;font-weight:700;white-space:nowrap;margin-left:6px}}
 .pu-harga-note{{font-size:.6rem;color:#94a3b8;margin-top:4px}}
 @media(max-width:600px){{#sidebar{{display:none}}#hdr-date{{display:none}}}}
+.nav-bar{{background:#0d2244;border-top:1px solid rgba(201,168,76,.3);position:fixed;top:56px;left:0;right:0;z-index:999;height:36px}}
+.nav-bar-inner{{display:flex;gap:0;padding:0 20px;height:100%}}
+.nav-link{{color:rgba(255,255,255,.5);text-decoration:none;font-size:.72rem;font-weight:500;padding:8px 14px;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center}}
+.nav-link:hover{{color:#C9A84C;background:rgba(201,168,76,.08)}}
+.nav-link.active{{color:#C9A84C;border-bottom-color:#C9A84C;background:rgba(201,168,76,.1)}}
 </style>
 </head>
 <body>
@@ -413,6 +418,13 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
   <div id="hdr-right">
     <div class="hdr-chip">{total:,} Lokasi</div>
     <div id="hdr-date">{tgl}</div>
+  </div>
+</div>
+
+<div class="nav-bar">
+  <div class="nav-bar-inner">
+    <a class="nav-link" href="./index.html">&#128202; Harga</a>
+    <a class="nav-link active" href="./knmp.html">&#128506;&#65039; Peta KNMP</a>
   </div>
 </div>
 
