@@ -401,9 +401,9 @@ select:focus{{border-color:rgba(201,168,76,.55)}}
 .pu-harga-v{{color:#1B3A6B;font-weight:700;white-space:nowrap;margin-left:6px}}
 .pu-harga-note{{font-size:.6rem;color:#94a3b8;margin-top:4px}}
 @media(max-width:600px){{#sidebar{{display:none}}#hdr-date{{display:none}}}}
-.nav-bar{{background:#0d2244;border-top:1px solid rgba(201,168,76,.3);position:fixed;top:56px;left:0;right:0;z-index:999;height:36px}}
-.nav-bar-inner{{display:flex;gap:0;padding:0 20px;height:100%}}
-.nav-link{{color:rgba(255,255,255,.5);text-decoration:none;font-size:.72rem;font-weight:500;padding:8px 14px;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center}}
+.nav-bar{{background:#0d2244;border-top:1px solid rgba(201,168,76,.3);position:fixed;top:56px;left:0;right:0;z-index:999}}
+.nav-bar-inner{{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;gap:0}}
+.nav-link{{color:rgba(255,255,255,.5);text-decoration:none;font-size:.78rem;font-weight:500;padding:8px 16px;border-bottom:2px solid transparent;transition:all .15s}}
 .nav-link:hover{{color:#C9A84C;background:rgba(201,168,76,.08)}}
 .nav-link.active{{color:#C9A84C;border-bottom-color:#C9A84C;background:rgba(201,168,76,.1)}}
 </style>
