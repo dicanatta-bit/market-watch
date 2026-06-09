@@ -16,32 +16,24 @@ api.interceptors.response.use(
 
 export default api
 
-// Mock data imports
+// ── Mock data ──
 import { mockKnmp, mockPrices, mockRegional, mockStats } from './mockData.js'
 
-// Helper: try API, fallback to mock
-async function tryAPI(getter, mockData, label) {
+async function tryAPI(url, mockData, label) {
   try {
-    const { data } = await api.get(getter)
-    return data.data || data
+    const { data } = await api.get(url)
+    // Vite returns HTML for unknown routes - check if valid data
+    if (data && typeof data === 'object' && (data.data || data.success !== undefined)) {
+      return data.data || data
+    }
+    throw new Error('Invalid API response')
   } catch {
-    console.info(`📦 ${label}: menggunakan mock data (BE belum tersedia)`)
+    console.debug(`📦 ${label}: mock data`)
     return mockData
   }
 }
 
-export async function fetchKnmp() {
-  return tryAPI('/api/knmp', mockKnmp, 'KNMP')
-}
-
-export async function fetchPrices() {
-  return tryAPI('/api/prices', mockPrices, 'Harga')
-}
-
-export async function fetchRegionalPrices() {
-  return tryAPI('/api/prices/regional', mockRegional, 'Harga Wilayah')
-}
-
-export async function fetchStats() {
-  return tryAPI('/api/stats', mockStats, 'Statistik')
-}
+export function fetchKnmp()          { return tryAPI('/api/knmp', mockKnmp, 'KNMP') }
+export function fetchPrices()        { return tryAPI('/api/prices', mockPrices, 'Harga') }
+export function fetchRegionalPrices(){ return tryAPI('/api/prices/regional', mockRegional, 'Wilayah') }
+export function fetchStats()         { return tryAPI('/api/stats', mockStats, 'Stats') }
