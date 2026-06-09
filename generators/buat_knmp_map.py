@@ -339,11 +339,11 @@ function popup(m){{
 
 function toggleSidebar(){{document.getElementById('sidebar').classList.toggle('open')}}
 
-const map=L.map('map',{{center:[-2.5,118],zoom:5}});
+const map=L.map('map',{{center:[-2.5,118],zoom:5,preferCanvas:true}});
 L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png',{{
   attribution:'&copy; OSM &copy; CARTO',subdomains:'abcd',maxZoom:19
 }}).addTo(map);
-const cl=L.markerClusterGroup({{chunkedLoading:true,maxClusterRadius:55,
+const cl=L.markerClusterGroup({{chunkedLoading:true,maxClusterRadius:55,spiderfyOnMaxZoom:false,
   iconCreateFunction:function(c){{const n=c.getChildCount(),s=n<10?30:n<30?36:n<70?42:48;
     return L.divIcon({{html:'<div style="background:#1B3A6B;border:2px solid #C9A84C;border-radius:50%;width:'+s+'px;height:'+s+'px;display:flex;align-items:center;justify-content:center;color:#C9A84C;font-size:'+(s<36?10:12)+'px;font-weight:800">'+n+'</div>',className:'',iconSize:[s,s],iconAnchor:[s/2,s/2]}});
 }}}});
@@ -353,9 +353,9 @@ var curPop=null,allMarkers=[];
 function makeMarker(m){{
   var p=m.progress,sts=p!=null&&p>=100?'selesai':p!=null&&p>0?'berjalan':'siap';
   var sc=sts==='selesai'?'#10B981':sts==='berjalan'?'#F59E0B':m.status_knmp==='PENYANGGA'?'#94A3B8':'#3B82F6';
-  var mk=L.marker([m.lat||0,m.lon||0],{{icon:L.divIcon({{html:'<div style="width:20px;height:20px;border-radius:3px;background:'+sc+';border:2px solid rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)">&#9733;</div>',className:'',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]}})}});
-  mk.on('mouseover',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-12],closeButton:false,autoPan:false}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
-  mk.on('click',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-12]}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
+  var mk=L.circleMarker([m.lat||0,m.lon||0],{{radius:6,fillColor:sc,color:'#fff',weight:1.5,fillOpacity:.9}});
+  mk.on('mouseover',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-8],closeButton:false,autoPan:false}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
+  mk.on('click',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-8]}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
   mk._d=m;return mk;
 }}
 
@@ -382,18 +382,27 @@ function applyFilters(){{
 [sEl,pEl,stEl].forEach(function(el){{el.addEventListener(el.tagName==='INPUT'?'input':'change',applyFilters)}});
 rBtn.addEventListener('click',function(){{sEl.value='';pEl.value='';stEl.value='';document.getElementById('st-total').textContent={total};document.getElementById('st-live').textContent={n_live};document.getElementById('st-100').textContent={n100};document.getElementById('st-run').textContent={n_run};fcEl.style.display='none';updL(allMarkers);cl.clearLayers();cl.addLayers(allMarkers);map.setView([-2.5,118],5)}});
 
-// Load markers from API (fast page load)
+// Load markers from API — batched for non‑blocking render
 function loadMarkers(){{
   var t0=performance.now();
   fetch('/api/knmp').then(function(r){{return r.json()}}).then(function(data){{
     M=data.data||[];
-    allMarkers=M.map(function(m){{return makeMarker(m)}});
-    cl.addLayers(allMarkers);map.addLayer(cl);
-    updL(allMarkers);
-    var ms=Math.round(performance.now()-t0);
-    document.getElementById('st-live').textContent=allMarkers.filter(function(m){{return m._d.progress!==null}}).length;
-    console.log('Markers loaded: '+M.length+' in '+ms+'ms');
-  }}).catch(function(e){{console.error('Load failed:',e)}});
+    var idx=0,BATCH=100;
+    function batch(){{
+      var chunk=M.slice(idx,idx+BATCH);
+      for(var i=0;i<chunk.length;i++){{allMarkers.push(makeMarker(chunk[i]))}}
+      cl.addLayers(allMarkers.slice(idx,idx+BATCH));
+      idx+=BATCH;
+      if(idx<M.length){{requestAnimationFrame(batch)}}
+      else{{
+        map.addLayer(cl);updL(allMarkers);
+        var ms=Math.round(performance.now()-t0);
+        document.getElementById('st-live').textContent=M.length;
+        console.log(M.length+' markers in '+ms+'ms');
+      }}
+    }}
+    batch();
+  }});
 }}
 loadMarkers();
 </script>
