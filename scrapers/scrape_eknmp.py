@@ -1,6 +1,6 @@
 """scrape_eknmp.py v2 — Login eKNMP API → INSERT ke MySQL + auto-create accounts"""
 import sys, time
-from datetime import date
+from datetime import datetime, date
 from config import Config
 from app import create_app
 from models import db, KnmpLocation, KnmpLocationSnapshot, User
@@ -142,6 +142,51 @@ def main():
                 )
                 db.session.add(snap)
                 updated_snapshots += 1
+
+        # Step: Fetch detail for locations WITHOUT coordinates
+        print(f"\n  Fetching lat/lon from detail API...")
+        locs_without_coords = KnmpLocation.query.filter(
+            db.or_(KnmpLocation.lat == None, KnmpLocation.lon == None)
+        ).all()
+        print(f"  {len(locs_without_coords)} locations need coordinates")
+
+        detail_count = 0
+        for loc in locs_without_coords:
+            try:
+                detail = client.fetch_detail(loc.id_lokasi)
+                if detail:
+                    if detail.get("lat") and detail.get("long"):
+                        loc.lat = float(detail["lat"])
+                        loc.lon = float(detail["long"])
+                    loc.kecamatan = detail.get("kecamatan")
+                    loc.desa = detail.get("desa")
+                    detail_data = detail.get("detail", {})
+                    if detail_data:
+                        loc.jenis_penyedia = detail_data.get("jenis_penyedia")
+                        loc.tanggal_kontrak = detail_data.get("tanggal_kontrak")
+                        if detail_data.get("tanggal_kontrak"):
+                            try:
+                                loc.tanggal_kontrak = detail_data["tanggal_kontrak"]
+                                parsed = datetime.strptime(str(detail_data["tanggal_kontrak"]), "%Y-%m-%d").date()
+                                loc.tanggal_kontrak = parsed
+                            except:
+                                pass
+                    monitoring = detail.get("monitoring")
+                    if monitoring:
+                        existing_snap = KnmpLocationSnapshot.query.filter_by(id_lokasi=loc.id_lokasi, snapshot_date=today).first()
+                        if existing_snap:
+                            existing_snap.realisasi_fisik = float(monitoring.get("realisasi_fisik", 0) or 0)
+                            existing_snap.realisasi_keuangan = float(monitoring.get("realisasi_keuangan", 0) or 0)
+                    detail_count += 1
+                    if detail_count % 50 == 0:
+                        print(f"    {detail_count}/{len(locs_without_coords)} details enriched...")
+                time.sleep(DELAY)
+            except Exception as e:
+                print(f"    ⚠ detail {loc.id_lokasi} failed: {e}")
+                continue
+
+        print(f"  ✓ {detail_count} details enriched with coordinates")
+        db.session.commit()
 
         # Auto-create accounts for new locations
         lokasi_tanpa_akun = (
