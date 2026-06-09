@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+}
+
+/* Leaflet overrides */
+.leaflet-container { background: #eef2f7 !important; }
+.leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; }
+.leaflet-popup-content { margin: 0; min-width: 240px; max-width: 320px; }
+.leaflet-popup-close-button { padding: 4px 6px !important; }
+
+/* Sidebar transition */
+.sidebar-transition { transition: transform 0.3s ease; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }

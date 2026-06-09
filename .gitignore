@@ -1,19 +1,7 @@
-__pycache__/
-*.pyc
-*.pyo
+node_modules/
+dist/
 .env
-*.log
-*.tmp
-
-# Uploads (foto progress)
-static/uploads/*
-!static/uploads/.gitkeep
-
-# Generated HTML
-knmp.html
-index.html
-
-# Local config
-instance/
-*.db
-*.sqlite
+*.pyc
+__pycache__/
+uploads/*
+!uploads/.gitkeep
