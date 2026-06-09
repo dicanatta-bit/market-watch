@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebSearch",
-      "WebFetch(domain:suhana.web.id)",
-      "WebFetch(domain:app.jala.tech)"
-    ]
-  }
-}
