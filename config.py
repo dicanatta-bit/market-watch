@@ -7,7 +7,7 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL",
-        "mysql+pymysql://mw_app:mw_password_2026@localhost/market_watch?charset=utf8mb4",
+        "mysql+pymysql://root:@localhost/market_watch?charset=utf8mb4",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {

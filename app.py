@@ -1,6 +1,6 @@
 """Market Watch v2 — Flask Application Factory"""
 import os
-from flask import Flask
+from flask import Flask, send_file
 from config import Config
 from models import db
 from auth import init_auth
@@ -30,9 +30,18 @@ def create_app(config_class=None):
     app.register_blueprint(api_bp)
     app.register_blueprint(export_bp)
 
+    # Serve static HTML
+    @app.route("/")
+    def home():
+        return send_file("index.html", mimetype="text/html")
+
+    @app.route("/knmp")
+    def knmp_map():
+        return send_file("knmp.html", mimetype="text/html")
+
     return app
 
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=8000)

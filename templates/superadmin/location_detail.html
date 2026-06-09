@@ -1,117 +1,58 @@
 {% extends "base.html" %}
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Location Detail — {{ location.nama_kampung }}{% endblock %}
 {% block content %}
-
-<h2 style="margin-bottom:4px;color:#1B3A6B;font-size:1.1rem;">
-  KNMP #{{ location.id_lokasi }} — {{ location.nama_kampung }}
-</h2>
-<p style="color:#64748b;font-size:.8rem;margin-bottom:16px">
-  {{ location.provinsi }} · {{ location.kabupaten }} · {{ location.kecamatan or '—' }} · {{ location.desa or '—' }}
-</p>
-
-<div class="grid-2">
-  <div>
-    <div class="card">
-      <div class="card-title">Info Lokasi</div>
-      <table>
-        <tr><td style="color:#64748b;width:140px">Status KNMP</td><td><span class="badge {% if location.status_knmp == 'HUB' %}badge-green{% else %}badge-blue{% endif %}">{{ location.status_knmp or '—' }}</span></td></tr>
-        <tr><td style="color:#64748b">Status Progres</td><td>{{ location.status_progres or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Tahun</td><td>{{ location.tahun or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Penyedia</td><td>{{ location.penyedia or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Jenis Penyedia</td><td>{{ location.jenis_penyedia or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Tanggal Kontrak</td><td>{{ location.tanggal_kontrak or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Nelayan</td><td>{{ location.jumlah_nelayan or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Kapal</td><td>{{ location.jumlah_kapal or '—' }}</td></tr>
-        <tr><td style="color:#64748b">Koordinat</td><td>{{ location.lat }}, {{ location.lon }}</td></tr>
-        <tr><td style="color:#64748b">Admin Lokasi</td><td>{{ admin_user.username if admin_user else '—' }}</td></tr>
-      </table>
-    </div>
-  </div>
-
-  <div>
-    <div class="card">
-      <div class="card-title">Progress Mingguan (History)</div>
-      {% if snapshots %}
-        <table>
-          <thead><tr><th>Tanggal</th><th>Progress</th><th>Fisik</th><th>Keuangan</th></tr></thead>
-          <tbody>
-            {% for s in snapshots %}
-            <tr>
-              <td>{{ s.snapshot_date }}</td>
-              <td>
-                <div class="progress-bar">
-                  <div class="progress-fill {{ 'green' if (s.progress_kumulatif or 0) >= 100 else 'yellow' if (s.progress_kumulatif or 0) >= 50 else 'red' }}" style="width:{{ s.progress_kumulatif or 0 }}%"></div>
-                </div>
-                {{ s.progress_kumulatif or 0 }}%
-              </td>
-              <td>{{ s.realisasi_fisik }}%</td>
-              <td>{{ s.realisasi_keuangan }}%</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p style="color:#64748b">Belum ada data snapshot.</p>
-      {% endif %}
-    </div>
-  </div>
-</div>
+<div class="page-title">KNMP #{{ location.id_lokasi }} — {{ location.nama_kampung }}</div>
+<p style="font-size:.78rem;color:var(--sub);margin-bottom:16px">{{ location.provinsi }} · {{ location.kabupaten }} · {{ location.kecamatan or '—' }}</p>
 
 <div class="grid-2">
   <div class="card">
-    <div class="card-title">Item Pembangunan ({{ items|length }})</div>
-    {% if items %}
-      {% for item in items %}
-      <div style="padding:8px 0;border-bottom:1px solid #e2e8f0">
-        <strong>{{ item.nama_item }}</strong>
-        {% set latest = item.updates|sort(attribute='created_at', reverse=True)|first %}
-        {% if latest %}
-          <div class="progress-bar"><div class="progress-fill yellow" style="width:{{ latest.progress_persen }}%"></div></div>
-          <span style="font-size:.7rem;color:#64748b">{{ latest.progress_persen }}% · {{ latest.created_at.strftime('%d %b %Y') }}</span>
-        {% else %}
-          <span style="font-size:.7rem;color:#94a3b8">Belum ada update</span>
-        {% endif %}
-      </div>
-      {% endfor %}
-    {% else %}
-      <p style="color:#64748b">Belum ada item.</p>
-    {% endif %}
-  </div>
-
-  <div class="card">
-    <div class="card-title">CCTV Streams ({{ cctv_streams|length }})</div>
-    {% if cctv_streams %}
-      {% for c in cctv_streams %}
-      <div style="padding:8px 0;border-bottom:1px solid #e2e8f0">
-        <strong>{{ c.label }}</strong><br>
-        <span style="font-size:.7rem;color:#64748b">Type: {{ c.stream_type }} · {% if c.is_active %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</span>
-      </div>
-      {% endfor %}
-    {% else %}
-      <p style="color:#64748b">Belum ada CCTV.</p>
-    {% endif %}
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-title">Harga TPI Terbaru ({{ tpi_prices|length }})</div>
-  {% if tpi_prices %}
+    <div class="card-title">Info Lokasi</div>
     <table>
-      <thead><tr><th>Tanggal</th><th>TPI</th><th>Komoditas</th><th>Harga</th></tr></thead>
-      <tbody>
-        {% for p in tpi_prices %}
-        <tr>
-          <td>{{ p.tanggal }}</td>
-          <td>{{ p.nama_tpi or '—' }}</td>
-          <td>{{ p.komoditas }}</td>
-          <td><strong>Rp {{ '{:,.0f}'.format(p.harga) }}/{{ p.satuan }}</strong></td>
-        </tr>
-        {% endfor %}
-      </tbody>
+      <tr><td style="color:var(--sub);width:130px">Status</td><td><span class="badge {% if location.status_knmp == 'HUB' %}badge-green{% else %}badge-blue{% endif %}">{{ location.status_knmp or '—' }}</span></td></tr>
+      <tr><td style="color:var(--sub)">Progres</td><td>{{ location.status_progres or '—' }}</td></tr>
+      <tr><td style="color:var(--sub)">Tahun</td><td>{{ location.tahun or '—' }}</td></tr>
+      <tr><td style="color:var(--sub)">Penyedia</td><td>{{ location.penyedia or '—' }}</td></tr>
+      <tr><td style="color:var(--sub)">Nelayan</td><td>{{ location.jumlah_nelayan or '—' }}</td></tr>
+      <tr><td style="color:var(--sub)">Kapal</td><td>{{ location.jumlah_kapal or '—' }}</td></tr>
+      <tr><td style="color:var(--sub)">Koordinat</td><td>{{ location.lat }}, {{ location.lon }}</td></tr>
+      {% if admin_user %}<tr><td style="color:var(--sub)">Admin</td><td>{{ admin_user.username }}</td></tr>{% endif %}
     </table>
-  {% else %}
-    <p style="color:#64748b">Belum ada data harga TPI.</p>
-  {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-title">Progress Snapshot (History)</div>
+    {% if snapshots %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Tanggal</th><th>Progress</th><th>Fisik</th><th>Keuangan</th></tr></thead>
+      <tbody>{% for s in snapshots %}<tr>
+        <td>{{ s.snapshot_date }}</td>
+        <td><div class="prog-bar"><div class="prog-fill {{ 'g' if (s.progress_kumulatif or 0) >= 100 else 'y' if (s.progress_kumulatif or 0) >= 50 else 'r' }}" style="width:{{ s.progress_kumulatif or 0 }}%"></div></div>{{ s.progress_kumulatif or 0 }}%</td>
+        <td>{{ s.realisasi_fisik }}%</td><td>{{ s.realisasi_keuangan }}%</td></tr>{% endfor %}
+      </tbody></table></div>
+    {% else %}<p style="color:var(--sub);font-size:.74rem">Belum ada snapshot.</p>{% endif %}
+  </div>
 </div>
 
+<div class="grid-2">
+  <div class="card"><div class="card-title">Item Pembangunan ({{ items|length }})</div>
+    {% if items %}{% for item in items %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <strong>{{ item.nama_item }}</strong>
+      {% set lu = item.updates|sort(attribute='created_at', reverse=True)|first %}
+      {% if lu %}<div class="prog-bar" style="margin:4px 0"><div class="prog-fill y" style="width:{{ lu.progress_persen }}%"></div></div>
+        <span style="font-size:.65rem;color:var(--sub)">{{ lu.progress_persen }}% · {{ lu.created_at.strftime('%d %b %Y') }}</span>{% else %}<span style="font-size:.65rem;color:#94a3b8">Belum update</span>{% endif %}
+    </div>{% endfor %}{% else %}<p style="color:var(--sub);font-size:.74rem">Belum ada item.</p>{% endif %}
+  </div>
+  <div class="card"><div class="card-title">CCTV Streams</div>
+    {% if cctv_streams %}{% for c in cctv_streams %}<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <strong>{{ c.label }}</strong><br><span style="font-size:.65rem;color:var(--sub)">{{ c.stream_type }} · <span class="badge {% if c.is_active %}badge-green{% else %}badge-gray{% endif %}">{{ 'Active' if c.is_active else 'Inactive' }}</span></span></div>{% endfor %}
+    {% else %}<p style="color:var(--sub);font-size:.74rem">Belum ada CCTV.</p>{% endif %}
+  </div>
+</div>
+
+<div class="card"><div class="card-title">Harga TPI ({{ tpi_prices|length }})</div>
+  {% if tpi_prices %}<div class="table-wrap"><table>
+    <thead><tr><th>Tanggal</th><th>TPI</th><th>Komoditas</th><th>Harga</th></tr></thead>
+    <tbody>{% for p in tpi_prices %}<tr><td>{{ p.tanggal }}</td><td>{{ p.nama_tpi or '—' }}</td><td>{{ p.komoditas }}</td><td><strong>Rp {{ '{:,.0f}'.format(p.harga) }}/kg</strong></td></tr>{% endfor %}
+    </tbody></table></div>{% else %}<p style="color:var(--sub);font-size:.74rem">Belum ada data harga.</p>{% endif %}
+</div>
 {% endblock %}
