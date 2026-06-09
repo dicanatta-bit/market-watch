@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import 'leaflet.markercluster'
 import { fetchKnmp } from '../api/client.js'
 
 function KnmpLayer({ markers }) {
