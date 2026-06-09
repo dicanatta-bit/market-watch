@@ -1,6 +1,19 @@
-credentials.json
 __pycache__/
 *.pyc
+*.pyo
 .env
-output/*.log
-output/*.tmp
+*.log
+*.tmp
+
+# Uploads (foto progress)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Generated HTML
+knmp.html
+index.html
+
+# Local config
+instance/
+*.db
+*.sqlite

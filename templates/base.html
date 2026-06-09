@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Market Watch AJN{% endblock %}</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#f0f4f8;color:#1e293b;min-height:100vh}
+
+/* ── Nav ── */
+.nav{background:linear-gradient(135deg,#1B3A6B,#0d2244);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.nav-brand{font-size:1rem;font-weight:700;color:#C9A84C;letter-spacing:.3px;text-decoration:none}
+.nav-right{display:flex;align-items:center;gap:16px;font-size:.78rem}
+.nav-right a{color:#cbd5e1;text-decoration:none;transition:color .15s}
+.nav-right a:hover{color:#C9A84C}
+.nav-badge{background:rgba(201,168,76,.15);color:#C9A84C;padding:3px 10px;border-radius:10px;font-size:.72rem;border:1px solid rgba(201,168,76,.3)}
+
+/* ── Content ── */
+.container{max-width:1200px;margin:0 auto;padding:20px 16px}
+
+/* ── Cards ── */
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:20px;margin-bottom:16px}
+.card-title{font-size:.85rem;font-weight:700;color:#1B3A6B;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #C9A84C}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-left:3px solid #C9A84C}
+.stat-card.green{border-left-color:#10B981}
+.stat-card.blue{border-left-color:#3B82F6}
+.stat-num{font-size:1.8rem;font-weight:800;color:#1B3A6B;line-height:1.1}
+.stat-lbl{font-size:.7rem;color:#64748b;margin-top:4px}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:.78rem}
+th{background:#1B3A6B;color:#fff;font-weight:600}
+tr:hover td{background:#f8fafc}
+
+/* ── Buttons ── */
+.btn{display:inline-block;padding:7px 16px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;border:none;transition:all .15s}
+.btn-primary{background:#1B3A6B;color:#fff}.btn-primary:hover{background:#0d2244}
+.btn-gold{background:#C9A84C;color:#fff}.btn-gold:hover{background:#b8943e}
+.btn-outline{background:#fff;color:#1B3A6B;border:1.5px solid #1B3A6B}.btn-outline:hover{background:#f0f4f8}
+.btn-sm{padding:4px 10px;font-size:.7rem}
+.btn-danger{background:#DC2626;color:#fff}.btn-danger:hover{background:#B91C1C}
+
+/* ── Forms ── */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:.75rem;font-weight:600;color:#475569;margin-bottom:4px}
+.form-input{width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:.82rem;outline:none;transition:border .15s}
+.form-input:focus{border-color:#C9A84C}
+.form-select{width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:.82rem;background:#fff}
+
+/* ── Alerts ── */
+.alert{padding:10px 16px;border-radius:8px;margin-bottom:12px;font-size:.8rem}
+.alert-success{background:#D1FAE5;color:#065F46;border:1px solid #A7F3D0}
+.alert-danger{background:#FEE2E2;color:#991B1B;border:1px solid #FECACA}
+.alert-warning{background:#FEF3C7;color:#92400E;border:1px solid #FDE68A}
+.alert-info{background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE}
+
+/* ── Progress Bar ── */
+.progress-bar{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin:8px 0}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.progress-fill.green{background:linear-gradient(90deg,#10B981,#34D399)}
+.progress-fill.yellow{background:linear-gradient(90deg,#F59E0B,#FBBF24)}
+.progress-fill.red{background:linear-gradient(90deg,#EF4444,#F87171)}
+
+/* ── Badge ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.65rem;font-weight:700}
+.badge-green{background:#D1FAE5;color:#065F46}
+.badge-yellow{background:#FEF3C7;color:#92400E}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-blue{background:#DBEAFE;color:#1E40AF}
+
+/* ── Grid ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="{{ url_for('superadmin.dashboard') if current_user.role == 'superadmin' else url_for('location.dashboard') }}" class="nav-brand">Market Watch AJN</a>
+  <div class="nav-right">
+    {% if current_user.is_authenticated %}
+      <span class="nav-badge">{{ current_user.role }}</span>
+      <span>{{ current_user.username }}</span>
+      <a href="{{ url_for('auth.logout') }}">Logout</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

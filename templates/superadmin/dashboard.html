@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+
+<h2 style="margin-bottom:20px;color:#1B3A6B;font-size:1.2rem;">Dashboard Superadmin</h2>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-num">{{ total_lokasi }}</div>
+    <div class="stat-lbl">Total Lokasi KNMP</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-num">{{ selesai }}</div>
+    <div class="stat-lbl">Selesai 100%</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ berjalan }}</div>
+    <div class="stat-lbl">Sedang Berjalan</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-num">{{ total_users }}</div>
+    <div class="stat-lbl">Total User</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ rata_rata }}%</div>
+    <div class="stat-lbl">Progress Rata-rata Nasional</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">{{ cctv_count }}</div>
+    <div class="stat-lbl">CCTV Aktif</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Menu</div>
+    <a href="{{ url_for('superadmin.locations') }}" class="btn btn-outline" style="width:100%;margin-bottom:8px">📍 Manage Locations</a>
+    <a href="{{ url_for('superadmin.users') }}" class="btn btn-outline" style="width:100%;margin-bottom:8px">👥 Manage Users</a>
+    <a href="{{ url_for('export.excel') }}" class="btn btn-gold" style="width:100%;margin-bottom:8px">📥 Export Excel</a>
+    <a href="{{ url_for('export.pdf') }}" class="btn btn-outline" style="width:100%">📄 Export PDF</a>
+  </div>
+  <div class="card">
+    <div class="card-title">Link Publik</div>
+    <a href="/market-watch/" target="_blank" class="btn btn-outline" style="width:100%;margin-bottom:8px">📊 Dashboard Harga (public)</a>
+    <a href="/market-watch/knmp.html" target="_blank" class="btn btn-outline" style="width:100%">🗺️ Peta KNMP (public)</a>
+  </div>
+</div>
+
+{% endblock %}

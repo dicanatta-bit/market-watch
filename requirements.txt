@@ -1,0 +1,12 @@
+flask==3.1.0
+flask-login==0.6.3
+flask-sqlalchemy==3.1.1
+pymysql==1.1.1
+sqlalchemy==2.0.36
+bcrypt==4.2.1
+gunicorn==23.0.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+openpyxl>=3.1.0
+reportlab>=4.2.0
+Pillow>=10.0.0
