@@ -290,7 +290,8 @@ select:focus{{border-color:#C9A84C}}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-const M={mj};const T={tj};const H={hj};const PW={pj};const HT='{tgl_harga}';const TA={total};
+const T={tj};const H={hj};const PW={pj};const HT='{tgl_harga}';const TA={total};
+var M=[]; // loaded via API
 
 function esc(s){{return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}}
 function nf(n){{return n!=null?n.toLocaleString('id'):'—'}}
@@ -347,27 +348,23 @@ const cl=L.markerClusterGroup({{chunkedLoading:true,maxClusterRadius:55,
     return L.divIcon({{html:'<div style="background:#1B3A6B;border:2px solid #C9A84C;border-radius:50%;width:'+s+'px;height:'+s+'px;display:flex;align-items:center;justify-content:center;color:#C9A84C;font-size:'+(s<36?10:12)+'px;font-weight:800">'+n+'</div>',className:'',iconSize:[s,s],iconAnchor:[s/2,s/2]}});
 }}}});
 
-var curPop=null;
+var curPop=null,allMarkers=[];
 
-const am=M.map(function(m){{
-  const p=m.progress,sts=p!=null&&p>=100?'selesai':p!=null&&p>0?'berjalan':'siap';
-  const sc=sts==='selesai'?'#10B981':sts==='berjalan'?'#F59E0B':m.status_knmp==='PENYANGGA'?'#94A3B8':'#3B82F6';
-  const mk=L.marker([m.lat||0,m.lon||0],{{icon:L.divIcon({{html:'<div style="width:20px;height:20px;border-radius:3px;background:'+sc+';border:2px solid rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)">&#9733;</div>',className:'',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]}})}});
-
+function makeMarker(m){{
+  var p=m.progress,sts=p!=null&&p>=100?'selesai':p!=null&&p>0?'berjalan':'siap';
+  var sc=sts==='selesai'?'#10B981':sts==='berjalan'?'#F59E0B':m.status_knmp==='PENYANGGA'?'#94A3B8':'#3B82F6';
+  var mk=L.marker([m.lat||0,m.lon||0],{{icon:L.divIcon({{html:'<div style="width:20px;height:20px;border-radius:3px;background:'+sc+';border:2px solid rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)">&#9733;</div>',className:'',iconSize:[20,20],iconAnchor:[10,10],popupAnchor:[0,-10]}})}});
   mk.on('mouseover',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-12],closeButton:false,autoPan:false}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
-  mk.on('mouseout',function(){{/* keep open - user can interact */}});
   mk.on('click',function(e){{if(curPop){{map.removeLayer(curPop);curPop=null}}curPop=L.popup({{offset:[0,-12]}}).setLatLng(e.latlng).setContent(popup(m)).openOn(map)}});
   mk._d=m;return mk;
-}});
-cl.addLayers(am);map.addLayer(cl);
+}}
 
-function updL(arr){{const cc={{'100':0,run:0,siap:0,pen:0}};arr.forEach(function(m){{const d=m._d,p=d.progress;if(d.status_knmp==='PENYANGGA')cc.pen++;else if(p!=null&&p>=100)cc['100']++;else if(p!=null&&p>0)cc.run++;else cc.siap++}});['100','run','siap','pen'].forEach(function(k){{var e=document.getElementById('lc-'+k);if(e)e.textContent=cc[k]}})}}
-updL(am);
+function updL(arr){{var cc={{'100':0,run:0,siap:0,pen:0}};arr.forEach(function(m){{var d=m._d,p=d.progress;if(d.status_knmp==='PENYANGGA')cc.pen++;else if(p!=null&&p>=100)cc['100']++;else if(p!=null&&p>0)cc.run++;else cc.siap++}});['100','run','siap','pen'].forEach(function(k){{var e=document.getElementById('lc-'+k);if(e)e.textContent=cc[k]}})}}
 
 var sEl=document.getElementById('search'),pEl=document.getElementById('fprov'),stEl=document.getElementById('fstat'),rBtn=document.getElementById('resetBtn'),fcEl=document.getElementById('fcount');
-function apply(){{
+function applyFilters(){{
   var q=sEl.value.toLowerCase().trim(),pv=pEl.value,st=stEl.value;
-  var ft=am.filter(function(m){{var d=m._d,p=d.progress;
+  var ft=allMarkers.filter(function(m){{var d=m._d,p=d.progress;
     if(pv&&d.provinsi!==pv)return false;
     if(st==='HUB'&&d.status_knmp!=='HUB')return false;
     if(st==='PENYANGGA'&&d.status_knmp!=='PENYANGGA')return false;
@@ -382,8 +379,23 @@ function apply(){{
   fcEl.style.display=n<TA?'block':'none';if(n<TA)fcEl.textContent='dari '+TA.toLocaleString('id')+' total';
   updL(ft);if(n>0&&n<TA){{var bnd=L.featureGroup(ft).getBounds();if(bnd.isValid())map.fitBounds(bnd,{{padding:[40,40],maxZoom:13}})}}
 }}
-[sEl,pEl,stEl].forEach(function(el){{el.addEventListener(el.tagName==='INPUT'?'input':'change',apply)}});
-rBtn.addEventListener('click',function(){{sEl.value='';pEl.value='';stEl.value='';document.getElementById('st-total').textContent={total};document.getElementById('st-live').textContent={n_live};document.getElementById('st-100').textContent={n100};document.getElementById('st-run').textContent={n_run};fcEl.style.display='none';updL(am);cl.clearLayers();cl.addLayers(am);map.setView([-2.5,118],5)}});
+[sEl,pEl,stEl].forEach(function(el){{el.addEventListener(el.tagName==='INPUT'?'input':'change',applyFilters)}});
+rBtn.addEventListener('click',function(){{sEl.value='';pEl.value='';stEl.value='';document.getElementById('st-total').textContent={total};document.getElementById('st-live').textContent={n_live};document.getElementById('st-100').textContent={n100};document.getElementById('st-run').textContent={n_run};fcEl.style.display='none';updL(allMarkers);cl.clearLayers();cl.addLayers(allMarkers);map.setView([-2.5,118],5)}});
+
+// Load markers from API (fast page load)
+function loadMarkers(){{
+  var t0=performance.now();
+  fetch('/api/knmp').then(function(r){{return r.json()}}).then(function(data){{
+    M=data.data||[];
+    allMarkers=M.map(function(m){{return makeMarker(m)}});
+    cl.addLayers(allMarkers);map.addLayer(cl);
+    updL(allMarkers);
+    var ms=Math.round(performance.now()-t0);
+    document.getElementById('st-live').textContent=allMarkers.filter(function(m){{return m._d.progress!==null}}).length;
+    console.log('Markers loaded: '+M.length+' in '+ms+'ms');
+  }}).catch(function(e){{console.error('Load failed:',e)}});
+}}
+loadMarkers();
 </script>
 </body>
 </html>"""
