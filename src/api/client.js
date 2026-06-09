@@ -16,42 +16,32 @@ api.interceptors.response.use(
 
 export default api
 
-// ── Mock fallback for development (remove when backend is ready) ──
+// Mock data imports
 import { mockKnmp, mockPrices, mockRegional, mockStats } from './mockData.js'
 
-export async function fetchKnmp() {
+// Helper: try API, fallback to mock
+async function tryAPI(getter, mockData, label) {
   try {
-    const { data } = await api.get('/api/knmp')
-    return data.data
+    const { data } = await api.get(getter)
+    return data.data || data
   } catch {
-    console.warn('BE unavailable, using mock knmp data')
-    return mockKnmp
+    console.info(`📦 ${label}: menggunakan mock data (BE belum tersedia)`)
+    return mockData
   }
+}
+
+export async function fetchKnmp() {
+  return tryAPI('/api/knmp', mockKnmp, 'KNMP')
 }
 
 export async function fetchPrices() {
-  try {
-    const { data } = await api.get('/api/prices')
-    return data.data
-  } catch {
-    return mockPrices
-  }
+  return tryAPI('/api/prices', mockPrices, 'Harga')
 }
 
 export async function fetchRegionalPrices() {
-  try {
-    const { data } = await api.get('/api/prices/regional')
-    return data.data
-  } catch {
-    return mockRegional
-  }
+  return tryAPI('/api/prices/regional', mockRegional, 'Harga Wilayah')
 }
 
 export async function fetchStats() {
-  try {
-    const { data } = await api.get('/api/stats')
-    return data.data
-  } catch {
-    return mockStats
-  }
+  return tryAPI('/api/stats', mockStats, 'Statistik')
 }

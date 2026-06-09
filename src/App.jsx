@@ -26,21 +26,27 @@ function Protected({ children, role }) {
 export default function App() {
   return (
     <Routes>
+      {/* Public pages with shared header */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/peta" element={<MapPage />} />
         <Route path="/login" element={<Login />} />
       </Route>
 
+      {/* Fullscreen map — no layout wrapper */}
+      <Route path="/peta" element={<MapPage />} />
+
+      {/* Change password — standalone */}
       <Route path="/change-password" element={<ChangePw />} />
 
-      <Route element={<Protected><AdminLayout /></Protected>}>
-        <Route path="/admin" element={<Protected role="superadmin"><AdminDashboard /></Protected>} />
-        <Route path="/admin/locations" element={<Protected role="superadmin"><Locations /></Protected>} />
-        <Route path="/admin/locations/:id" element={<Protected role="superadmin"><LocationDetail /></Protected>} />
-        <Route path="/admin/users" element={<Protected role="superadmin"><Users /></Protected>} />
+      {/* Superadmin routes */}
+      <Route element={<Protected role="superadmin"><AdminLayout /></Protected>}>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/locations" element={<Locations />} />
+        <Route path="/admin/locations/:id" element={<LocationDetail />} />
+        <Route path="/admin/users" element={<Users />} />
       </Route>
 
+      {/* Location admin routes */}
       <Route element={<Protected><AdminLayout /></Protected>}>
         <Route path="/loc/:id" element={<LocDashboard />} />
       </Route>

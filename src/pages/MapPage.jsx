@@ -87,7 +87,24 @@ export default function MapPage() {
   const berjalan = markers.filter(m => (m.progress_kumulatif || 0) > 0 && (m.progress_kumulatif || 0) < 100).length
 
   return (
-    <div className="-mx-4 sm:-mx-6 -my-6 fixed inset-0 top-[81px] flex">
+    <div className="h-screen w-screen flex flex-col overflow-hidden">
+      {/* Top bar */}
+      <header className="flex-shrink-0 bg-gradient-to-r from-navy to-navy-dark text-white flex items-center justify-between px-4 h-12 z-30 shadow-md">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white text-lg">☰</button>
+          <div>
+            <h1 className="text-sm font-bold text-gold">Peta KNMP Nasional</h1>
+            <p className="text-[9px] text-slate-400 hidden sm:block">PT Agrinas Jaladri Nusantara (Persero)</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] bg-gold/10 border border-gold/30 text-gold px-2 py-0.5 rounded-full">{markers.length} Lokasi</span>
+          <a href="/login" className="text-[10px] font-bold bg-gold text-navy-dark px-2.5 py-1 rounded hover:bg-amber-600 transition">🔒 Login</a>
+          <a href="/" className="text-[10px] text-slate-400 hover:text-white ml-1">📊 Harga</a>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-60' : 'w-0'} transition-all overflow-hidden lg:w-60 bg-white border-r border-slate-200 flex-shrink-0 z-10`}>
         <div className="p-3 space-y-3 overflow-y-auto h-full">
@@ -142,6 +159,7 @@ export default function MapPage() {
             attribution='&copy; OSM &copy; CARTO' subdomains="abcd" maxZoom={19} />
           <KnmpLayer markers={filtered} />
         </MapContainer>
+      </div>
       </div>
     </div>
   )
