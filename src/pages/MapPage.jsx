@@ -10,7 +10,37 @@ function KnmpLayer({ markers }) {
   useEffect(() => {
     if (!markers.length) return
     // Use MarkerCluster via L.markerClusterGroup
-    const mcg = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 55 })
+    const mcg = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 55,
+      iconCreateFunction: function(cluster) {
+        const count = cluster.getChildCount();
+        const children = cluster.getAllChildMarkers();
+        // Calculate completion ratio for cluster coloring
+        let done = 0, progress = 0;
+        children.forEach(m => {
+          const d = m._d || m.options?._d;
+          if (!d) return;
+          const p = d.progress_kumulatif;
+          if (p != null && p >= 100) done++;
+          else if (p != null && p > 0) progress++;
+        });
+        const total = done + progress;
+        const ratio = total > 0 ? done / total : 0;
+        const clusterColor = ratio >= 0.7 ? '#10B981' : ratio >= 0.3 ? '#F59E0B' : '#3B82F6';
+        const size = count < 20 ? 36 : count < 50 ? 44 : count < 100 ? 52 : 60;
+        const fontSize = size < 44 ? 12 : 14;
+        // Pie-like ring showing completion ratio
+        const ring = ratio > 0
+          ? `<svg width="${size}" height="${size}" style="position:absolute;top:0;left:0"><circle cx="${size/2}" cy="${size/2}" r="${size/2-3}" fill="none" stroke="#10B981" stroke-width="3" stroke-dasharray="${(ratio*100).toFixed(0)} 100" transform="rotate(-90 ${size/2} ${size/2})" opacity="0.8"/></svg>`
+          : '';
+        return L.divIcon({
+          html: `<div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center">
+            <div style="background:${clusterColor};border:3px solid #fff;border-radius:50%;width:${size-6}px;height:${size-6}px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.3);font-weight:800;font-size:${fontSize}px;color:#fff">${count}</div>
+            ${ring}
+          </div>`,
+          className: '', iconSize: [size, size], iconAnchor: [size/2, size/2]
+        });
+      }
+    })
 
     const batchSize = 100
     let idx = 0
@@ -99,8 +129,8 @@ export default function MapPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] bg-gold/10 border border-gold/30 text-gold px-2 py-0.5 rounded-full">{markers.length} Lokasi</span>
+          <a href="/" className="text-[10px] text-slate-400 hover:text-white">📊 Harga</a>
           <a href="/login" className="text-[10px] font-bold bg-gold text-navy-dark px-2.5 py-1 rounded hover:bg-amber-600 transition">🔒 Login</a>
-          <a href="/" className="text-[10px] text-slate-400 hover:text-white ml-1">📊 Harga</a>
         </div>
       </header>
 
@@ -159,6 +189,28 @@ export default function MapPage() {
             attribution='&copy; OSM &copy; CARTO' subdomains="abcd" maxZoom={19} />
           <KnmpLayer markers={filtered} />
         </MapContainer>
+
+        {/* Progress overview bar */}
+        <div className="absolute bottom-4 left-4 right-4 z-10 flex gap-2 flex-wrap">
+          <div className="bg-white/90 backdrop-blur rounded-xl shadow-lg px-4 py-2.5 flex items-center gap-3 text-xs flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <div className="w-8 h-2 bg-slate-200 rounded-full overflow-hidden flex-1 min-w-[100px]"><div className="h-full bg-emerald-500 rounded-full" style={{width: `${(selesai/markers.length*100).toFixed(0)}%`}} /></div>
+              <span className="font-bold text-emerald-700">{selesai}</span><span className="text-slate-400">Selesai</span>
+            </div>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-8 h-2 bg-slate-200 rounded-full overflow-hidden flex-1 min-w-[80px]"><div className="h-full bg-amber-400 rounded-full" style={{width: `${(berjalan/markers.length*100).toFixed(0)}%`}} /></div>
+              <span className="font-bold text-amber-700">{berjalan}</span><span className="text-slate-400">Berjalan</span>
+            </div>
+            <span className="text-slate-300">|</span>
+            <span className="font-bold text-slate-500">{markers.length - selesai - berjalan} <span className="text-slate-400">Siap</span></span>
+          </div>
+          {markers.length > 0 && (
+            <div className="bg-white/90 backdrop-blur rounded-xl shadow-lg px-4 py-2.5 text-xs text-slate-600">
+              ⭕ Cluster = jumlah kampung · 🟢 hijau = banyak selesai · 🟡 kuning = banyak berjalan
+            </div>
+          )}
+        </div>
       </div>
       </div>
     </div>
