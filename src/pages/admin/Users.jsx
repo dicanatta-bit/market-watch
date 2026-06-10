@@ -1,48 +1,47 @@
 import { useState } from 'react'
 import api from '../../api/client.js'
+import { Card } from '../../components/ui/Card.jsx'
+import { Button } from '../../components/ui/Button.jsx'
+import { Badge } from '../../components/ui/Badge.jsx'
+import { Table, TableBody, TableRow, TableCell, TableHead, TableHeader } from '../../components/ui/Table.jsx'
+import { Skeleton } from '../../components/ui/Skeleton.jsx'
 
 const MOCK_USERS = [
   { id: 1, username: 'superadmin@ajn.id', role: 'superadmin', nama: 'Superadmin AJN', id_lokasi: null, is_active: true, last_login: '2026-06-09' },
-  { id: 2, username: 'knmp_1363', role: 'admin_lokasi', nama: 'Kuala Tadu', id_lokasi: 1363, is_active: true, last_login: null },
-  { id: 3, username: 'knmp_1', role: 'admin_lokasi', nama: 'Kuala Raja', id_lokasi: 1, is_active: true, last_login: '2026-06-09' },
-  { id: 4, username: 'knmp_2', role: 'admin_lokasi', nama: 'Lancok', id_lokasi: 2, is_active: true, last_login: null },
+  { id: 2, username: 'knmp_1', role: 'admin_lokasi', nama: 'Kuala Raja', id_lokasi: 1, is_active: true, last_login: '2026-06-09' },
+  { id: 3, username: 'knmp_1363', role: 'admin_lokasi', nama: 'Kuala Tadu', id_lokasi: 1363, is_active: true, last_login: null },
 ]
 
 export default function Users() {
   const [users] = useState(MOCK_USERS)
   const [msg, setMsg] = useState('')
 
-  const resetPw = async (userId) => {
-    try {
-      await api.post(`/api/users/${userId}/reset-pw`)
-      setMsg(`Password user #${userId} direset.`)
-      setTimeout(() => setMsg(''), 3000)
-    } catch { setMsg('Gagal mereset password.') }
+  const resetPw = async (id) => {
+    try { await api.post(`/api/users/${id}/reset-pw`); setMsg(`Password user #${id} direset.`) } catch { setMsg('Gagal.') }
+    setTimeout(()=>setMsg(''),3000)
   }
 
   return (
     <div>
-      <h2 className="text-base font-bold text-navy mb-4">Manage Users</h2>
-      {msg && <div className="bg-emerald-50 text-emerald-700 text-xs p-2.5 rounded-lg mb-4 border border-emerald-200">{msg}</div>}
-      <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead><tr className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wide">
-            <th className="p-2.5 text-left">ID</th><th className="p-2.5 text-left">Username</th><th className="p-2.5 text-left">Role</th><th className="p-2.5 text-left">Nama</th><th className="p-2.5 text-left">Lokasi</th><th className="p-2.5 text-left">Status</th><th className="p-2.5 text-left">Last Login</th><th></th>
-          </tr></thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50">
-                <td className="p-2.5">{u.id}</td><td className="p-2.5 font-semibold">{u.username}</td>
-                <td className="p-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${u.role === 'superadmin' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'}`}>{u.role}</span></td>
-                <td className="p-2.5">{u.nama}</td><td className="p-2.5">{u.id_lokasi || '—'}</td>
-                <td className="p-2.5"><span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${u.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>{u.is_active ? 'Active' : 'Inactive'}</span></td>
-                <td className="p-2.5">{u.last_login || '—'}</td>
-                <td className="p-2.5"><button onClick={() => resetPw(u.id)} className="px-3 py-1 text-[10px] font-semibold bg-white border border-navy text-navy rounded-lg hover:bg-slate-50">Reset PW</button></td>
-              </tr>
+      <h2 className="text-base font-bold text-foreground mb-4">Manage Users</h2>
+      {msg && <div className="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-xs p-3 rounded-lg mb-4 border border-emerald-200 dark:border-emerald-800">{msg}</div>}
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Username</TableHead><TableHead>Role</TableHead><TableHead>Nama</TableHead><TableHead>Lokasi</TableHead><TableHead>Status</TableHead><TableHead>Login</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableBody>
+            {users.map(u=>(
+              <TableRow key={u.id}>
+                <TableCell className="text-xs">{u.id}</TableCell><TableCell className="text-xs font-semibold">{u.username}</TableCell>
+                <TableCell><Badge variant={u.role==='superadmin'?'success':'info'} className="text-[10px]">{u.role}</Badge></TableCell>
+                <TableCell className="text-xs">{u.nama}</TableCell><TableCell className="text-xs">{u.id_lokasi||'—'}</TableCell>
+                <TableCell><Badge variant={u.is_active?'success':'destructive'} className="text-[10px]">{u.is_active?'Active':'Inactive'}</Badge></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{u.last_login||'—'}</TableCell>
+                <TableCell><Button variant="outline" size="xs" onClick={()=>resetPw(u.id)}>Reset PW</Button></TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   )
 }
