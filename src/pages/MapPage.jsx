@@ -38,6 +38,9 @@ function KnmpLayer({ markers }) {
 
   useEffect(() => {
     if (!markers.length) return
+    let cancelled = false
+    const validMarkers = markers.filter(m => m.lat != null && m.lon != null)
+
     const mcg = L.markerClusterGroup({
       chunkedLoading: true, maxClusterRadius: 55, disableClusteringAtZoom: 16,
       iconCreateFunction: function(cluster) {
@@ -51,26 +54,37 @@ function KnmpLayer({ markers }) {
     })
 
     let idx = 0
-    const BATCH = 120
+    const BATCH = 80
+
     function addBatch() {
-      const chunk = markers.slice(idx, idx + BATCH)
+      if (cancelled) return
+      const chunk = validMarkers.slice(idx, idx + BATCH)
       chunk.forEach(m => {
         const p = m.progress_kumulatif
         const sts = p != null && p >= 100 ? 'selesai' : p != null && p > 0 ? 'berjalan' : m.status_knmp === 'PENYANGGA' ? 'penyangga' : 'siap'
-        const c = L.circleMarker([m.lat || 0, m.lon || 0], {
+        const c = L.circleMarker([m.lat, m.lon], {
           radius: m.status_knmp === 'HUB' ? 7 : 5, fillColor: STATUS_COLOR[sts],
           color: '#fff', weight: 1.5, fillOpacity: 0.9
         })
-        c.bindPopup(popupHTML(m), { maxWidth: 320 })
-        c.bindTooltip(`<b>${m.nama_kampung||''}</b><br>${m.status_knmp||''} · ${p!=null?p+'%':'—'}`, { direction: 'top' })
+        c._d = m
+        c.bindPopup(function() { return popupHTML(this._d) }, { maxWidth: 320 })
         mcg.addLayer(c)
       })
       idx += BATCH
-      if (idx < markers.length) requestAnimationFrame(addBatch)
-      else map.addLayer(mcg)
+      if (idx >= validMarkers.length) {
+        if (!cancelled) map.addLayer(mcg)
+        console.log(`${validMarkers.length} markers rendered on map`)
+      } else {
+        requestAnimationFrame(addBatch)
+      }
     }
-    addBatch()
-    return () => { map.removeLayer(mcg) }
+
+    setTimeout(addBatch, 50) // small delay to let map tiles load first
+
+    return () => {
+      cancelled = true
+      try { map.removeLayer(mcg) } catch(e) {}
+    }
   }, [markers, map])
 
   return null
@@ -159,6 +173,15 @@ export default function MapPage() {
 
         {/* Map area */}
         <div className="flex-1 relative">
+          {markers.length === 0 && (
+            <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <div className="animate-spin w-10 h-10 border-4 border-muted border-t-primary rounded-full mx-auto" />
+                <p className="text-sm text-muted-foreground font-medium">Memuat peta KNMP...</p>
+                <p className="text-xs text-muted-foreground/60">Mengambil data dari server</p>
+              </div>
+            </div>
+          )}
           <MapContainer center={[-2.5, 118]} zoom={5} className="w-full h-full" preferCanvas>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
               attribution='&copy; OSM &copy; CARTO' subdomains="abcd" maxZoom={19} />
