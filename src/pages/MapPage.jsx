@@ -39,7 +39,15 @@ function popupHTML(m, hargaWilayah) {
   const st = normStatus(m.status_knmp)
   const displaySt = st === 'PENYANGGA' ? 'Penyangga' : st === 'HUB' ? 'HUB' : st
   const wil = m.provinsi ? WILAYAH_PROV[m.provinsi.toUpperCase()] : null
-  const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
+  // 3 komoditas unik (beda nama) per wilayah
+  const seen = new Set()
+  const rawHarga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil] : []
+  const harga = rawHarga.filter(h => {
+    const name = h.komoditas.split('(')[0].trim()
+    if (seen.has(name)) return false
+    seen.add(name)
+    return true
+  }).slice(0, 3)
   const badgeBg = st === 'HUB' ? '#DBEAFE' : '#FEF3C7'
   const badgeClr = st === 'HUB' ? '#1E40AF' : '#92400E'
 
