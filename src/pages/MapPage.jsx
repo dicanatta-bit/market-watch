@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 
-const ST = { hub: '#3B82F6', penyangga: '#94A3B8', default: '#60A5FA' }
+const ST = { hub: '#3B82F6', penyangga: '#C9A84C', default: '#60A5FA' }
 
 const WILAYAH_PROV = {
   "ACEH":"Sumatera","SUMATERA UTARA":"Sumatera","SUMATRA UTARA":"Sumatera",
@@ -32,8 +32,8 @@ const WILAYAH_PROV = {
 function popupHTML(m, hargaWilayah) {
   const wil = WILAYAH_PROV[m.provinsi] || null
   const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
-  const badgeBg = m.status_knmp === 'HUB' ? '#DBEAFE' : '#F1F5F9'
-  const badgeClr = m.status_knmp === 'HUB' ? '#1E40AF' : '#475569'
+  const badgeBg = m.status_knmp === 'HUB' ? '#DBEAFE' : m.status_knmp === 'PENYANGGA' ? '#FEF3C7' : '#F1F5F9'
+  const badgeClr = m.status_knmp === 'HUB' ? '#1E40AF' : m.status_knmp === 'PENYANGGA' ? '#92400E' : '#475569'
 
   const rows = [
     ['Provinsi', m.provinsi],
@@ -54,7 +54,7 @@ function popupHTML(m, hargaWilayah) {
 
   const hargaHtml = harga.length ? `
     <div style="padding:6px 11px 0;background:#f0f7ff;border-top:1px solid #dbeafe;font-size:11px;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.4px">&#128722; Harga Komoditas — ${wil}</div>
-    ${harga.map(h => `<div style="display:flex;justify-content:space-between;padding:2px 11px;border-bottom:1px dotted #e2e8f0;font-size:12px;background:#f0f7ff"><span style="color:#475569">${h.k} <em style="color:#94a3b8;font-style:normal">${h.s}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${h.t}/kg</span></div>`).join('')}
+    ${harga.map(h => `<div style="display:flex;justify-content:space-between;padding:2px 11px;border-bottom:1px dotted #e2e8f0;font-size:12px;background:#f0f7ff"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8;font-style:normal">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')} – ${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('')}
     <div style="padding:2px 11px 6px;background:#f0f7ff;font-size:9px;color:#94a3b8">Per hari ini · Estimasi tingkat nelayan/tambak</div>
   ` : ''
 
@@ -137,9 +137,9 @@ export default function MapPage() {
             <Button variant="outline" size="xs" className="w-full" onClick={()=>{setSearch('');setSelectedProv('');setStatFilter('')}}>↺ Reset</Button>
             <div className="border-t pt-2 text-[11px] space-y-1">
               <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Legenda</div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#3B82F6'}}>●</span> HUB</span><span className="font-semibold">{hub}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#94A3B8'}}>●</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#60A5FA'}}>●</span> Lainnya</span><span className="font-semibold">{total-hub-penyangga}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#3B82F6'}}>⬤</span> HUB</span><span className="font-semibold">{hub}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#C9A84C'}}>⬤</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#60A5FA'}}>⬤</span> Lainnya</span><span className="font-semibold">{total-hub-penyangga}</span></div>
             </div>
           </div>
         </div>
@@ -169,7 +169,7 @@ export default function MapPage() {
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[150px]"><div className="h-full bg-blue-500 rounded-full" style={{width:`${(hub/total*100).toFixed(0)}%`}}/></div>
                 <span className="font-bold text-blue-700 dark:text-blue-400">{hub} HUB</span>
                 <span className="text-muted-foreground">|</span>
-                <span className="font-bold text-slate-500">{penyangga} Penyangga</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">{penyangga} Penyangga</span>
                 <span className="text-muted-foreground">|</span>
                 <span className="text-muted-foreground">{total-hub-penyangga} Lain</span>
               </div>
