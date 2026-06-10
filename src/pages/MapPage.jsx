@@ -37,23 +37,26 @@ const WILAYAH_PROV = {
 
 function popupHTML(m, hargaWilayah) {
   const st = normStatus(m.status_knmp)
+  const displaySt = st === 'PENYANGGA' ? 'Penyangga' : st === 'HUB' ? 'HUB' : st
   const wil = WILAYAH_PROV[m.provinsi] || null
   const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
   const badgeBg = st === 'HUB' ? '#DBEAFE' : '#FEF3C7'
   const badgeClr = st === 'HUB' ? '#1E40AF' : '#92400E'
-  const row = (l, v, w) => `<tr${w ? ' style="background:#f1f5f9"' : ''}><td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${l}</td><td style="padding:3px 11px;color:#1e293b"><b>${v||'—'}</b></td></tr>`
-  const rows = [['Provinsi', m.provinsi],['Kabupaten', m.kabupaten]]
+
+  const rows = []
+  if (m.provinsi) rows.push(['Provinsi', m.provinsi])
+  if (m.kabupaten) rows.push(['Kabupaten', m.kabupaten])
   if (m.kecamatan) rows.push(['Kecamatan', m.kecamatan])
   if (m.desa) rows.push(['Desa', m.desa])
-  rows.push(['Nelayan', (m.jumlah_nelayan||0)+' org'],['Kapal', (m.jumlah_kapal||0)+' unit'])
-  if (m.tahun) rows.push(['Tahun', m.tahun])
+  rows.push(['Nelayan', (m.jumlah_nelayan||0)+' org'])
+  rows.push(['Kapal', (m.jumlah_kapal||0)+' unit'])
 
   return `<div style="font-family:system-ui;min-width:260px;max-width:340px">
     <div style="padding:9px 13px;font-weight:700;font-size:13px;color:#C9A84C;background:linear-gradient(135deg,#1B3A6B,#0d2244)">#${m.id_lokasi} · ${m.nama_kampung||'?'}</div>
-    <div style="padding:4px 11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${st||'—'}</span>${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}</div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">${rows.map((r,i)=>row(r[0],r[1],i%2!==0)).join('')}</table>
-    ${harga.length?`<div style="background:#f0f7ff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe"><div style="padding:6px 11px 2px;font-size:11px;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.4px">&#128722; Harga Komoditas — ${wil}</div>${harga.map(h=>`<div style="display:flex;justify-content:space-between;padding:2px 11px;font-size:12px!important"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8;font-style:normal">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')} – ${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('<div style="border-bottom:1px dotted #e2e8f0"/>')}<div style="padding:2px 11px 6px;font-size:9px;color:#94a3b8">Per hari ini · Estimasi tingkat nelayan/tambak</div></div>`:''}
-    <div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #f1f5f9"><a href="/login" style="color:#3B82F6">🔒 Login</a> untuk detail</div>
+    <div style="padding:4px 11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${displaySt||'—'}</span>${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">${rows.reduce((s,r,i)=>s+`<tr${i%2!==0?' style="background:#f1f5f9"':''}><td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${r[0]}</td><td style="padding:3px 11px;color:#1e293b"><b>${r[1]||'—'}</b></td></tr>`,'')}</table>
+    ${harga.length?`<div style="background:#f0f7ff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe"><div style="padding:6px 11px 2px;font-size:11px;font-weight:700;color:#1B3A6B">&#128722; Harga Komoditas — ${wil}</div>${harga.map(h=>`<div style="display:flex;justify-content:space-between;padding:3px 11px;font-size:12px"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')}–${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('<hr style="border:none;border-top:1px dotted #e2e8f0;margin:0;height:0">')}<div style="padding:2px 11px 6px;font-size:9px;color:#94a3b8">Per hari ini · Estimasi nelayan/tambak</div></div>`:''}
+    <div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8"><a href="/login" style="color:#3B82F6">&#128274; Login</a> untuk detail</div>
   </div>`
 }
 
