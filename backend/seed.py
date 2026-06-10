@@ -14,8 +14,8 @@ try:
         db.add(User(username=SUPERADMIN_USERNAME, password_hash=hash_password(SUPERADMIN_PASSWORD),
                      role="superadmin", nama="Superadmin AJN", is_active=True, force_pw_change=False))
         db.commit()
-        print(f"✓ Superadmin created: {SUPERADMIN_USERNAME}")
+        print(f"✓ Superadmin: {SUPERADMIN_USERNAME}")
     else:
-        print(f"✓ Superadmin already exists")
+        print(f"✓ Superadmin exists")
 finally:
     db.close()
