@@ -1,12 +1,13 @@
-import { useEffect, useState, useCallback } from 'react'
-import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { useEffect, useState, useRef } from 'react'
+import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 import L from 'leaflet'
-import 'leaflet.markercluster'
 import { fetchKnmp } from '../api/client.js'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
+
+// markercluster loaded via CDN in index.html — attaches to window.L
 
 const STATUS_COLOR = {
   selesai: '#10B981', berjalan: '#F59E0B', siap: '#3B82F6', penyangga: '#94A3B8'
@@ -33,15 +34,20 @@ function popupHTML(m) {
   </div>`
 }
 
-function KnmpLayer({ markers }) {
+function KnmpLayer({ markers, onReady }) {
   const map = useMap()
+  const layerRef = useRef(null)
+  const dirtyRef = useRef(false)
 
   useEffect(() => {
     if (!markers.length) return
-    let cancelled = false
-    const validMarkers = markers.filter(m => m.lat != null && m.lon != null)
+    if (dirtyRef.current) return // Strict Mode: skip second mount
+    dirtyRef.current = true
 
-    const mcg = L.markerClusterGroup({
+    const valid = markers.filter(m => m.lat != null && m.lon != null)
+    if (!valid.length) return
+
+    const mcg = window.L.markerClusterGroup({
       chunkedLoading: true, maxClusterRadius: 55, disableClusteringAtZoom: 16,
       iconCreateFunction: function(cluster) {
         const count = cluster.getChildCount()
@@ -53,16 +59,17 @@ function KnmpLayer({ markers }) {
       }
     })
 
-    let idx = 0
+    layerRef.current = mcg
+
     const BATCH = 80
+    let idx = 0
 
     function addBatch() {
-      if (cancelled) return
-      const chunk = validMarkers.slice(idx, idx + BATCH)
+      const chunk = valid.slice(idx, idx + BATCH)
       chunk.forEach(m => {
         const p = m.progress_kumulatif
         const sts = p != null && p >= 100 ? 'selesai' : p != null && p > 0 ? 'berjalan' : m.status_knmp === 'PENYANGGA' ? 'penyangga' : 'siap'
-        const c = L.circleMarker([m.lat, m.lon], {
+        const c = window.L.circleMarker([m.lat, m.lon], {
           radius: m.status_knmp === 'HUB' ? 7 : 5, fillColor: STATUS_COLOR[sts],
           color: '#fff', weight: 1.5, fillOpacity: 0.9
         })
@@ -71,21 +78,22 @@ function KnmpLayer({ markers }) {
         mcg.addLayer(c)
       })
       idx += BATCH
-      if (idx >= validMarkers.length) {
-        if (!cancelled) map.addLayer(mcg)
-        console.log(`${validMarkers.length} markers rendered on map`)
+      if (idx >= valid.length) {
+        map.addLayer(mcg)
+        console.log(`${valid.length} markers rendered`)
+        if (onReady) onReady()
       } else {
         requestAnimationFrame(addBatch)
       }
     }
 
-    setTimeout(addBatch, 50) // small delay to let map tiles load first
+    addBatch()
 
     return () => {
-      cancelled = true
+      dirtyRef.current = false
       try { map.removeLayer(mcg) } catch(e) {}
     }
-  }, [markers, map])
+  }, [markers, map, onReady])
 
   return null
 }
@@ -96,12 +104,13 @@ export default function MapPage() {
   const [provFilter, setProvFilter] = useState('')
   const [statFilter, setStatFilter] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     const t0 = performance.now()
     fetchKnmp().then(data => {
       setMarkers(data)
-      console.log(`${data.length} markers in ${Math.round(performance.now()-t0)}ms`)
+      console.log(`${data.length} markers loaded in ${Math.round(performance.now()-t0)}ms`)
     })
   }, [])
 
@@ -173,19 +182,19 @@ export default function MapPage() {
 
         {/* Map area */}
         <div className="flex-1 relative">
-          {markers.length === 0 && (
-            <div className="absolute inset-0 z-20 bg-background/70 backdrop-blur-sm flex items-center justify-center">
+          {!mapReady && (
+            <div className="absolute inset-0 z-20 bg-background/60 backdrop-blur-sm flex items-center justify-center">
               <div className="text-center space-y-3">
                 <div className="animate-spin w-10 h-10 border-4 border-muted border-t-primary rounded-full mx-auto" />
-                <p className="text-sm text-muted-foreground font-medium">Memuat peta KNMP...</p>
-                <p className="text-xs text-muted-foreground/60">Mengambil data dari server</p>
+                <p className="text-sm text-muted-foreground font-medium">Memuat data KNMP...</p>
+                <p className="text-xs text-muted-foreground/60">{markers.length > 0 ? 'Menggambar marker di peta' : 'Mengambil data dari server'}</p>
               </div>
             </div>
           )}
           <MapContainer center={[-2.5, 118]} zoom={5} className="w-full h-full" preferCanvas>
             <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
               attribution='&copy; OSM &copy; CARTO' subdomains="abcd" maxZoom={19} />
-            <KnmpLayer markers={filtered} />
+            <KnmpLayer markers={filtered} onReady={() => setMapReady(true)} />
           </MapContainer>
 
           {/* Bottom progress bar */}
