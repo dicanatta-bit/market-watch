@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { fetchKnmp, fetchRegionalPrices } from '../api/client.js'
+import api from '../api/client.js'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 
-const ST = { hub: '#3B82F6', penyangga: '#C9A84C', default: '#60A5FA' }
+// Normalize status_knmp: 'penyangga' or 'Penyangga' or 'PENYANGGA' → 'PENYANGGA'
+function normStatus(s) {
+  if (!s) return ''
+  const u = s.toUpperCase()
+  if (u === 'HUB') return 'HUB'
+  if (u === 'PENYANGGA') return 'PENYANGGA'
+  return u
+}
 
 const WILAYAH_PROV = {
   "ACEH":"Sumatera","SUMATERA UTARA":"Sumatera","SUMATRA UTARA":"Sumatera",
@@ -28,52 +35,26 @@ const WILAYAH_PROV = {
   "PAPUA PEGUNUNGAN":"Papua","PAPUA BARAT DAYA":"Papua",
 }
 
-// Legacy-style rich popup
 function popupHTML(m, hargaWilayah) {
+  const st = normStatus(m.status_knmp)
   const wil = WILAYAH_PROV[m.provinsi] || null
   const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
-  const badgeBg = m.status_knmp === 'HUB' ? '#DBEAFE' : m.status_knmp === 'PENYANGGA' ? '#FEF3C7' : '#F1F5F9'
-  const badgeClr = m.status_knmp === 'HUB' ? '#1E40AF' : m.status_knmp === 'PENYANGGA' ? '#92400E' : '#475569'
-
-  const rows = [
-    ['Provinsi', m.provinsi],
-    ['Kabupaten', m.kabupaten],
-  ]
+  const badgeBg = st === 'HUB' ? '#DBEAFE' : '#FEF3C7'
+  const badgeClr = st === 'HUB' ? '#1E40AF' : '#92400E'
+  const row = (l, v, w) => `<tr${w ? ' style="background:#f1f5f9"' : ''}><td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${l}</td><td style="padding:3px 11px;color:#1e293b"><b>${v||'—'}</b></td></tr>`
+  const rows = [['Provinsi', m.provinsi],['Kabupaten', m.kabupaten]]
   if (m.kecamatan) rows.push(['Kecamatan', m.kecamatan])
   if (m.desa) rows.push(['Desa', m.desa])
-  rows.push(['Nelayan', (m.jumlah_nelayan || 0).toLocaleString('id') + ' org'])
-  rows.push(['Kapal', (m.jumlah_kapal || 0) + ' unit'])
+  rows.push(['Nelayan', (m.jumlah_nelayan||0)+' org'],['Kapal', (m.jumlah_kapal||0)+' unit'])
   if (m.tahun) rows.push(['Tahun', m.tahun])
-
-  const rowsHtml = rows.map((r, i) =>
-    `<tr${i % 2 === 0 ? '' : ' style="background:#f1f5f9"'}>
-      <td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${r[0]}</td>
-      <td style="padding:3px 11px;color:#1e293b"><b>${r[1]||'—'}</b></td>
-    </tr>`
-  ).join('')
-
-  const hargaHtml = harga.length ? `
-    <div style="padding:6px 11px 0;background:#f0f7ff;border-top:1px solid #dbeafe;font-size:11px;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.4px">&#128722; Harga Komoditas — ${wil}</div>
-    ${harga.map(h => `<div style="display:flex;justify-content:space-between;padding:2px 11px;border-bottom:1px dotted #e2e8f0;font-size:12px;background:#f0f7ff"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8;font-style:normal">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')} – ${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('')}
-    <div style="padding:2px 11px 6px;background:#f0f7ff;font-size:9px;color:#94a3b8">Per hari ini · Estimasi tingkat nelayan/tambak</div>
-  ` : ''
 
   return `<div style="font-family:system-ui;min-width:260px;max-width:340px">
     <div style="padding:9px 13px;font-weight:700;font-size:13px;color:#C9A84C;background:linear-gradient(135deg,#1B3A6B,#0d2244)">#${m.id_lokasi} · ${m.nama_kampung||'?'}</div>
-    <div style="padding:4px 11px">
-      <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${m.status_knmp||'—'}</span>
-      ${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">${rowsHtml}</table>
-    ${hargaHtml}
+    <div style="padding:4px 11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${st||'—'}</span>${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">${rows.map((r,i)=>row(r[0],r[1],i%2!==0)).join('')}</table>
+    ${harga.length?`<div style="background:#f0f7ff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe"><div style="padding:6px 11px 2px;font-size:11px;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.4px">&#128722; Harga Komoditas — ${wil}</div>${harga.map(h=>`<div style="display:flex;justify-content:space-between;padding:2px 11px;font-size:12px!important"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8;font-style:normal">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')} – ${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('<div style="border-bottom:1px dotted #e2e8f0"/>')}<div style="padding:2px 11px 6px;font-size:9px;color:#94a3b8">Per hari ini · Estimasi tingkat nelayan/tambak</div></div>`:''}
     <div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #f1f5f9"><a href="/login" style="color:#3B82F6">🔒 Login</a> untuk detail</div>
   </div>`
-}
-
-function colorFor(m) {
-  if (m.status_knmp === 'PENYANGGA') return ST.penyangga
-  if (m.status_knmp === 'HUB') return ST.hub
-  return ST.default
 }
 
 export default function MapPage() {
@@ -85,22 +66,22 @@ export default function MapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
-    fetchKnmp().then(setMarkers)
-    fetchRegionalPrices().then(setHargaWilayah)
+    api.get('/api/knmp').then(r => setMarkers(r.data.data||[])).catch(() => {})
+    api.get('/api/prices/regional').then(r => setHargaWilayah(r.data.data||{})).catch(() => {})
   }, [])
 
   const filtered = markers.filter(m => {
     if (m.lat == null || m.lon == null) return false
     if (selectedProv && (m.provinsi||'').toUpperCase() !== selectedProv.toUpperCase()) return false
-    if (statFilter === 'HUB' && m.status_knmp !== 'HUB') return false
-    if (statFilter === 'PENYANGGA' && m.status_knmp !== 'PENYANGGA') return false
-    if (search && ![(m.nama_kampung||''),(m.kabupaten||''),(m.penyedia||'')].some(v => v.toLowerCase().includes(search.toLowerCase()))) return false
+    if (statFilter === 'HUB' && normStatus(m.status_knmp) !== 'HUB') return false
+    if (statFilter === 'PENYANGGA' && normStatus(m.status_knmp) !== 'PENYANGGA') return false
+    if (search && ![(m.nama_kampung||''),(m.kabupaten||'')].some(v => v.toLowerCase().includes(search.toLowerCase()))) return false
     return true
   })
 
   const total = markers.length
-  const hub = markers.filter(m => m.status_knmp === 'HUB').length
-  const penyangga = markers.filter(m => m.status_knmp === 'PENYANGGA').length
+  const hub = markers.filter(m => normStatus(m.status_knmp) === 'HUB').length
+  const penyangga = markers.filter(m => normStatus(m.status_knmp) === 'PENYANGGA').length
   const provs = [...new Set(markers.map(m => m.provinsi).filter(Boolean))].sort()
 
   return (
@@ -137,9 +118,9 @@ export default function MapPage() {
             <Button variant="outline" size="xs" className="w-full" onClick={()=>{setSearch('');setSelectedProv('');setStatFilter('')}}>↺ Reset</Button>
             <div className="border-t pt-2 text-[11px] space-y-1">
               <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Legenda</div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#3B82F6'}}>⬤</span> HUB</span><span className="font-semibold">{hub}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#C9A84C'}}>⬤</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#60A5FA'}}>⬤</span> Lainnya</span><span className="font-semibold">{total-hub-penyangga}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#3B82F6]">⬤</span> HUB</span><span className="font-semibold">{hub}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#C9A84C]">⬤</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#60A5FA]">⬤</span> Lain</span><span className="font-semibold">{total-hub-penyangga}</span></div>
             </div>
           </div>
         </div>
@@ -149,18 +130,23 @@ export default function MapPage() {
             <div className="w-full h-full flex items-center justify-center bg-muted/30">
               <div className="text-center space-y-3">
                 <div className="animate-spin w-10 h-10 border-4 border-muted border-t-primary rounded-full mx-auto"/>
-                <p className="text-sm text-muted-foreground">Memuat peta KNMP...</p>
+                <p className="text-sm text-muted-foreground">Memuat peta KNMP... {markers.length} markers</p>
               </div>
             </div>
           ) : (
             <MapContainer center={[-2.5,118]} zoom={5} className="w-full h-full" preferCanvas>
               <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution="&copy; OSM &copy; CARTO" subdomains="abcd" maxZoom={19}/>
-              {filtered.map(m => (
-                <CircleMarker key={m.id_lokasi} center={[m.lat,m.lon]} radius={m.status_knmp==='HUB'?7:5} fillColor={colorFor(m)} pathOptions={{color:'#fff',weight:1.5}} fillOpacity={0.9}>
-                  <Popup maxWidth={320}><div dangerouslySetInnerHTML={{__html:popupHTML(m, hargaWilayah)}}/></Popup>
-                  <Tooltip direction="top" offset={[0,-12]}><b>{m.nama_kampung}</b><br/>{m.status_knmp}</Tooltip>
-                </CircleMarker>
-              ))}
+              {filtered.map(m => {
+                const st = normStatus(m.status_knmp)
+                const color = st === 'PENYANGGA' ? '#C9A84C' : st === 'HUB' ? '#3B82F6' : '#60A5FA'
+                return (
+                  <CircleMarker key={m.id_lokasi} center={[m.lat,m.lon]}
+                    radius={st === 'HUB' ? 7 : 5} fillColor={color} pathOptions={{color:'#fff',weight:1.5}} fillOpacity={0.9}>
+                    <Popup maxWidth={320}><div dangerouslySetInnerHTML={{__html:popupHTML(m, hargaWilayah)}}/></Popup>
+                    <Tooltip direction="top" offset={[0,-12]}><b>{m.nama_kampung}</b><br/>{st}</Tooltip>
+                  </CircleMarker>
+                )
+              })}
             </MapContainer>
           )}
           {total > 0 && (
@@ -170,8 +156,6 @@ export default function MapPage() {
                 <span className="font-bold text-blue-700 dark:text-blue-400">{hub} HUB</span>
                 <span className="text-muted-foreground">|</span>
                 <span className="font-bold text-amber-700 dark:text-amber-400">{penyangga} Penyangga</span>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">{total-hub-penyangga} Lain</span>
               </div>
             </div>
           )}

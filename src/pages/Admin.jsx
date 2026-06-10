@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Card } from '../components/ui/Card.jsx'
 import { Button } from '../components/ui/Button.jsx'
-import { fetchPrices, fetchStats } from '../api/client.js'
 import api from '../api/client.js'
 
 const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
@@ -15,7 +14,7 @@ export default function Admin() {
   const [scraping, setScraping] = useState(false)
   const [scrapeLog, setScrapeLog] = useState('')
 
-  useEffect(() => { fetchPrices().then(setPrices); fetchStats().then(setStats) }, [])
+  useEffect(() => { api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {}); api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {}) }, [])
 
   const triggerScrape = async () => {
     setScraping(true)

@@ -15,23 +15,3 @@ api.interceptors.response.use(
 )
 
 export default api
-
-// Real API — fallback to mock only if backend is down
-async function fetchOrMock(url, mockData, label) {
-  try {
-    const { data } = await api.get(`/api${url}`)
-    if (data && data.data) return data.data
-    if (data && Array.isArray(data)) return data
-    return mockData
-  } catch (e) {
-    console.debug(`📦 ${label}: mock`)
-    return mockData
-  }
-}
-
-import { mockKnmp, mockPrices, mockRegional, mockStats } from './mockData.js'
-
-export function fetchKnmp()          { return fetchOrMock('/knmp', mockKnmp, 'KNMP') }
-export function fetchPrices()        { return fetchOrMock('/prices', mockPrices, 'Harga') }
-export function fetchRegionalPrices(){ return fetchOrMock('/prices/regional', mockRegional, 'Wilayah') }
-export function fetchStats()         { return fetchOrMock('/stats', mockStats, 'Stats') }

@@ -6,7 +6,7 @@ import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/Card.
 import { Badge } from '../components/ui/Badge.jsx'
 import { Skeleton } from '../components/ui/Skeleton.jsx'
 import { Table, TableBody, TableRow, TableCell, TableHead, TableHeader } from '../components/ui/Table.jsx'
-import { fetchPrices, fetchRegionalPrices, fetchStats } from '../api/client.js'
+import api from '../api/client.js'
 
 export default function Home() {
   const [prices, setPrices] = useState(null)
@@ -15,9 +15,9 @@ export default function Home() {
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
-    fetchPrices().then(setPrices)
-    fetchRegionalPrices().then(setRegional)
-    fetchStats().then(setStats)
+    api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
+    api.get('/api/prices/regional').then(r => setRegional(r.data.data||{})).catch(() => {})
+    api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
   }, [])
 
   const loading = !prices || !regional || !stats
