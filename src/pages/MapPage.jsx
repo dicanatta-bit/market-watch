@@ -38,7 +38,7 @@ const WILAYAH_PROV = {
 function popupHTML(m, hargaWilayah) {
   const st = normStatus(m.status_knmp)
   const displaySt = st === 'PENYANGGA' ? 'Penyangga' : st === 'HUB' ? 'HUB' : st
-  const wil = WILAYAH_PROV[m.provinsi] || null
+  const wil = m.provinsi ? WILAYAH_PROV[m.provinsi.toUpperCase()] : null
   const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
   const badgeBg = st === 'HUB' ? '#DBEAFE' : '#FEF3C7'
   const badgeClr = st === 'HUB' ? '#1E40AF' : '#92400E'
@@ -70,7 +70,10 @@ export default function MapPage() {
 
   useEffect(() => {
     api.get('/api/knmp').then(r => setMarkers(r.data.data||[])).catch(() => {})
-    api.get('/api/prices/regional').then(r => setHargaWilayah(r.data.data||{})).catch(() => {})
+    api.get('/api/prices/regional').then(r => {
+      const data = r.data.data || {}
+      setHargaWilayah(data)
+    }).catch(e => console.warn('harga wilayah error:', e.message))
   }, [])
 
   const filtered = markers.filter(m => {
