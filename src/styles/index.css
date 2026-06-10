@@ -3,18 +3,60 @@
 @tailwind utilities;
 
 @layer base {
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  :root {
+    --background: 220 25% 97%;
+    --foreground: 215 28% 17%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
+    --primary: 218 61% 26%;
+    --primary-foreground: 43 55% 55%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 215 28% 17%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 43 55% 55%;
+    --accent-foreground: 218 61% 26%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 218 61% 26%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 90%;
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 90%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 90%;
+    --primary: 218 61% 40%;
+    --primary-foreground: 43 55% 55%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 43 55% 55%;
+    --accent-foreground: 218 61% 26%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 218 61% 40%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 }
 
 /* Leaflet overrides */
 .leaflet-container { background: #eef2f7 !important; }
+.dark .leaflet-container { background: #0f172a !important; }
 .leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; }
 .leaflet-popup-content { margin: 0; min-width: 240px; max-width: 320px; }
 .leaflet-popup-close-button { padding: 4px 6px !important; }
-
-/* Sidebar transition */
-.sidebar-transition { transition: transform 0.3s ease; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }

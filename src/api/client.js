@@ -16,24 +16,22 @@ api.interceptors.response.use(
 
 export default api
 
-// ── Mock data ──
-import { mockKnmp, mockPrices, mockRegional, mockStats } from './mockData.js'
-
-async function tryAPI(url, mockData, label) {
+// Real API — fallback to mock only if backend is down
+async function fetchOrMock(url, mockData, label) {
   try {
-    const { data } = await api.get(url)
-    // Vite returns HTML for unknown routes - check if valid data
-    if (data && typeof data === 'object' && (data.data || data.success !== undefined)) {
-      return data.data || data
-    }
-    throw new Error('Invalid API response')
-  } catch {
-    console.debug(`📦 ${label}: mock data`)
+    const { data } = await api.get(`/api${url}`)
+    if (data && data.data) return data.data
+    if (data && Array.isArray(data)) return data
+    return mockData
+  } catch (e) {
+    console.debug(`📦 ${label}: mock`)
     return mockData
   }
 }
 
-export function fetchKnmp()          { return tryAPI('/api/knmp', mockKnmp, 'KNMP') }
-export function fetchPrices()        { return tryAPI('/api/prices', mockPrices, 'Harga') }
-export function fetchRegionalPrices(){ return tryAPI('/api/prices/regional', mockRegional, 'Wilayah') }
-export function fetchStats()         { return tryAPI('/api/stats', mockStats, 'Stats') }
+import { mockKnmp, mockPrices, mockRegional, mockStats } from './mockData.js'
+
+export function fetchKnmp()          { return fetchOrMock('/knmp', mockKnmp, 'KNMP') }
+export function fetchPrices()        { return fetchOrMock('/prices', mockPrices, 'Harga') }
+export function fetchRegionalPrices(){ return fetchOrMock('/prices/regional', mockRegional, 'Wilayah') }
+export function fetchStats()         { return fetchOrMock('/stats', mockStats, 'Stats') }
