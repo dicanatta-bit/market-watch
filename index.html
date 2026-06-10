@@ -1,13 +1,98 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Market Watch AJN</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Market Watch AJN — 10 June 2026</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#eef2f7;color:#1e293b;font-size:14px;min-height:100vh}
+.hdr{background:linear-gradient(135deg,#1B3A6B 0%,#0d2244 100%);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px}
+.hdr h1{font-size:1rem;font-weight:800;letter-spacing:.4px;color:#C9A84C}
+.hdr p{font-size:.65rem;color:rgba(203,213,225,.7)}
+.hdr-r{display:flex;align-items:center;gap:12px}
+.hdr-date{font-size:.7rem;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);color:#C9A84C;padding:4px 12px;border-radius:16px}
+
+.nav{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;gap:0}
+.nav a{color:#64748b;text-decoration:none;font-size:.75rem;font-weight:600;padding:9px 16px;border-bottom:2px solid transparent;transition:all .15s}
+.nav a:hover{color:#1B3A6B}
+.nav a.act{color:#1B3A6B;border-bottom-color:#C9A84C}
+
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px}
+
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.sc{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid #1B3A6B}
+.sc.gold{border-left-color:#C9A84C}.sc.green{border-left-color:#10B981}.sc.blue{border-left-color:#3B82F6}
+.sc-n{font-size:1.5rem;font-weight:800;color:#1B3A6B;line-height:1}
+.sc-l{font-size:.68rem;color:#64748b;margin-top:2px}
+
+.tl{font-size:.85rem;font-weight:700;color:#1B3A6B;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #C9A84C;display:flex;align-items:center;gap:6px}
+.tl::before{content:'';width:6px;height:6px;border-radius:50%;background:#C9A84C;flex-shrink:0}
+
+.fb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.fb button{padding:5px 14px;font-size:.75rem;font-weight:600;border-radius:16px;border:2px solid #cbd5e1;background:#fff;color:#475569;cursor:pointer}
+.fb button.act{background:#1B3A6B;color:#fff;border-color:#1B3A6B}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.grid{grid-template-columns:1fr}}
+
+.kc{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #1B3A6B;cursor:default;transition:transform .15s}
+.kc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.kc[data-cat="t"]{border-top-color:#145A30}
+.kc.hide{display:none}
+.kc-t{margin-bottom:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.6rem;font-weight:700}
+.badge.b{background:#DBEAFE;color:#1E40AF}
+.badge.t{background:#D1FAE5;color:#065F46}
+.kc-n{font-size:.8rem;font-weight:700;color:#1B3A6B}
+.kc-s{font-size:.65rem;color:#94a3b8}
+.kc-h{font-size:1.15rem;font-weight:800;color:#1e293b;margin-top:3px}
+.kc-u{font-size:.62rem;font-weight:400;color:#94a3b8}
+.kc-e{font-size:.65rem;color:#64748b}
+
+.table-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:.75rem}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid #e2e8f0}
+th{background:#f8fafc;color:#475569;font-weight:700;font-size:.65rem;text-transform:uppercase;letter-spacing:.4px}
+tr:hover td{background:#f8fafc}
+
+.badge-alert{display:inline-block;padding:1px 6px;border-radius:6px;font-size:.6rem;font-weight:700}
+.merah{background:#FEE2E2;color:#991B1B}
+.kuning{background:#FEF3C7;color:#92400E}
+.biru{background:#DBEAFE;color:#1E40AF}
+
+.footer{text-align:center;padding:16px;color:#94a3b8;font-size:.65rem;border-top:1px solid #e2e8f0;margin-top:16px}
+</style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased">
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+<body>
+<div class="hdr"><div><h1>Market Watch AJN</h1><p>PT Agrinas Jaladri Nusantara (Persero)</p></div><div class="hdr-r"><div class="hdr-date">10 June 2026</div></div></div>
+<div class="nav"><a class="act" href="./index.html">📊 Harga</a><a href="./knmp.html">🗺️ Peta KNMP</a></div>
+<div class="wrap">
+
+<div class="summary">
+  <div class="sc"><div class="sc-n">10</div><div class="sc-l">Komoditas</div></div>
+  <div class="sc gold"><div class="sc-n">0</div><div class="sc-l">Alert</div></div>
+  <div class="sc blue"><div class="sc-n">723</div><div class="sc-l">Lokasi KNMP</div></div>
+  <div class="sc green"><div class="sc-n">7</div><div class="sc-l">Wilayah Harga</div></div>
+</div>
+
+<div class="tl">Harga Tambak</div>
+<div class="fb"><button class="act" onclick="f('all')">Semua</button><button onclick="f('b')">Budidaya</button><button onclick="f('t')">Tangkap</button></div>
+<div class="grid" id="g">
+  <div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Udang Vaname (Litopenaeus vannamei)</div><div class="kc-s">Size 50</div><div class="kc-h">Rp 60.000 – 65.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $3.55/kg</div></div><div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Udang Vaname (Litopenaeus vannamei)</div><div class="kc-s">Size 60</div><div class="kc-h">Rp 55.000 – 60.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $3.55/kg</div></div><div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Udang Windu (Penaeus monodon)</div><div class="kc-s">Size 20</div><div class="kc-h">Rp 100.000 – 120.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $8.00/kg</div></div><div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Nila (Oreochromis niloticus)</div><div class="kc-s">300-500 g</div><div class="kc-h">Rp 22.000 – 28.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $3.00/kg</div></div><div class="kc" data-cat="t"><div class="kc-t"><span class="badge t">Tangkap</span></div><div class="kc-n">Tuna Sirip Kuning / Yellowfin (Thunnus albacares)</div><div class="kc-s">Sashimi grade</div><div class="kc-h">Rp 60.000 – 80.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $5.00/kg</div></div><div class="kc" data-cat="t"><div class="kc-t"><span class="badge t">Tangkap</span></div><div class="kc-n">Tuna Cakalang (Katsuwonus pelamis)</div><div class="kc-s">-</div><div class="kc-h">Rp 15.000 – 25.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $1.50/kg</div></div><div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Rumput Laut (Eucheuma cottonii)</div><div class="kc-s">Kering</div><div class="kc-h">Rp 6.000 – 7.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $0.40/kg</div></div><div class="kc" data-cat="t"><div class="kc-t"><span class="badge t">Tangkap</span></div><div class="kc-n">Lobster (Panulirus ornatus) / Mutiara</div><div class="kc-s">>200 g</div><div class="kc-h">Rp 280.000 – 380.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $18.00/kg</div></div><div class="kc" data-cat="b"><div class="kc-t"><span class="badge b">Budidaya</span></div><div class="kc-n">Bandeng (Chanos chanos)</div><div class="kc-s">250-500 g</div><div class="kc-h">Rp 20.000 – 28.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $1.80/kg</div></div><div class="kc" data-cat="t"><div class="kc-t"><span class="badge t">Tangkap</span></div><div class="kc-n">Cumi-cumi (Loligo spp.)</div><div class="kc-s">-</div><div class="kc-h">Rp 35.000 – 50.000<span class="kc-u">/kg</span></div><div class="kc-e">Ekspor: USD $3.50/kg</div></div>
+</div>
+
+<div class="tl">Harga per Wilayah (7 Wilayah)</div>
+<div class="table-wrap"><table><thead><tr><th>Wilayah</th><th>Komoditas</th><th>Size</th><th>Harga</th></tr></thead><tbody><tr><td>Jawa-Bali</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 60,000 – 65,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 57,000 – 61,750</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 55,200 – 59,800</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 54,000 – 58,500</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 52,800 – 57,200</strong>/kg</td></tr><tr><td>Maluku</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 51,000 – 55,250</strong>/kg</td></tr><tr><td>Papua</td><td>Udang Vaname</td><td>Size 50</td><td><strong>Rp 51,000 – 55,250</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 55,000 – 60,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 52,250 – 57,000</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 50,600 – 55,200</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 49,500 – 54,000</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 48,400 – 52,800</strong>/kg</td></tr><tr><td>Maluku</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 46,750 – 51,000</strong>/kg</td></tr><tr><td>Papua</td><td>Udang Vaname</td><td>Size 60</td><td><strong>Rp 46,750 – 51,000</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 100,000 – 120,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 95,000 – 114,000</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 92,000 – 110,400</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 90,000 – 108,000</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 88,000 – 105,600</strong>/kg</td></tr><tr><td>Maluku</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 85,000 – 102,000</strong>/kg</td></tr><tr><td>Papua</td><td>Udang Windu</td><td>Size 20</td><td><strong>Rp 85,000 – 102,000</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 22,000 – 28,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 20,900 – 26,600</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 20,240 – 25,760</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 19,800 – 25,200</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 19,360 – 24,640</strong>/kg</td></tr><tr><td>Maluku</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 18,700 – 23,800</strong>/kg</td></tr><tr><td>Papua</td><td>Nila</td><td>300-500 g</td><td><strong>Rp 18,700 – 23,800</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 60,000 – 80,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 57,000 – 76,000</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 55,200 – 73,600</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 54,000 – 72,000</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 52,800 – 70,400</strong>/kg</td></tr><tr><td>Maluku</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 51,000 – 68,000</strong>/kg</td></tr><tr><td>Papua</td><td>Tuna Sirip Kuning / Yellowfin</td><td>Sashimi grade</td><td><strong>Rp 51,000 – 68,000</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 15,000 – 25,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 14,250 – 23,750</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 13,800 – 23,000</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 13,500 – 22,500</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 13,200 – 22,000</strong>/kg</td></tr><tr><td>Maluku</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 12,750 – 21,250</strong>/kg</td></tr><tr><td>Papua</td><td>Tuna Cakalang</td><td>-</td><td><strong>Rp 12,750 – 21,250</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 6,000 – 7,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,700 – 6,650</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,520 – 6,440</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,400 – 6,300</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,280 – 6,160</strong>/kg</td></tr><tr><td>Maluku</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,100 – 5,950</strong>/kg</td></tr><tr><td>Papua</td><td>Rumput Laut</td><td>Kering</td><td><strong>Rp 5,100 – 5,950</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 280,000 – 380,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 266,000 – 361,000</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 257,600 – 349,600</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 252,000 – 342,000</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 246,400 – 334,400</strong>/kg</td></tr><tr><td>Maluku</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 238,000 – 323,000</strong>/kg</td></tr><tr><td>Papua</td><td>Lobster</td><td>>200 g</td><td><strong>Rp 238,000 – 323,000</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 20,000 – 28,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 19,000 – 26,600</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 18,400 – 25,760</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 18,000 – 25,200</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 17,600 – 24,640</strong>/kg</td></tr><tr><td>Maluku</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 17,000 – 23,800</strong>/kg</td></tr><tr><td>Papua</td><td>Bandeng</td><td>250-500 g</td><td><strong>Rp 17,000 – 23,800</strong>/kg</td></tr><tr><td>Jawa-Bali</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 35,000 – 50,000</strong>/kg</td></tr><tr><td>Sumatera</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 33,250 – 47,500</strong>/kg</td></tr><tr><td>Kalimantan</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 32,200 – 46,000</strong>/kg</td></tr><tr><td>Sulawesi</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 31,500 – 45,000</strong>/kg</td></tr><tr><td>NTT-NTB</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 30,800 – 44,000</strong>/kg</td></tr><tr><td>Maluku</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 29,750 – 42,500</strong>/kg</td></tr><tr><td>Papua</td><td>Cumi-cumi</td><td>-</td><td><strong>Rp 29,750 – 42,500</strong>/kg</td></tr></tbody></table></div>
+
+<div class="tl">Alert Pergerakan Harga</div>
+<div class="table-wrap"><p style="padding:16px;color:#94a3b8">Tidak ada alert saat ini.</p></div>
+
+</div>
+<div class="footer">Market Watch AJN &copy; 2026 — PT Agrinas Jaladri Nusantara (Persero)</div>
+
+<script>
+function f(c){document.querySelectorAll('.fb button').forEach(function(b){b.classList.remove('act')});if(c!=='all')document.querySelector('.fb button[onclick*="'+c+'"').classList.add('act');document.querySelectorAll('#g .kc').forEach(function(e){e.classList.toggle('hide',c!=='all'&&e.getAttribute('data-cat')!==c)})}
+</script>
 </body>
 </html>
