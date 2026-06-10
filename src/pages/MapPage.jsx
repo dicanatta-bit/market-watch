@@ -1,34 +1,97 @@
 import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { fetchKnmp } from '../api/client.js'
+import { fetchKnmp, fetchRegionalPrices } from '../api/client.js'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
 
-const ST = { selesai: '#10B981', berjalan: '#F59E0B', siap: '#3B82F6', penyangga: '#94A3B8' }
+const ST = { hub: '#3B82F6', penyangga: '#94A3B8', default: '#60A5FA' }
 
-function popupHTML(m) {
-  const p = m.progress_kumulatif, sts = p != null && p >= 100 ? 'selesai' : p != null && p > 0 ? 'berjalan' : 'siap'
-  const sc = ST[sts], lb = sts === 'selesai' ? 'Selesai' : 'Berjalan'
-  return `<div style="font-family:system-ui;min-width:260px"><div style="padding:10px 13px;font-weight:700;font-size:13px;color:#C9A84C;background:linear-gradient(135deg,#1B3A6B,#0d2244)">#${m.id_lokasi} · ${m.nama_kampung||'?'}</div>${p!=null?`<div style="height:4px;background:#e2e8f0"><div style="height:100%;width:${Math.min(p,100)}%;background:${sc}"></div></div>`:''}<div style="padding:4px 11px;display:flex;gap:4px;flex-wrap:wrap"><span style="padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;color:#fff;background:${sc}">${lb}${p>0?' '+p+'%':''}</span>${m.status_knmp?`<span style="padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${m.status_knmp==='HUB'?'#D1FAE5':'#F1F5F9'};color:${m.status_knmp==='HUB'?'#065F46':'#475569'}">${m.status_knmp}</span>`:''}${m.tahun?`<span style="padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569">${m.tahun}</span>`:''}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody><tr><td style="padding:3px 11px;color:#475569;width:90px;font-weight:600">Provinsi</td><td style="padding:3px 11px;color:#1e293b"><b>${m.provinsi||''}</b></td></tr><tr><td style="padding:3px 11px;color:#475569;font-weight:600">Kabupaten</td><td style="padding:3px 11px;color:#1e293b"><b>${m.kabupaten||''}</b></td></tr>${m.kecamatan?`<tr><td style="padding:3px 11px;color:#475569;font-weight:600">Kec</td><td style="padding:3px 11px;color:#1e293b"><b>${m.kecamatan}</b></td></tr>`:''}<tr><td style="padding:3px 11px;color:#475569;font-weight:600">Nelayan</td><td style="padding:3px 11px;color:#1e293b"><b>${(m.jumlah_nelayan||0).toLocaleString('id')} org</b></td></tr><tr><td style="padding:3px 11px;color:#475569;font-weight:600">Kapal</td><td style="padding:3px 11px;color:#1e293b"><b>${m.jumlah_kapal||0} unit</b></td></tr>${m.penyedia?`<tr><td style="padding:3px 11px;color:#475569;font-weight:600">Penyedia</td><td style="padding:3px 11px;color:#1e293b"><b>${m.penyedia}</b></td></tr>`:''}</tbody></table><div style="padding:6px 11px;background:#F0FDF4;border-top:1px solid #BBF7D0;font-size:11px">🏗️ Fisik <b>${m.realisasi_fisik!=null?m.realisasi_fisik+'%':'—'}</b> &nbsp; 💰 Keu <b>${m.realisasi_keuangan!=null?m.realisasi_keuangan+'%':'—'}</b></div><div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #f1f5f9">⏱️ ${m.snapshot_date||'—'} · <a href="/login" style="color:#3B82F6">🔒 Login</a></div></div>`
+const WILAYAH_PROV = {
+  "ACEH":"Sumatera","SUMATERA UTARA":"Sumatera","SUMATRA UTARA":"Sumatera",
+  "SUMATERA BARAT":"Sumatera","SUMATRA BARAT":"Sumatera","RIAU":"Sumatera",
+  "KEPULAUAN RIAU":"Sumatera","JAMBI":"Sumatera","BENGKULU":"Sumatera",
+  "SUMATERA SELATAN":"Sumatera","SUMATRA SELATAN":"Sumatera","LAMPUNG":"Sumatera",
+  "KEPULAUAN BANGKA BELITUNG":"Sumatera","BANGKA BELITUNG":"Sumatera",
+  "BANTEN":"Jawa-Bali","DKI JAKARTA":"Jawa-Bali","JAKARTA":"Jawa-Bali",
+  "JAWA BARAT":"Jawa-Bali","JAWA TENGAH":"Jawa-Bali","JAWA TIMUR":"Jawa-Bali",
+  "DI YOGYAKARTA":"Jawa-Bali","BALI":"Jawa-Bali",
+  "KALIMANTAN BARAT":"Kalimantan","KALIMANTAN TENGAH":"Kalimantan",
+  "KALIMANTAN SELATAN":"Kalimantan","KALIMANTAN TIMUR":"Kalimantan","KALIMANTAN UTARA":"Kalimantan",
+  "SULAWESI UTARA":"Sulawesi","SULAWESI TENGAH":"Sulawesi","SULAWESI SELATAN":"Sulawesi",
+  "SULAWESI TENGGARA":"Sulawesi","GORONTALO":"Sulawesi","SULAWESI BARAT":"Sulawesi",
+  "NUSA TENGGARA BARAT":"NTT-NTB","NTB":"NTT-NTB",
+  "NUSA TENGGARA TIMUR":"NTT-NTB","NTT":"NTT-NTB",
+  "MALUKU":"Maluku","MALUKU UTARA":"Maluku",
+  "PAPUA":"Papua","PAPUA BARAT":"Papua","PAPUA SELATAN":"Papua","PAPUA TENGAH":"Papua",
+  "PAPUA PEGUNUNGAN":"Papua","PAPUA BARAT DAYA":"Papua",
+}
+
+// Legacy-style rich popup
+function popupHTML(m, hargaWilayah) {
+  const wil = WILAYAH_PROV[m.provinsi] || null
+  const harga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil].slice(0, 3) : []
+  const badgeBg = m.status_knmp === 'HUB' ? '#DBEAFE' : '#F1F5F9'
+  const badgeClr = m.status_knmp === 'HUB' ? '#1E40AF' : '#475569'
+
+  const rows = [
+    ['Provinsi', m.provinsi],
+    ['Kabupaten', m.kabupaten],
+  ]
+  if (m.kecamatan) rows.push(['Kecamatan', m.kecamatan])
+  if (m.desa) rows.push(['Desa', m.desa])
+  rows.push(['Nelayan', (m.jumlah_nelayan || 0).toLocaleString('id') + ' org'])
+  rows.push(['Kapal', (m.jumlah_kapal || 0) + ' unit'])
+  if (m.tahun) rows.push(['Tahun', m.tahun])
+
+  const rowsHtml = rows.map((r, i) =>
+    `<tr${i % 2 === 0 ? '' : ' style="background:#f1f5f9"'}>
+      <td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${r[0]}</td>
+      <td style="padding:3px 11px;color:#1e293b"><b>${r[1]||'—'}</b></td>
+    </tr>`
+  ).join('')
+
+  const hargaHtml = harga.length ? `
+    <div style="padding:6px 11px 0;background:#f0f7ff;border-top:1px solid #dbeafe;font-size:11px;font-weight:700;color:#1B3A6B;text-transform:uppercase;letter-spacing:.4px">&#128722; Harga Komoditas — ${wil}</div>
+    ${harga.map(h => `<div style="display:flex;justify-content:space-between;padding:2px 11px;border-bottom:1px dotted #e2e8f0;font-size:12px;background:#f0f7ff"><span style="color:#475569">${h.k} <em style="color:#94a3b8;font-style:normal">${h.s}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${h.t}/kg</span></div>`).join('')}
+    <div style="padding:2px 11px 6px;background:#f0f7ff;font-size:9px;color:#94a3b8">Per hari ini · Estimasi tingkat nelayan/tambak</div>
+  ` : ''
+
+  return `<div style="font-family:system-ui;min-width:260px;max-width:340px">
+    <div style="padding:9px 13px;font-weight:700;font-size:13px;color:#C9A84C;background:linear-gradient(135deg,#1B3A6B,#0d2244)">#${m.id_lokasi} · ${m.nama_kampung||'?'}</div>
+    <div style="padding:4px 11px">
+      <span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${m.status_knmp||'—'}</span>
+      ${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">${rowsHtml}</table>
+    ${hargaHtml}
+    <div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8;border-top:1px solid #f1f5f9"><a href="/login" style="color:#3B82F6">🔒 Login</a> untuk detail</div>
+  </div>`
+}
+
+function colorFor(m) {
+  if (m.status_knmp === 'PENYANGGA') return ST.penyangga
+  if (m.status_knmp === 'HUB') return ST.hub
+  return ST.default
 }
 
 export default function MapPage() {
   const [markers, setMarkers] = useState([])
+  const [hargaWilayah, setHargaWilayah] = useState({})
   const [search, setSearch] = useState('')
   const [selectedProv, setSelectedProv] = useState('')
   const [statFilter, setStatFilter] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  useEffect(() => { fetchKnmp().then(setMarkers) }, [])
+  useEffect(() => {
+    fetchKnmp().then(setMarkers)
+    fetchRegionalPrices().then(setHargaWilayah)
+  }, [])
 
   const filtered = markers.filter(m => {
     if (m.lat == null || m.lon == null) return false
     if (selectedProv && (m.provinsi||'').toUpperCase() !== selectedProv.toUpperCase()) return false
-    if (statFilter === 'selesai' && (m.progress_kumulatif||0) < 100) return false
-    if (statFilter === 'berjalan' && !((m.progress_kumulatif||0) > 0 && (m.progress_kumulatif||0) < 100)) return false
-    if (statFilter === 'siap' && (m.progress_kumulatif||0) > 0) return false
     if (statFilter === 'HUB' && m.status_knmp !== 'HUB') return false
     if (statFilter === 'PENYANGGA' && m.status_knmp !== 'PENYANGGA') return false
     if (search && ![(m.nama_kampung||''),(m.kabupaten||''),(m.penyedia||'')].some(v => v.toLowerCase().includes(search.toLowerCase()))) return false
@@ -36,8 +99,9 @@ export default function MapPage() {
   })
 
   const total = markers.length
-  const selesai = markers.filter(m => (m.progress_kumulatif||0)>=100).length
-  const berjalan = markers.filter(m => (m.progress_kumulatif||0)>0&&(m.progress_kumulatif||0)<100).length
+  const hub = markers.filter(m => m.status_knmp === 'HUB').length
+  const penyangga = markers.filter(m => m.status_knmp === 'PENYANGGA').length
+  const provs = [...new Set(markers.map(m => m.provinsi).filter(Boolean))].sort()
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100 dark:bg-slate-950">
@@ -57,30 +121,25 @@ export default function MapPage() {
         <div className={`${sidebarOpen?'w-64':'w-0'} transition-all overflow-hidden lg:w-64 bg-card border-r flex-shrink-0 z-10`}>
           <div className="p-3 space-y-3 overflow-y-auto h-full">
             <div className="grid grid-cols-2 gap-2">
-              {[[total,'Total'],[selesai,'Selesai'],[berjalan,'Berjalan'],[total-selesai-berjalan,'Siap']].map(([v,l],i)=>(
+              {[[total,'Total'],[hub,'HUB'],[penyangga,'Penyangga'],[total-hub-penyangga,'Lain']].map(([v,l],i)=>(
                 <div key={i} className="bg-muted rounded-lg p-2.5 text-center border"><div className="text-lg font-extrabold text-foreground">{v}</div><div className="text-[10px] text-muted-foreground">{l}</div></div>
               ))}
             </div>
             <Input placeholder="Cari lokasi..." value={search} onChange={e=>setSearch(e.target.value)} className="h-8 text-xs"/>
-            <div>
-              <label className="block text-[11px] font-semibold text-muted-foreground mb-1">Provinsi</label>
-              <select value={selectedProv} onChange={e => setSelectedProv(e.target.value)} className="w-full h-8 text-xs border rounded-md bg-background px-2">
-                <option value="">Semua Provinsi</option>
-                {[...new Set(markers.map(m=>m.provinsi).filter(Boolean))].sort().map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
+            <div><label className="block text-[11px] font-semibold text-muted-foreground mb-1">Provinsi</label>
+              <select value={selectedProv} onChange={e=>setSelectedProv(e.target.value)} className="w-full h-8 text-xs border rounded-md bg-background px-2"><option value="">Semua Provinsi</option>{provs.map(p=><option key={p} value={p}>{p}</option>)}</select>
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-muted-foreground mb-1">Status</label>
+            <div><label className="block text-[11px] font-semibold text-muted-foreground mb-1">Status</label>
               <select value={statFilter} onChange={e=>setStatFilter(e.target.value)} className="w-full h-8 text-xs border rounded-md bg-background px-2">
-                <option value="">Semua Status</option><option value="selesai">Selesai (100%)</option><option value="berjalan">Berjalan</option><option value="siap">Siap Dibangun</option><option value="HUB">HUB</option><option value="PENYANGGA">Penyangga</option>
+                <option value="">Semua</option><option value="HUB">HUB</option><option value="PENYANGGA">Penyangga</option>
               </select>
             </div>
             <Button variant="outline" size="xs" className="w-full" onClick={()=>{setSearch('');setSelectedProv('');setStatFilter('')}}>↺ Reset</Button>
             <div className="border-t pt-2 text-[11px] space-y-1">
               <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Legenda</div>
-              {[['🟢 Selesai',selesai],['🟡 Berjalan',berjalan],['🔵 Siap',total-selesai-berjalan]].map(([l,v],i)=>(<div key={i} className="flex justify-between text-muted-foreground"><span>{l}</span><span className="font-semibold">{v}</span></div>))}
-              <div className="flex justify-between text-muted-foreground"><span>⭐ HUB</span><span className="font-semibold">{markers.filter(m=>m.status_knmp==='HUB').length}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span>◆ Penyangga</span><span className="font-semibold">{markers.filter(m=>m.status_knmp==='PENYANGGA').length}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#3B82F6'}}>●</span> HUB</span><span className="font-semibold">{hub}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#94A3B8'}}>●</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
+              <div className="flex justify-between text-muted-foreground"><span><span style={{color:'#60A5FA'}}>●</span> Lainnya</span><span className="font-semibold">{total-hub-penyangga}</span></div>
             </div>
           </div>
         </div>
@@ -96,24 +155,23 @@ export default function MapPage() {
           ) : (
             <MapContainer center={[-2.5,118]} zoom={5} className="w-full h-full" preferCanvas>
               <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution="&copy; OSM &copy; CARTO" subdomains="abcd" maxZoom={19}/>
-              {filtered.map(m => {
-                const p = m.progress_kumulatif, sts = p!=null&&p>=100?'selesai':p!=null&&p>0?'berjalan':m.status_knmp==='PENYANGGA'?'penyangga':'siap'
-                return (
-                  <CircleMarker key={m.id_lokasi} center={[m.lat,m.lon]} radius={m.status_knmp==='HUB'?7:5} fillColor={ST[sts]} pathOptions={{color:'#fff',weight:1.5}} fillOpacity={0.9}>
-                    <Popup maxWidth={300}><div dangerouslySetInnerHTML={{__html:popupHTML(m)}}/></Popup>
-                    <Tooltip direction="top" offset={[0,-12]}><b>{m.nama_kampung}</b><br/>{m.status_knmp} · {p!=null?p+'%':'—'}</Tooltip>
-                  </CircleMarker>
-                )
-              })}
+              {filtered.map(m => (
+                <CircleMarker key={m.id_lokasi} center={[m.lat,m.lon]} radius={m.status_knmp==='HUB'?7:5} fillColor={colorFor(m)} pathOptions={{color:'#fff',weight:1.5}} fillOpacity={0.9}>
+                  <Popup maxWidth={320}><div dangerouslySetInnerHTML={{__html:popupHTML(m, hargaWilayah)}}/></Popup>
+                  <Tooltip direction="top" offset={[0,-12]}><b>{m.nama_kampung}</b><br/>{m.status_knmp}</Tooltip>
+                </CircleMarker>
+              ))}
             </MapContainer>
           )}
           {total > 0 && (
             <div className="absolute bottom-3 left-3 right-3 z-[1000]">
               <div className="bg-card/90 backdrop-blur rounded-lg shadow border px-4 py-2.5 flex items-center gap-4 text-xs flex-wrap">
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[150px]"><div className="h-full bg-emerald-500 rounded-full" style={{width:`${(selesai/total*100).toFixed(0)}%`}}/></div>
-                <span className="font-bold text-emerald-700 dark:text-emerald-400">{selesai} Selesai</span><span className="text-muted-foreground">|</span>
-                <span className="font-bold text-amber-700 dark:text-amber-400">{berjalan} Berjalan</span><span className="text-muted-foreground">|</span>
-                <span className="text-muted-foreground">{total-selesai-berjalan} Siap</span>
+                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[150px]"><div className="h-full bg-blue-500 rounded-full" style={{width:`${(hub/total*100).toFixed(0)}%`}}/></div>
+                <span className="font-bold text-blue-700 dark:text-blue-400">{hub} HUB</span>
+                <span className="text-muted-foreground">|</span>
+                <span className="font-bold text-slate-500">{penyangga} Penyangga</span>
+                <span className="text-muted-foreground">|</span>
+                <span className="text-muted-foreground">{total-hub-penyangga} Lain</span>
               </div>
             </div>
           )}

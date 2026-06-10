@@ -49,23 +49,28 @@ def main():
             if item.get("jumlah_kapal") and str(item["jumlah_kapal"]).isdigit():
                 loc.jumlah_kapal = int(item["jumlah_kapal"])
 
-        # Fetch lat/lon from detail API
-        need_coords = db.query(KnmpLocation).filter((KnmpLocation.lat == None) | (KnmpLocation.lon == None)).all()
-        print(f"\n  {len(need_coords)} locations need coordinates")
+        # Fetch lat/lon from detail API for ALL locations (coord refresh)
+        all_locs = db.query(KnmpLocation).all()
+        print(f"\n  Fetching coordinates for {len(all_locs)} locations (API field: 'long')...")
         detail_count = 0
-        for loc in need_coords:
+        for loc in all_locs:
             try:
                 rd = requests.get(f"{BASE_URL}/api/api/knmp/detail",
                     params={"id_lokasi": loc.id_lokasi}, headers=headers, timeout=15)
+                if rd.status_code != 200:
+                    continue
                 detail = rd.json().get("data", {})
                 if detail.get("lat") and detail.get("long"):
                     loc.lat = float(detail["lat"]); loc.lon = float(detail["long"])
                 loc.kecamatan = detail.get("kecamatan")
                 loc.desa = detail.get("desa")
                 detail_count += 1
-                if detail_count % 100 == 0: print(f"    {detail_count}/{len(need_coords)} coordinates")
+                if detail_count % 100 == 0:
+                    print(f"    {detail_count}/{len(all_locs)} enriched")
                 time.sleep(0.2)
-            except Exception as e: pass
+            except Exception as e:
+                print(f"    ⚠ {loc.id_lokasi}: {type(e).__name__}")
+                continue
 
         db.commit()
         print(f"\nDone: {len(all_items)} locations, {new_loc} new, {detail_count} with coordinates")
