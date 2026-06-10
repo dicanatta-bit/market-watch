@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
@@ -40,7 +40,7 @@ export default function Login() {
             <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
             <Button type="submit" variant="gold" className="w-full" disabled={loading}>{loading ? 'Loading...' : 'Login'}</Button>
           </form>
-          <p className="text-xs text-muted-foreground text-center mt-4"><a href="/" className="hover:underline">← Kembali ke Website</a></p>
+          <p className="text-xs text-muted-foreground text-center mt-4"><Link to="/" className="hover:underline">← Kembali ke Website</Link></p>
         </CardContent>
       </Card>
     </div>

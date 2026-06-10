@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Card } from '../components/ui/Card.jsx'
 import { Button } from '../components/ui/Button.jsx'
@@ -37,8 +38,8 @@ export default function Admin() {
       <header className="bg-navy text-white flex items-center justify-between px-6 h-12">
         <h1 className="text-sm font-bold text-gold">Market Watch AJN · Admin</h1>
         <div className="flex items-center gap-4 text-xs">
-          <a href="/" className="text-slate-400 hover:text-white">← Website</a>
-          <a href="/peta" className="text-slate-400 hover:text-white">🗺️ Peta</a>
+          <Link to="/" className="text-slate-400 hover:text-white">← Website</Link>
+          <Link to="/peta" className="text-slate-400 hover:text-white">🗺️ Peta</Link>
           <span>{user?.username}</span>
           <button onClick={logout} className="text-red-400 hover:text-red-300 font-semibold">Logout</button>
         </div>
@@ -71,7 +72,7 @@ export default function Admin() {
             </div>
             <a href={exportURL}><Button variant="outline">📥 Export {pulau || 'Semua'}</Button></a>
           </div>
-          <p className="text-xs text-slate-400 mt-3">API: <code className="bg-slate-100 px-1 rounded">/api/export/excel?pulau=Jawa-Bali</code> · <a href="/docs" className="text-blue-600 hover:underline" target="_blank">Swagger /docs</a></p>
+          <p className="text-xs text-slate-400 mt-3">API: <code className="bg-slate-100 px-1 rounded">/api/export/excel?pulau=Jawa-Bali</code> · <a href="/market-watch/docs" className="text-blue-600 hover:underline" target="_blank">Swagger /docs</a></p>
         </Card>
 
         {/* Stats */}
