@@ -31,7 +31,7 @@ export default function Admin() {
     } finally { setScraping(false) }
   }
 
-  const exportURL = pulau ? `/api/export/excel?pulau=${encodeURIComponent(pulau)}` : '/api/export/excel'
+  const exportURL = pulau ? `/market-watch/api/export/excel?pulau=${encodeURIComponent(pulau)}` : '/market-watch/api/export/excel'
 
   return (
     <div className="min-h-screen bg-slate-50">
