@@ -68,7 +68,7 @@ export default function Home() {
       <div className="flex items-center gap-2 mb-4">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gold" /> Harga Tambak
-          {lastUpdate && <span className="text-[10px] font-normal text-muted-foreground ml-1">— Update: {lastUpdate}</span>}
+          {lastUpdate && <span className="text-[10px] font-normal text-muted-foreground ml-1">— Update: {new Date(lastUpdate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>}
         </h2>
         <div className="flex gap-1.5 ml-auto">
           {[{key:'all',label:'Semua'},{key:'b',label:'Budidaya'},{key:'t',label:'Tangkap'}].map(({key,label}) => (
@@ -120,7 +120,6 @@ export default function Home() {
           onClose={() => { setModalItem(null); setHistoryData([]) }}
         />
       )}
-    </div>
     </div>
   )
 }
