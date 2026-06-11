@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import StatCard from '../components/cards/StatCard.jsx'
 import CommodityCard from '../components/cards/CommodityCard.jsx'
+import PriceChart from '../components/charts/PriceChart.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Card, CardHeader, CardContent, CardTitle } from '../components/ui/Card.jsx'
 import { Badge } from '../components/ui/Badge.jsx'
@@ -12,13 +13,28 @@ export default function Home() {
   const [prices, setPrices] = useState(null)
   const [regional, setRegional] = useState(null)
   const [stats, setStats] = useState(null)
+  const [lastUpdate, setLastUpdate] = useState('')
   const [filter, setFilter] = useState('all')
+  const [modalItem, setModalItem] = useState(null)
+  const [historyData, setHistoryData] = useState([])
 
   useEffect(() => {
-    api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
+    api.get('/api/prices').then(r => {
+      setPrices(r.data.data||[])
+      if (r.data.latest_date) setLastUpdate(r.data.latest_date)
+    }).catch(() => {})
     api.get('/api/prices/regional').then(r => setRegional(r.data.data||{})).catch(() => {})
     api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
   }, [])
+
+  const fetchHistory = (komoditas, size) => {
+    api.get(`/api/prices/history?komoditas=${encodeURIComponent(komoditas)}&size=${encodeURIComponent(size)}`)
+      .then(r => {
+        setHistoryData(r.data.data || [])
+        setModalItem({ komoditas, size })
+      })
+      .catch(() => {})
+  }
 
   const loading = !prices || !regional || !stats
   const isFish = /tuna|cakalang|kakap|kerapu|cumi|lobster/i
@@ -52,6 +68,7 @@ export default function Home() {
       <div className="flex items-center gap-2 mb-4">
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gold" /> Harga Tambak
+          {lastUpdate && <span className="text-[10px] font-normal text-muted-foreground ml-1">— Update: {lastUpdate}</span>}
         </h2>
         <div className="flex gap-1.5 ml-auto">
           {[{key:'all',label:'Semua'},{key:'b',label:'Budidaya'},{key:'t',label:'Tangkap'}].map(({key,label}) => (
@@ -61,7 +78,11 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
-        {filtered.map((p, i) => <CommodityCard key={i} item={p} />)}
+        {filtered.map((p, i) => (
+          <div key={i} onClick={() => fetchHistory(p.komoditas, p.size)} className="cursor-pointer">
+            <CommodityCard item={p} />
+          </div>
+        ))}
       </div>
 
       <h2 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
@@ -91,6 +112,15 @@ export default function Home() {
       <Card>
         <CardContent className="pt-4 text-center text-muted-foreground text-sm">Belum ada alert. Sistem pemantauan berjalan normal.</CardContent>
       </Card>
+
+      {modalItem && (
+        <PriceChart
+          history={historyData}
+          komoditas={`${modalItem.komoditas.split('(')[0].trim()} ${modalItem.size}`}
+          onClose={() => { setModalItem(null); setHistoryData([]) }}
+        />
+      )}
+    </div>
     </div>
   )
 }
