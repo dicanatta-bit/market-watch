@@ -1,5 +1,15 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
+const fmtDate = (d) => {
+  const dt = new Date(d + 'T00:00:00')
+  return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+}
+
+const fmtTooltip = (d) => {
+  const dt = new Date(d + 'T00:00:00')
+  return dt.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 export default function PriceChart({ history, komoditas, onClose }) {
   const data = history.map(h => ({
     date: h.date,
@@ -27,14 +37,14 @@ export default function PriceChart({ history, komoditas, onClose }) {
                     <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.02}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={v => v.substring(5)} />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={fmtDate} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `Rp${(v/1000).toFixed(0)}k`} width={60} />
                 <Tooltip
                   formatter={(value, name) => {
                     const label = name === 'low' ? 'Rendah' : name === 'high' ? 'Tinggi' : 'Rata-rata'
                     return [`Rp ${value.toLocaleString('id')}/kg`, label]
                   }}
-                  labelFormatter={label => `Tanggal: ${label}`}
+                  labelFormatter={fmtTooltip}
                 />
                 <Area type="monotone" dataKey="high" stroke="#3B82F6" fill="none" strokeWidth={2} dot={false} />
                 <Area type="monotone" dataKey="avg" stroke="#1d4ed8" strokeWidth={1.5} dot={{ r: 3 }} fill="url(#colorPrice)" />
