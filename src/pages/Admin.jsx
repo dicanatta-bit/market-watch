@@ -5,10 +5,21 @@ import { Card } from '../components/ui/Card.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import api from '../api/client.js'
 
-  const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
+export default function Admin() {
+  const { user, logout } = useAuth()
+  const [prices, setPrices] = useState([])
+  const [stats, setStats] = useState(null)
+  const [pulau, setPulau] = useState('')
+  const [scraping, setScraping] = useState(false)
+  const [scrapeLog, setScrapeLog] = useState('')
   const [visitorStats, setVisitorStats] = useState(null)
+  const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
 
-  useEffect(() => { api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {}); api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {}); api.get('/api/visitor/stats').then(r => setVisitorStats(r.data.data||{})).catch(() => {}) }, [])
+  useEffect(() => {
+    api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
+    api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
+    api.get('/api/visitor/stats').then(r => setVisitorStats(r.data.data||{})).catch(() => {})
+  }, [])
 
   const triggerScrape = async () => {
     setScraping(true)
@@ -17,8 +28,8 @@ import api from '../api/client.js'
       const { data } = await api.post('/api/scrape/trigger')
       setScrapeLog(data.logs?.join('\n\n') || 'Selesai')
       // Refresh data
-      fetchPrices().then(setPrices)
-      fetchStats().then(setStats)
+      api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
+      api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
     } catch (e) {
       setScrapeLog('Gagal: ' + (e.response?.data?.detail || e.message))
     } finally { setScraping(false) }
