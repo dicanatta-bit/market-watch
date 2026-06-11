@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
 
-app = FastAPI(title="Market Watch AJN", version="3.0.0")
+app = FastAPI(title="Market Watch AJN", version="3.0.0", openapi_url="/market-watch/openapi.json", docs_url="/market-watch/docs")
 
 app.add_middleware(
     CORSMiddleware,

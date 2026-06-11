@@ -6,7 +6,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "mysql+pymysql://root:@localhost/market_watch?charset=utf8mb4",
+    "mysql+pymysql://market_watch:Jaladri%2126@localhost/db_market_watch?charset=utf8mb4",
 )
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "mw-v3-dev-secret-change-in-production")

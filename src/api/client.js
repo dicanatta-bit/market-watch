@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '' })
+const api = axios.create({ baseURL: '/market-watch' })
 
 api.interceptors.response.use(
   res => res,
