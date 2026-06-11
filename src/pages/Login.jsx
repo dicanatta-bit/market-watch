@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
@@ -25,27 +25,8 @@ export default function Login() {
   }
 
   if (user) {
-    return (
-      <div className="max-w-sm mx-auto mt-8">
-        <Card>
-          <CardHeader><CardTitle className="text-center">Anda Sudah Login</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground text-center">
-              Login sebagai <strong>{user.nama || user.username}</strong> ({user.role})
-            </p>
-            <div className="flex gap-2">
-              {user.role === 'superadmin' ? (
-                <Link to="/admin" className="flex-1"><Button variant="gold" className="w-full">Dashboard Admin</Button></Link>
-              ) : (
-                <Link to="/" className="flex-1"><Button variant="gold" className="w-full">Halaman Utama</Button></Link>
-              )}
-              <Button variant="outline" className="flex-1" onClick={() => { logout(); setUsername(''); setPassword('') }}>Logout</Button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center"><Link to="/" className="hover:underline">← Kembali ke Website</Link></p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    const target = user.role === 'superadmin' ? '/admin' : '/'
+    return <Navigate to={target} replace />
   }
 
   return (
