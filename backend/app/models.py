@@ -96,3 +96,12 @@ class TpiPrice(Base):
     satuan = Column(String(20), default="Rp/kg")
     created_by = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class VisitorLog(Base):
+    __tablename__ = "visitor_logs"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    ip_address = Column(String(45))
+    user_agent = Column(Text)
+    page = Column(String(200))
+    visited_at = Column(DateTime, default=datetime.utcnow)

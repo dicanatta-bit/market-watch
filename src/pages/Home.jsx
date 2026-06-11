@@ -17,8 +17,10 @@ export default function Home() {
   const [filter, setFilter] = useState('all')
   const [modalItem, setModalItem] = useState(null)
   const [historyData, setHistoryData] = useState([])
+  const [visitorCount, setVisitorCount] = useState(null)
 
   useEffect(() => {
+    api.post('/api/visitor/log').then(r => setVisitorCount(r.data)).catch(() => {})
     api.get('/api/prices').then(r => {
       setPrices(r.data.data||[])
       if (r.data.latest_date) setLastUpdate(r.data.latest_date)
@@ -69,6 +71,7 @@ export default function Home() {
         <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-gold" /> Harga Tambak
           {lastUpdate && <span className="text-[10px] font-normal text-muted-foreground ml-1">— Update: {new Date(lastUpdate).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>}
+          {visitorCount && <span className="text-[10px] text-muted-foreground ml-2">· 👁️ {visitorCount.today} hari ini</span>}
         </h2>
         <div className="flex gap-1.5 ml-auto">
           {[{key:'all',label:'Semua'},{key:'b',label:'Budidaya'},{key:'t',label:'Tangkap'}].map(({key,label}) => (

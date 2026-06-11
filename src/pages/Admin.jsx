@@ -5,17 +5,10 @@ import { Card } from '../components/ui/Card.jsx'
 import { Button } from '../components/ui/Button.jsx'
 import api from '../api/client.js'
 
-const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
+  const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
+  const [visitorStats, setVisitorStats] = useState(null)
 
-export default function Admin() {
-  const { user, logout } = useAuth()
-  const [prices, setPrices] = useState([])
-  const [stats, setStats] = useState(null)
-  const [pulau, setPulau] = useState('')
-  const [scraping, setScraping] = useState(false)
-  const [scrapeLog, setScrapeLog] = useState('')
-
-  useEffect(() => { api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {}); api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {}) }, [])
+  useEffect(() => { api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {}); api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {}); api.get('/api/visitor/stats').then(r => setVisitorStats(r.data.data||{})).catch(() => {}) }, [])
 
   const triggerScrape = async () => {
     setScraping(true)
@@ -82,6 +75,34 @@ export default function Admin() {
           <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-emerald-700">{stats?.total_nelayan?.toLocaleString('id')||'—'}</div><div className="text-[11px] text-slate-500">Nelayan</div></Card>
           <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-amber-700">{stats?.total_kapal?.toLocaleString('id')||'—'}</div><div className="text-[11px] text-slate-500">Kapal</div></Card>
         </div>
+
+        {/* Visitor Stats */}
+        <h2 className="text-sm font-bold text-navy mb-3">👁️ Visitor</h2>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-navy">{visitorStats?.total||0}</div><div className="text-[11px] text-slate-500">Total Kunjungan</div></Card>
+          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-emerald-700">{visitorStats?.today||0}</div><div className="text-[11px] text-slate-500">Hari Ini</div></Card>
+          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-amber-700">{visitorStats?.unique_ips||0}</div><div className="text-[11px] text-slate-500">IP Unik</div></Card>
+        </div>
+
+        {visitorStats?.recent_logs?.length > 0 && (
+          <Card className="overflow-hidden mb-6">
+            <table className="w-full text-xs">
+              <thead><tr className="bg-slate-50 font-semibold uppercase tracking-wide">
+                <th className="p-2.5 text-left text-slate-500">IP</th><th className="p-2.5 text-left text-slate-500">Halaman</th><th className="p-2.5 text-left text-slate-500">User Agent</th><th className="p-2.5 text-left text-slate-500">Waktu</th>
+              </tr></thead>
+              <tbody>
+                {visitorStats.recent_logs.slice(0, 20).map((v, i) => (
+                  <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
+                    <td className="p-2.5 font-mono text-[10px]">{v.ip}</td>
+                    <td className="p-2.5">{v.page}</td>
+                    <td className="p-2.5 text-[10px] text-slate-500">{v.ua}</td>
+                    <td className="p-2.5 text-slate-500">{v.time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
 
         {/* Prices */}
         <h2 className="text-sm font-bold text-navy mb-3">Harga Komoditas</h2>

@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from .routers import auth_router, knmp_router, prices_router, stats_router, users_router, export_router, scrape_router
+from .routers import auth_router, knmp_router, prices_router, stats_router, users_router, export_router, scrape_router, visitor_router
 app.include_router(auth_router.router, prefix="/api")
 app.include_router(knmp_router.router, prefix="/api")
 app.include_router(prices_router.router, prefix="/api")
@@ -21,6 +21,7 @@ app.include_router(stats_router.router, prefix="/api")
 app.include_router(users_router.router, prefix="/api")
 app.include_router(export_router.router, prefix="/api")
 app.include_router(scrape_router.router, prefix="/api")
+app.include_router(visitor_router.router, prefix="/api")
 
 @app.get("/api/health")
 def health():
