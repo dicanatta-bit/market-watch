@@ -32,8 +32,8 @@ export default function PriceChart({ history, komoditas, onClose }) {
             <ResponsiveContainer width="100%" height={360}>
               <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                  <linearGradient id="avgGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.02}/>
                   </linearGradient>
                 </defs>
@@ -41,14 +41,14 @@ export default function PriceChart({ history, komoditas, onClose }) {
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `Rp${(v/1000).toFixed(0)}k`} width={60} />
                 <Tooltip
                   formatter={(value, name) => {
-                    const label = name === 'low' ? 'Rendah' : name === 'high' ? 'Tinggi' : 'Rata-rata'
-                    return [`Rp ${value.toLocaleString('id')}/kg`, label]
+                    const labels = { low: 'Terendah', high: 'Tertinggi', avg: 'Rata-rata' }
+                    return [`Rp ${value.toLocaleString('id')}/kg`, labels[name]]
                   }}
                   labelFormatter={fmtTooltip}
                 />
-                <Area type="linear" dataKey="high" stroke="#3B82F6" fill="none" strokeWidth={2} dot={false} />
-                <Area type="linear" dataKey="avg" stroke="#1d4ed8" strokeWidth={1.5} dot={{ r: 3 }} fill="url(#colorPrice)" />
-                <Area type="linear" dataKey="low" stroke="#93c5fd" fill="none" strokeWidth={2} dot={false} />
+                <Area type="linear" dataKey="high" stroke="#10B981" fill="none" strokeWidth={2} dot={false} />
+                <Area type="linear" dataKey="avg" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} fill="url(#avgGrad)" />
+                <Area type="linear" dataKey="low" stroke="#EF4444" fill="none" strokeWidth={2} dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           )}
