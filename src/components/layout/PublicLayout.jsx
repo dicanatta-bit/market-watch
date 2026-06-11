@@ -29,7 +29,7 @@ export default function PublicLayout() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            {visitorCount && <span className="text-[10px] text-muted-foreground">👁️ {visitorCount.today}</span>}
+            {visitorCount && <span className="text-[10px] text-muted-foreground">Today Visitor : {visitorCount.today}</span>}
             <DarkToggle />
             {user ? (
               <span className="text-[10px] text-muted-foreground font-medium">{user.nama || 'Admin'}</span>
