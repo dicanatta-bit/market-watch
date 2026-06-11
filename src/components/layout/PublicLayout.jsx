@@ -15,7 +15,7 @@ export default function PublicLayout() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-30 border-b bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
@@ -39,10 +39,10 @@ export default function PublicLayout() {
           </div>
         </div>
       </header>
-      <main className="container py-6">
+      <main className="flex-1 container py-6">
         <Outlet />
       </main>
-      <footer className="border-t py-4 text-center text-[11px] text-muted-foreground">
+      <footer className="border-t py-4 text-center text-[11px] text-muted-foreground flex-shrink-0">
         Market Watch AJN © 2026 — PT Agrinas Jaladri Nusantara (Persero)
       </footer>
     </div>

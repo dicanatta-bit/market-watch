@@ -7,7 +7,8 @@ import Login from './pages/Login.jsx'
 import Admin from './pages/Admin.jsx'
 
 function Protected({ children }) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  if (loading) return null
   if (!user) return <Navigate to="/login" replace />
   if (user.role !== 'superadmin') return <Navigate to="/" replace />
   return children
