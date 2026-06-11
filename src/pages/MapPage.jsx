@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.jsx'
 import api from '../api/client.js'
 import { Button } from '../components/ui/Button.jsx'
 import { Input } from '../components/ui/Input.jsx'
@@ -69,6 +70,7 @@ function popupHTML(m, hargaWilayah) {
 }
 
 export default function MapPage() {
+  const { user } = useAuth()
   const [markers, setMarkers] = useState([])
   const [hargaWilayah, setHargaWilayah] = useState({})
   const [search, setSearch] = useState('')
@@ -108,7 +110,11 @@ export default function MapPage() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge variant="outline" className="text-[10px]">{total} Lokasi</Badge>
           <Link to="/"><Button variant="ghost" size="xs">📊 Harga</Button></Link>
-          <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
+          {user ? (
+            <Link to="/admin"><Button variant="gold" size="xs">{user.nama || 'Admin'} →</Button></Link>
+          ) : (
+            <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
+          )}
         </div>
       </header>
 

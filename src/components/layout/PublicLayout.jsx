@@ -32,7 +32,7 @@ export default function PublicLayout() {
             {visitorCount && <span className="text-[10px] text-muted-foreground">Today Visitor : {visitorCount.today}</span>}
             <DarkToggle />
             {user ? (
-              <span className="text-[10px] text-muted-foreground font-medium">{user.nama || 'Admin'}</span>
+              <Link to="/admin"><Button variant="gold" size="xs">{user.nama || 'Admin'} →</Button></Link>
             ) : (
               <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
             )}
