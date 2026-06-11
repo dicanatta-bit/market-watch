@@ -9,16 +9,10 @@ export default function PublicLayout() {
   const { pathname } = useLocation()
   const { user } = useAuth()
   const [visitorCount, setVisitorCount] = useState(null)
-  const [lastUpdate, setLastUpdate] = useState('')
 
   useEffect(() => {
     api.post('/api/visitor/log').then(r => setVisitorCount(r.data)).catch(() => {})
-    api.get('/api/prices').then(r => {
-      if (r.data.latest_date) setLastUpdate(r.data.latest_date)
-    }).catch(() => {})
   }, [])
-
-  const fmtDate = lastUpdate ? new Date(lastUpdate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,12 +30,9 @@ export default function PublicLayout() {
           </div>
           <div className="flex items-center gap-2">
             {visitorCount && <span className="text-[10px] text-muted-foreground">👁️ {visitorCount.today}</span>}
-            <span className="hidden sm:inline text-[9px] text-muted-foreground/60">{fmtDate}</span>
             <DarkToggle />
             {user ? (
-              <span className="text-[10px] bg-[#C9A84C]/10 text-[#C9A84C] px-2 py-1 rounded-full font-medium">
-                {user.role === 'superadmin' ? 'Superadmin' : `KNMP #${user.id_lokasi}`}
-              </span>
+              <span className="text-[10px] text-muted-foreground font-medium">{user.nama || 'Admin'}</span>
             ) : (
               <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
             )}
