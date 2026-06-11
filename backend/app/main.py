@@ -13,6 +13,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
 from .routers import auth_router, knmp_router, prices_router, stats_router, users_router, export_router, scrape_router, visitor_router
 app.include_router(auth_router.router, prefix="/api")
 app.include_router(knmp_router.router, prefix="/api")
