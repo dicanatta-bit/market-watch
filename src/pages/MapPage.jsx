@@ -107,7 +107,7 @@ export default function MapPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge variant="outline" className="text-[10px]">{total} Lokasi</Badge>
-          <Link to="/"><Button variant="ghost" size="xs">📊</Button></Link>
+          <Link to="/"><Button variant="ghost" size="xs">📊 Harga</Button></Link>
           <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
         </div>
       </header>
