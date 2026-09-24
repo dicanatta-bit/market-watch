@@ -1,139 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Card } from '../components/ui/Card.jsx'
-import { Button } from '../components/ui/Button.jsx'
 import api from '../api/client.js'
+import '../styles/admin.css'
+
+const islands = ['Jawa-Bali', 'Sumatera', 'Kalimantan', 'Sulawesi', 'NTT-NTB', 'Maluku', 'Papua']
+const number = value => Number(value || 0).toLocaleString('id-ID')
+const stamp = value => value ? new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : 'Belum ada'
+
+function Health({ label, value, detail, healthy }) {
+  const text = healthy === true ? 'Sehat' : healthy === false ? 'Perlu perhatian' : 'Belum tersedia'
+  return <article className="admin-health"><div><span>{label}</span><b className={healthy === true ? 'good' : healthy === false ? 'bad' : ''}>{text}</b></div><strong>{value}</strong><small>{detail}</small></article>
+}
 
 export default function Admin() {
   const { user, logout } = useAuth()
-  const [prices, setPrices] = useState([])
-  const [stats, setStats] = useState(null)
-  const [pulau, setPulau] = useState('')
-  const [scraping, setScraping] = useState(false)
-  const [scrapeLog, setScrapeLog] = useState('')
-  const [visitorStats, setVisitorStats] = useState(null)
-  const PULAU_LIST = ["Jawa-Bali", "Sumatera", "Kalimantan", "Sulawesi", "NTT-NTB", "Maluku", "Papua"]
-
-  useEffect(() => {
-    api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
-    api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
-    api.get('/api/visitor/stats').then(r => setVisitorStats(r.data.data||{})).catch(() => {})
+  const [prices, setPrices] = useState([]); const [stats, setStats] = useState({}); const [visitors, setVisitors] = useState({}); const [monitor, setMonitor] = useState(null)
+  const [pulau, setPulau] = useState(''); const [running, setRunning] = useState(false); const [exporting, setExporting] = useState(''); const [log, setLog] = useState(''); const [notice, setNotice] = useState('')
+  const refresh = useCallback(async () => {
+    const results = await Promise.allSettled([api.get('/api/prices'), api.get('/api/stats'), api.get('/api/visitor/stats'), api.get('/api/admin/monitoring')])
+    if (results[0].status === 'fulfilled') setPrices(results[0].value.data.data || [])
+    if (results[1].status === 'fulfilled') setStats(results[1].value.data.data || {})
+    if (results[2].status === 'fulfilled') setVisitors(results[2].value.data.data || {})
+    if (results[3].status === 'fulfilled') setMonitor(results[3].value.data.data || results[3].value.data)
   }, [])
-
-  const triggerScrape = async () => {
-    setScraping(true)
-    setScrapeLog('Menjalankan scraper...')
-    try {
-      const { data } = await api.post('/api/scrape/trigger')
-      setScrapeLog(data.logs?.join('\n\n') || 'Selesai')
-      // Refresh data
-      api.get('/api/prices').then(r => setPrices(r.data.data||[])).catch(() => {})
-      api.get('/api/stats').then(r => setStats(r.data.data||{})).catch(() => {})
-    } catch (e) {
-      setScrapeLog('Gagal: ' + (e.response?.data?.detail || e.message))
-    } finally { setScraping(false) }
+  useEffect(() => { refresh() }, [refresh])
+  const sync = async () => {
+    setRunning(true); setNotice(''); setLog('Menjalankan pipeline sinkronisasi…')
+    try { const { data } = await api.post('/api/scrape/trigger'); setLog(data.log || data.message || 'Sinkronisasi selesai.'); setNotice('Sinkronisasi selesai. Ringkasan dimuat ulang.'); await refresh() }
+    catch (error) { const detail = error.response?.data?.detail; setLog(`Gagal: ${typeof detail === 'object' ? detail.message : detail || error.message}${typeof detail === 'object' && detail.log ? `\n\n${detail.log}` : ''}`) }
+    finally { setRunning(false) }
   }
-
-  const exportURL = pulau ? `/market-watch/api/export/excel?pulau=${encodeURIComponent(pulau)}` : '/market-watch/api/export/excel'
-
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-navy text-white flex items-center justify-between px-6 h-12">
-        <h1 className="text-sm font-bold text-gold">Market Watch AJN · Admin</h1>
-        <div className="flex items-center gap-4 text-xs">
-          <Link to="/" className="text-slate-400 hover:text-white">← Website</Link>
-          <Link to="/peta" className="text-slate-400 hover:text-white">🗺️ Peta</Link>
-          <span>{user?.username}</span>
-          <button onClick={logout} className="text-red-400 hover:text-red-300 font-semibold">Logout</button>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto p-6">
-
-        {/* Manual Scrape */}
-        <Card className="p-5 mb-6">
-          <h2 className="text-sm font-bold text-navy mb-3 pb-2 border-b-2 border-gold">🔄 Manual Scrape</h2>
-          <p className="text-xs text-slate-500 mb-3">Jalankan scraper untuk update data eKNMP, harga komoditas, SIHI, dan alert.</p>
-          <Button variant="gold" onClick={triggerScrape} disabled={scraping}>
-            {scraping ? '⏳ Scraping...' : '🔄 Scrape Sekarang'}
-          </Button>
-          {scrapeLog && (
-            <pre className="mt-3 p-3 bg-slate-900 text-green-400 text-[11px] rounded-lg overflow-auto max-h-60 whitespace-pre-wrap">{scrapeLog}</pre>
-          )}
-        </Card>
-
-        {/* Export */}
-        <Card className="p-5 mb-6">
-          <h2 className="text-sm font-bold text-navy mb-3 pb-2 border-b-2 border-gold">📥 Export Excel</h2>
-          <div className="flex flex-wrap items-end gap-3">
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Filter Pulau</label>
-              <select value={pulau} onChange={e => setPulau(e.target.value)} className="px-3 py-1.5 text-sm border rounded-lg bg-white">
-                <option value="">Semua Lokasi</option>
-                {PULAU_LIST.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <a href={exportURL}><Button variant="outline">📥 Export {pulau || 'Semua'}</Button></a>
-          </div>
-          <p className="text-xs text-slate-400 mt-3">API: <code className="bg-slate-100 px-1 rounded">/api/export/excel?pulau=Jawa-Bali</code> · <a href="/market-watch/docs" className="text-blue-600 hover:underline" target="_blank">Swagger /docs</a></p>
-        </Card>
-
-        {/* Stats */}
-        <h2 className="text-sm font-bold text-navy mb-3">Statistik</h2>
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-navy">{stats?.total_lokasi||723}</div><div className="text-[11px] text-slate-500">Lokasi KNMP</div></Card>
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-emerald-700">{stats?.total_nelayan?.toLocaleString('id')||'—'}</div><div className="text-[11px] text-slate-500">Nelayan</div></Card>
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-amber-700">{stats?.total_kapal?.toLocaleString('id')||'—'}</div><div className="text-[11px] text-slate-500">Kapal</div></Card>
-        </div>
-
-        {/* Visitor Stats */}
-        <h2 className="text-sm font-bold text-navy mb-3">👁️ Visitor</h2>
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-navy">{visitorStats?.total||0}</div><div className="text-[11px] text-slate-500">Total Kunjungan</div></Card>
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-emerald-700">{visitorStats?.today||0}</div><div className="text-[11px] text-slate-500">Hari Ini</div></Card>
-          <Card className="p-4 text-center"><div className="text-2xl font-extrabold text-amber-700">{visitorStats?.unique_ips||0}</div><div className="text-[11px] text-slate-500">IP Unik</div></Card>
-        </div>
-
-        {visitorStats?.recent_logs?.length > 0 && (
-          <Card className="overflow-hidden mb-6">
-            <table className="w-full text-xs">
-              <thead><tr className="bg-slate-50 font-semibold uppercase tracking-wide">
-                <th className="p-2.5 text-left text-slate-500">IP</th><th className="p-2.5 text-left text-slate-500">Halaman</th><th className="p-2.5 text-left text-slate-500">User Agent</th><th className="p-2.5 text-left text-slate-500">Waktu</th>
-              </tr></thead>
-              <tbody>
-                {visitorStats.recent_logs.slice(0, 20).map((v, i) => (
-                  <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="p-2.5 font-mono text-[10px]">{v.ip}</td>
-                    <td className="p-2.5">{v.page}</td>
-                    <td className="p-2.5 text-[10px] text-slate-500">{v.ua}</td>
-                    <td className="p-2.5 text-slate-500">{v.time}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        )}
-
-        {/* Prices */}
-        <h2 className="text-sm font-bold text-navy mb-3">Harga Komoditas</h2>
-        <Card className="overflow-hidden mb-6">
-          <table className="w-full text-xs">
-            <thead><tr className="bg-slate-50 font-semibold uppercase tracking-wide">
-              <th className="p-2.5 text-left text-slate-500">Komoditas</th><th className="p-2.5 text-left text-slate-500">Size</th><th className="p-2.5 text-right text-slate-500">Tambak</th><th className="p-2.5 text-right text-slate-500">Ekspor</th>
-            </tr></thead>
-            <tbody>
-              {prices.map((p,i) => (
-                <tr key={i} className="border-t border-slate-100 hover:bg-slate-50">
-                  <td className="p-2.5 font-semibold">{p.komoditas}</td><td className="p-2.5">{p.size}</td>
-                  <td className="p-2.5 text-right">Rp {(p.harga_tambak_low||0).toLocaleString('id')} – {(p.harga_tambak_high||0).toLocaleString('id')}</td>
-                  <td className="p-2.5 text-right">{p.harga_ekspor_low ? `$${p.harga_ekspor_low.toFixed(2)}` : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-    </div>
-  )
+  const download = async format => {
+    setExporting(format); setNotice('')
+    try {
+      const response = await api.get(`/api/export/${format}`, { params: pulau ? { pulau } : {}, responseType: 'blob' }); const url = URL.createObjectURL(response.data); const link = document.createElement('a'); const fromHeader = response.headers['content-disposition']?.match(/filename=\"?([^\";]+)\"?/)?.[1]
+      link.href = url; link.download = fromHeader || `KNMP_${pulau || 'Semua'}.${format === 'excel' ? 'xlsx' : 'pdf'}`; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); setNotice(`Export ${format.toUpperCase()} berhasil disiapkan.`)
+    } catch (error) { setNotice(`Export gagal: ${error.response?.data?.detail || error.message}`) } finally { setExporting('') }
+  }
+  const price = monitor?.price || {}; const knmp = monitor?.knmp || {}; const pipeline = monitor?.pipeline || {}
+  return <div className="admin-shell">
+    <header className="admin-header"><Link className="admin-brand" to="/"><span>AJN</span><div>Market Watch<small>internal console</small></div></Link><nav><Link to="/">Beranda</Link><Link to="/peta">Peta KNMP</Link><span>{user?.username || 'Admin'}</span><button onClick={logout}>Keluar</button></nav></header>
+    <main className="admin-main"><section className="admin-hero"><div><p>OPERASIONAL DATA</p><h1>Kontrol Market Watch</h1><span>Amati kesegaran data, jalankan sinkronisasi yang terkunci, dan ambil laporan KNMP dari satu tempat.</span></div><button onClick={refresh}>↻ Muat ulang status</button></section>{notice && <div className="admin-notice">{notice}</div>}
+      <section className="admin-health-grid"><Health label="Harga pasar" value={price.latest_date || '—'} detail={`${number(price.observations)} observasi · ${price.age_days ?? '—'} hari lalu`} healthy={price.healthy}/><Health label="Sebaran KNMP" value={`${number(knmp.locations)} lokasi`} detail={knmp.last_updated ? `diperbarui ${knmp.age_days} hari lalu` : 'belum ada waktu pembaruan'} healthy={knmp.healthy}/><Health label="Pipeline terakhir" value={pipeline.status || 'Belum ada run'} detail={pipeline.finished_at ? stamp(pipeline.finished_at) : 'Belum ada catatan eksekusi'} healthy={pipeline.healthy}/></section>
+      <section className="admin-grid"><article className="admin-panel"><p>SINKRONISASI</p><h2>Jalankan update manual</h2><span>Tombol ini menjalankan pipeline yang sama dengan cron: eKNMP, arsip harga FishInfo Jatim, lalu alert. Dua proses tidak dapat berjalan bersamaan.</span><button className="primary" onClick={sync} disabled={running}>{running ? 'Sinkronisasi berjalan…' : 'Mulai sinkronisasi'}</button>{log && <pre>{log}</pre>}</article><article className="admin-panel"><p>LAPORAN</p><h2>Export sebaran KNMP</h2><span>Pilih cakupan. File berasal dari data KNMP yang sama dengan peta publik.</span><label>Cakupan wilayah<select value={pulau} onChange={event => setPulau(event.target.value)}><option value="">Seluruh Indonesia</option>{islands.map(item => <option key={item}>{item}</option>)}</select></label><div className="export"><button onClick={() => download('excel')} disabled={!!exporting}>{exporting === 'excel' ? 'Menyiapkan…' : 'Excel (.xlsx)'}</button><button onClick={() => download('pdf')} disabled={!!exporting}>{exporting === 'pdf' ? 'Menyiapkan…' : 'PDF (.pdf)'}</button></div></article></section>
+      <section className="admin-metrics"><article><strong>{number(stats.total_lokasi)}</strong><span>Lokasi KNMP</span></article><article><strong>{number(stats.total_nelayan)}</strong><span>Nelayan tercatat</span></article><article><strong>{number(stats.total_kapal)}</strong><span>Kapal tercatat</span></article><article><strong>{number(visitors.today)}</strong><span>Kunjungan hari ini</span></article></section>
+      <section className="admin-grid"><article className="admin-panel"><p>ALERT TERBARU</p><h2>Perubahan yang perlu dibaca</h2>{monitor?.alerts?.length ? <ul>{monitor.alerts.map((alert, index) => <li key={`${alert.date}-${index}`}><i className={alert.level || ''}/><div><strong>{alert.commodity || 'Alert data'}</strong><small>{alert.message || alert.date || 'Tanpa keterangan'}</small></div></li>)}</ul> : <em>Belum ada alert aktif dari pipeline terakhir.</em>}</article><article className="admin-panel"><p>RIWAYAT PIPELINE</p><h2>Eksekusi terakhir</h2><dl><div><dt>Pemicu</dt><dd>{pipeline.trigger || '—'}</dd></div><div><dt>Mulai</dt><dd>{stamp(pipeline.started_at)}</dd></div><div><dt>Selesai</dt><dd>{stamp(pipeline.finished_at)}</dd></div></dl>{pipeline.log && <details><summary>Lihat log pipeline</summary><pre>{pipeline.log}</pre></details>}</article></section>
+      <section className="admin-panel prices"><p>HARGA TERKINI</p><h2>Rata-rata eceran pasar Jawa Timur</h2><div className="table"><table><thead><tr><th>Komoditas</th><th>Ukuran</th><th>Harga rata-rata/kg</th><th>Sumber</th></tr></thead><tbody>{prices.length ? prices.map((item, index) => <tr key={`${item.komoditas}-${index}`}><td>{item.komoditas}</td><td>{item.size || '—'}</td><td>Rp {number(item.harga_tambak_low)}</td><td>{item.sumber || '—'}</td></tr>) : <tr><td colSpan="4"><em>Data harga belum tersedia.</em></td></tr>}</tbody></table></div></section>
+    </main></div>
 }

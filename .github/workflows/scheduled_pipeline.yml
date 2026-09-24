@@ -1,9 +1,7 @@
 name: Market Watch - Scheduled Pipeline (VPS)
 
-# Jadwal otomatis dipindah ke auto_update.yml (scrape langsung di GitHub
-# Actions via SSH tunnel ke DB), supaya tidak duplikat scraping/write DB.
-# Workflow ini tetap dipakai manual kalau perlu jalankan run_pipeline.sh
-# penuh di VPS (npm build, generate HTML/peta statis, dll).
+# Jadwal otomatis dijalankan cron VPS. Workflow ini manual-only untuk
+# men-trigger refresh data tanpa build frontend atau Git commit.
 on:
   workflow_dispatch:
 
@@ -15,7 +13,7 @@ jobs:
   run-pipeline:
     name: Trigger run_pipeline.sh di VPS
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 
     steps:
       - name: Setup SSH agent
@@ -39,7 +37,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const title = "Pipeline mingguan gagal jalan di VPS";
+            const title = "Pipeline Market Watch gagal jalan di VPS";
             const { data: existing } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,

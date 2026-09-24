@@ -1,67 +1,37 @@
-name: Market Watch AJN - Auto Update
+# Production refresh runs on the Indonesian VPS cron, not on a laptop or GitHub.
+# This workflow is manual-only and kept for troubleshooting.
+name: Market Watch AJN - Manual Update
 
 on:
-  schedule:
-    # Setiap Senin jam 01:00 UTC = 08:00 WIB
-    - cron: '0 1 * * 1'
   workflow_dispatch:
 
 jobs:
   update:
-    name: Scrape & Update Database
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
+          cache: pip
           cache-dependency-path: backend/requirements.txt
-
       - name: Install dependencies
         working-directory: backend
         run: pip install -r requirements.txt
-
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Tambahkan VPS ke known_hosts
+      - name: Open database tunnel
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Buka SSH tunnel ke MySQL di VPS (DB tetap tidak diekspos ke publik)
-        run: |
+          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
           ssh -f -N -L 3306:localhost:3306 -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
-          sleep 3
-
-      - name: Scrape eKNMP
+      - name: Refresh verified sources
         working-directory: backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m app.scrapers.eknmp
-
-      - name: Scrape Commodity
-        working-directory: backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m app.scrapers.commodity
-
-      - name: Scrape SIHI TPI (opsional — lanjut kalau tidak bisa diakses)
-        working-directory: backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m app.scrapers.scrape_sihi || echo "[WARN] Scrape SIHI gagal/tidak bisa diakses, lanjut tanpa data SIHI"
-
-      - name: Alert Engine
-        working-directory: backend
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m app.scrapers.alert_engine
+        run: |
+          python -m app.scrapers.eknmp
+          python -m app.scrapers.commodity
+          python -m app.scrapers.alert_engine

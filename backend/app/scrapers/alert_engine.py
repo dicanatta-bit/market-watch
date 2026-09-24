@@ -5,23 +5,21 @@ sys.path.insert(0, ".")
 
 from app.database import SessionLocal
 from app.models import CommodityPrice, AlertLog
+from app.scrapers.fishinfo_history import SERIES_SIZE, SOURCE_NAME
 
 
 def main():
     db = SessionLocal()
-    TODAY = date.today()
-    WEEK_AGO = TODAY - timedelta(days=7)
-
     try:
-        latest = db.query(CommodityPrice).filter(CommodityPrice.tanggal == TODAY).all()
-        if not latest:
-            prev_date = db.query(CommodityPrice.tanggal).order_by(CommodityPrice.tanggal.desc()).first()
-            if not prev_date:
-                print("No price data"); return
-            latest = db.query(CommodityPrice).filter(CommodityPrice.tanggal == prev_date[0]).all()
+        verified = (CommodityPrice.sumber == SOURCE_NAME) & (CommodityPrice.size == SERIES_SIZE)
+        latest_date = db.query(CommodityPrice.tanggal).filter(verified).order_by(CommodityPrice.tanggal.desc()).first()
+        if not latest_date:
+            print("No verified price data"); return
+        snapshot_date = latest_date[0]
+        latest = db.query(CommodityPrice).filter(verified, CommodityPrice.tanggal == snapshot_date).all()
 
         prev = {}
-        for p in db.query(CommodityPrice).filter(CommodityPrice.tanggal <= WEEK_AGO).order_by(CommodityPrice.tanggal.desc()).all():
+        for p in db.query(CommodityPrice).filter(verified, CommodityPrice.tanggal < snapshot_date).order_by(CommodityPrice.tanggal.desc()).all():
             key = f"{p.komoditas}|{p.size}"
             if key not in prev: prev[key] = p
 
@@ -41,9 +39,9 @@ def main():
                 short = p.komoditas.split("(")[0].strip()
                 pesan = f"{short} {p.size}: {'naik' if pct>0 else 'turun'} {abs(pct):.1f}% vs minggu lalu"
                 rekomendasi = "Pantau pergerakan harga" if abs(pct) < 7 else "Pertimbangkan penyesuaian stok" if abs(pct) < 15 else "Evaluasi strategi pembelian"
-                existing = db.query(AlertLog).filter_by(tanggal=TODAY, komoditas=p.komoditas, size=p.size).first()
+                existing = db.query(AlertLog).filter_by(tanggal=snapshot_date, komoditas=p.komoditas, size=p.size).first()
                 if not existing:
-                    db.add(AlertLog(tanggal=TODAY, alert_type=alert_type, komoditas=p.komoditas, size=p.size, pesan=pesan, rekomendasi=rekomendasi))
+                    db.add(AlertLog(tanggal=snapshot_date, alert_type=alert_type, komoditas=p.komoditas, size=p.size, pesan=pesan, rekomendasi=rekomendasi))
                     added += 1
 
         db.commit()

@@ -105,3 +105,13 @@ class VisitorLog(Base):
     user_agent = Column(Text)
     page = Column(String(200))
     visited_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PipelineRun(Base):
+    __tablename__ = "pipeline_runs"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    trigger = Column(String(30), nullable=False, default="cron")
+    status = Column(String(20), nullable=False, default="running")
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    finished_at = Column(DateTime)
+    log = Column(Text)

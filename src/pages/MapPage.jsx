@@ -1,186 +1,61 @@
-import React, { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet'
+import { useEffect, useMemo, useState } from 'react'
+import { MapContainer, CircleMarker, Popup, Tooltip, useMap } from 'react-leaflet'
+import { maplibreGL } from '@maplibre/maplibre-gl-leaflet'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext.jsx'
+import { ArrowLeft, FilterX, Layers3, MapPinned, Menu, Search, X } from 'lucide-react'
 import api from '../api/client.js'
-import { Button } from '../components/ui/Button.jsx'
-import { Input } from '../components/ui/Input.jsx'
-import { Badge } from '../components/ui/Badge.jsx'
 
-// Normalize status_knmp: 'penyangga' or 'Penyangga' or 'PENYANGGA' → 'PENYANGGA'
-function normStatus(s) {
-  if (!s) return ''
-  const u = s.toUpperCase()
-  if (u === 'HUB') return 'HUB'
-  if (u === 'PENYANGGA') return 'PENYANGGA'
-  return u
+const statusOf = value => (value || '').toUpperCase()
+const colors = { HUB: '#17699b', PENYANGGA: '#e8a84b' }
+
+function VectorBasemap() {
+  const map = useMap()
+  useEffect(() => {
+    const layer = maplibreGL({ style: 'https://tiles.openfreemap.org/styles/positron' }).addTo(map)
+    return () => map.removeLayer(layer)
+  }, [map])
+  return null
 }
 
-const WILAYAH_PROV = {
-  "ACEH":"Sumatera","SUMATERA UTARA":"Sumatera","SUMATRA UTARA":"Sumatera",
-  "SUMATERA BARAT":"Sumatera","SUMATRA BARAT":"Sumatera","RIAU":"Sumatera",
-  "KEPULAUAN RIAU":"Sumatera","JAMBI":"Sumatera","BENGKULU":"Sumatera",
-  "SUMATERA SELATAN":"Sumatera","SUMATRA SELATAN":"Sumatera","LAMPUNG":"Sumatera",
-  "KEPULAUAN BANGKA BELITUNG":"Sumatera","BANGKA BELITUNG":"Sumatera",
-  "BANTEN":"Jawa-Bali","DKI JAKARTA":"Jawa-Bali","JAKARTA":"Jawa-Bali",
-  "JAWA BARAT":"Jawa-Bali","JAWA TENGAH":"Jawa-Bali","JAWA TIMUR":"Jawa-Bali",
-  "DI YOGYAKARTA":"Jawa-Bali","BALI":"Jawa-Bali",
-  "KALIMANTAN BARAT":"Kalimantan","KALIMANTAN TENGAH":"Kalimantan",
-  "KALIMANTAN SELATAN":"Kalimantan","KALIMANTAN TIMUR":"Kalimantan","KALIMANTAN UTARA":"Kalimantan",
-  "SULAWESI UTARA":"Sulawesi","SULAWESI TENGAH":"Sulawesi","SULAWESI SELATAN":"Sulawesi",
-  "SULAWESI TENGGARA":"Sulawesi","GORONTALO":"Sulawesi","SULAWESI BARAT":"Sulawesi",
-  "NUSA TENGGARA BARAT":"NTT-NTB","NTB":"NTT-NTB",
-  "NUSA TENGGARA TIMUR":"NTT-NTB","NTT":"NTT-NTB",
-  "MALUKU":"Maluku","MALUKU UTARA":"Maluku",
-  "PAPUA":"Papua","PAPUA BARAT":"Papua","PAPUA SELATAN":"Papua","PAPUA TENGAH":"Papua",
-  "PAPUA PEGUNUNGAN":"Papua","PAPUA BARAT DAYA":"Papua",
-}
-
-function popupHTML(m, hargaWilayah) {
-  const st = normStatus(m.status_knmp)
-  const displaySt = st === 'PENYANGGA' ? 'Penyangga' : st === 'HUB' ? 'HUB' : st
-  const wil = m.provinsi ? WILAYAH_PROV[m.provinsi.toUpperCase()] : null
-  // 3 komoditas unik (beda nama) per wilayah
-  const seen = new Set()
-  const rawHarga = wil && hargaWilayah && hargaWilayah[wil] ? hargaWilayah[wil] : []
-  const harga = rawHarga.filter(h => {
-    const name = h.komoditas.split('(')[0].trim()
-    if (seen.has(name)) return false
-    seen.add(name)
-    return true
-  }).slice(0, 3)
-  const badgeBg = st === 'HUB' ? '#DBEAFE' : '#FEF3C7'
-  const badgeClr = st === 'HUB' ? '#1E40AF' : '#92400E'
-
-  const rows = []
-  if (m.provinsi) rows.push(['Provinsi', m.provinsi])
-  if (m.kabupaten) rows.push(['Kabupaten', m.kabupaten])
-  if (m.kecamatan) rows.push(['Kecamatan', m.kecamatan])
-  if (m.desa) rows.push(['Desa', m.desa])
-  rows.push(['Nelayan', (m.jumlah_nelayan||0)+' org'])
-  rows.push(['Kapal', (m.jumlah_kapal||0)+' unit'])
-
-  return `<div style="font-family:system-ui;min-width:260px;max-width:340px">
-    <div style="padding:9px 13px;font-weight:700;font-size:13px;color:#C9A84C;background:linear-gradient(135deg,#1B3A6B,#0d2244)">#${m.id_lokasi} · ${m.nama_kampung||'?'}</div>
-    <div style="padding:4px 11px"><span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeClr}">${displaySt||'—'}</span>${m.tahun?`<span style="display:inline-block;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;background:#F1F5F9;color:#475569;margin-left:4px">${m.tahun}</span>`:''}</div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">${rows.reduce((s,r,i)=>s+`<tr${i%2!==0?' style="background:#f1f5f9"':''}><td style="padding:3px 11px;color:#475569;width:80px;font-weight:600;white-space:nowrap">${r[0]}</td><td style="padding:3px 11px;color:#1e293b"><b>${r[1]||'—'}</b></td></tr>`,'')}</table>
-    ${harga.length?`<div style="background:#f0f7ff;border-top:1px solid #dbeafe;border-bottom:1px solid #dbeafe"><div style="padding:6px 11px 2px;font-size:11px;font-weight:700;color:#1B3A6B">&#128722; Harga Komoditas — ${wil}</div>${harga.map(h=>`<div style="display:flex;justify-content:space-between;padding:3px 11px;font-size:12px"><span style="color:#475569">${h.komoditas} <em style="color:#94a3b8">${h.size}</em></span><span style="color:#1B3A6B;font-weight:700">Rp ${(h.harga_low||0).toLocaleString('id')}–${(h.harga_high||0).toLocaleString('id')}/kg</span></div>`).join('<hr style="border:none;border-top:1px dotted #e2e8f0;margin:0;height:0">')}<div style="padding:2px 11px 6px;font-size:9px;color:#94a3b8">Per hari ini · Estimasi nelayan/tambak</div></div>`:''}
-    <div style="padding:4px 11px;text-align:center;font-size:9px;color:#94a3b8"><a href="/market-watch/login" style="color:#3B82F6">&#128274; Login</a> untuk detail</div>
-  </div>`
+function LocationPopup({ item }) {
+  const rows = [['Provinsi', item.provinsi], ['Kabupaten', item.kabupaten], ['Kecamatan', item.kecamatan], ['Desa', item.desa], ['Nelayan', item.jumlah_nelayan != null ? `${item.jumlah_nelayan} orang` : null], ['Kapal', item.jumlah_kapal != null ? `${item.jumlah_kapal} unit` : null]]
+  return <div className="mw-popup"><div className="mw-popup-top"><span>KNMP / {item.id_lokasi}</span><h3>{item.nama_kampung || 'Lokasi tanpa nama'}</h3><div>{statusOf(item.status_knmp) || 'Belum diklasifikasi'} {item.tahun ? `· ${item.tahun}` : ''}</div></div><div className="mw-popup-rows">{rows.filter(([,value]) => value != null && value !== '').map(([label,value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><p>Lokasi berdasarkan data eKNMP. Harga regional belum terverifikasi.</p></div>
 }
 
 export default function MapPage() {
-  const { user } = useAuth()
   const [markers, setMarkers] = useState([])
-  const [hargaWilayah, setHargaWilayah] = useState({})
+  const [lastUpdate, setLastUpdate] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [selectedProv, setSelectedProv] = useState('')
-  const [statFilter, setStatFilter] = useState('')
+  const [province, setProvince] = useState('')
+  const [status, setStatus] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
-    api.get('/api/knmp').then(r => setMarkers(r.data.data||[])).catch(() => {})
-    api.get('/api/prices/regional').then(r => {
-      const data = r.data.data || {}
-      setHargaWilayah(data)
-    }).catch(e => console.warn('harga wilayah error:', e.message))
+    Promise.all([api.get('/api/knmp'), api.get('/api/stats')]).then(([locations, summary]) => {
+      setMarkers(locations.data.data || [])
+      setLastUpdate(summary.data.data?.latest_knmp_update || null)
+    }).catch(() => setError('Data peta tidak dapat dimuat. Periksa koneksi atau layanan API.')).finally(() => setLoading(false))
   }, [])
 
-  const filtered = markers.filter(m => {
-    if (m.lat == null || m.lon == null) return false
-    if (selectedProv && (m.provinsi||'').toUpperCase() !== selectedProv.toUpperCase()) return false
-    if (statFilter === 'HUB' && normStatus(m.status_knmp) !== 'HUB') return false
-    if (statFilter === 'PENYANGGA' && normStatus(m.status_knmp) !== 'PENYANGGA') return false
-    if (search && ![(m.nama_kampung||''),(m.kabupaten||'')].some(v => v.toLowerCase().includes(search.toLowerCase()))) return false
-    return true
-  })
+  const provinces = useMemo(() => [...new Set(markers.map(item => item.provinsi).filter(Boolean))].sort(), [markers])
+  const filtered = useMemo(() => markers.filter(item => {
+    const lat = Number(item.lat), lon = Number(item.lon)
+    return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -12 && lat <= 7 && lon >= 94 && lon <= 142 &&
+      (!province || item.provinsi === province) && (!status || statusOf(item.status_knmp) === status) &&
+      (!search || `${item.nama_kampung || ''} ${item.kabupaten || ''} ${item.provinsi || ''}`.toLowerCase().includes(search.toLowerCase()))
+  }), [markers, province, status, search])
+  const hub = markers.filter(item => statusOf(item.status_knmp) === 'HUB').length
+  const support = markers.filter(item => statusOf(item.status_knmp) === 'PENYANGGA').length
+  const reset = () => { setSearch(''); setProvince(''); setStatus('') }
 
-  const total = markers.length
-  const hub = markers.filter(m => normStatus(m.status_knmp) === 'HUB').length
-  const penyangga = markers.filter(m => normStatus(m.status_knmp) === 'PENYANGGA').length
-  const provs = [...new Set(markers.map(m => m.provinsi).filter(Boolean))].sort()
-
-  return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-slate-100 dark:bg-slate-950">
-      <header className="flex-shrink-0 h-12 border-b bg-card/90 backdrop-blur flex items-center justify-between px-3 gap-3 z-30 shadow-sm">
-        <div className="flex items-center gap-2 min-w-0">
-          <button onClick={()=>setSidebarOpen(!sidebarOpen)} className="p-1 rounded-md hover:bg-accent">☰</button>
-          <div className="min-w-0"><h1 className="text-sm font-bold text-foreground truncate">Peta KNMP Nasional</h1></div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge variant="outline" className="text-[10px]">{total} Lokasi</Badge>
-          <Link to="/"><Button variant="ghost" size="xs">📊 Harga</Button></Link>
-          {user ? (
-            <Link to="/admin"><Button variant="gold" size="xs">{user.nama || 'Admin'} →</Button></Link>
-          ) : (
-            <Link to="/login"><Button variant="gold" size="xs">🔒 Login</Button></Link>
-          )}
-        </div>
-      </header>
-
-      <div className="flex-1 flex overflow-hidden">
-        <div className={`${sidebarOpen?'w-64':'w-0'} transition-all overflow-hidden lg:w-64 bg-card border-r flex-shrink-0 z-10`}>
-          <div className="p-3 space-y-3 overflow-y-auto h-full">
-            <div className="grid grid-cols-2 gap-2">
-              {[[total,'Total'],[hub,'HUB'],[penyangga,'Penyangga'],[total-hub-penyangga,'Lain']].map(([v,l],i)=>(
-                <div key={i} className="bg-muted rounded-lg p-2.5 text-center border"><div className="text-lg font-extrabold text-foreground">{v}</div><div className="text-[10px] text-muted-foreground">{l}</div></div>
-              ))}
-            </div>
-            <Input placeholder="Cari lokasi..." value={search} onChange={e=>setSearch(e.target.value)} className="h-8 text-xs"/>
-            <div><label className="block text-[11px] font-semibold text-muted-foreground mb-1">Provinsi</label>
-              <select value={selectedProv} onChange={e=>setSelectedProv(e.target.value)} className="w-full h-8 text-xs border rounded-md bg-background px-2"><option value="">Semua Provinsi</option>{provs.map(p=><option key={p} value={p}>{p}</option>)}</select>
-            </div>
-            <div><label className="block text-[11px] font-semibold text-muted-foreground mb-1">Status</label>
-              <select value={statFilter} onChange={e=>setStatFilter(e.target.value)} className="w-full h-8 text-xs border rounded-md bg-background px-2">
-                <option value="">Semua</option><option value="HUB">HUB</option><option value="PENYANGGA">Penyangga</option>
-              </select>
-            </div>
-            <Button variant="outline" size="xs" className="w-full" onClick={()=>{setSearch('');setSelectedProv('');setStatFilter('')}}>↺ Reset</Button>
-            <div className="border-t pt-2 text-[11px] space-y-1">
-              <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Legenda</div>
-              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#3B82F6]">⬤</span> HUB</span><span className="font-semibold">{hub}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#C9A84C]">⬤</span> Penyangga</span><span className="font-semibold">{penyangga}</span></div>
-              <div className="flex justify-between text-muted-foreground"><span><span className="text-[#60A5FA]">⬤</span> Lain</span><span className="font-semibold">{total-hub-penyangga}</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 relative">
-          {markers.length === 0 ? (
-            <div className="w-full h-full flex items-center justify-center bg-muted/30">
-              <div className="text-center space-y-3">
-                <div className="animate-spin w-10 h-10 border-4 border-muted border-t-primary rounded-full mx-auto"/>
-                <p className="text-sm text-muted-foreground">Memuat peta KNMP... {markers.length} markers</p>
-              </div>
-            </div>
-          ) : (
-            <MapContainer center={[-2.5,118]} zoom={5} className="w-full h-full" preferCanvas>
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" attribution="&copy; OSM &copy; CARTO" subdomains="abcd" maxZoom={19}/>
-              {filtered.map(m => {
-                const st = normStatus(m.status_knmp)
-                const color = st === 'PENYANGGA' ? '#C9A84C' : st === 'HUB' ? '#3B82F6' : '#60A5FA'
-                return (
-                  <CircleMarker key={m.id_lokasi} center={[m.lat,m.lon]}
-                    radius={st === 'HUB' ? 7 : 5} fillColor={color} pathOptions={{color:'#fff',weight:1.5}} fillOpacity={0.9}>
-                    <Popup maxWidth={320}><div dangerouslySetInnerHTML={{__html:popupHTML(m, hargaWilayah)}}/></Popup>
-                    <Tooltip direction="top" offset={[0,-12]}><b>{m.nama_kampung}</b><br/>{st}</Tooltip>
-                  </CircleMarker>
-                )
-              })}
-            </MapContainer>
-          )}
-          {total > 0 && (
-            <div className="absolute bottom-3 left-3 right-3 z-[1000]">
-              <div className="bg-card/90 backdrop-blur rounded-lg shadow border px-4 py-2.5 flex items-center gap-4 text-xs flex-wrap">
-                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden min-w-[150px]"><div className="h-full bg-blue-500 rounded-full" style={{width:`${(hub/total*100).toFixed(0)}%`}}/></div>
-                <span className="font-bold text-blue-700 dark:text-blue-400">{hub} HUB</span>
-                <span className="text-muted-foreground">|</span>
-                <span className="font-bold text-amber-700 dark:text-amber-400">{penyangga} Penyangga</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+  return <div className="mw-map-page">
+    <header className="mw-map-header"><div className="mw-map-header-left"><button className="mw-icon-button" onClick={() => setSidebarOpen(value => !value)} aria-label={sidebarOpen ? 'Tutup filter' : 'Buka filter'}><Menu size={19}/></button><Link to="/" className="mw-map-back"><ArrowLeft size={16}/> Market Watch</Link><span className="mw-map-divider"/><strong>Peta Sebaran KNMP</strong></div><div className="mw-map-header-right"><span className="mw-map-live"><span/> DATA eKNMP</span><span className="mw-map-total">{markers.length.toLocaleString('id-ID')} lokasi</span></div></header>
+    <div className="mw-map-body">
+      <aside className={`mw-map-sidebar ${sidebarOpen ? 'open' : ''}`}><div className="mw-map-sidebar-inner"><div className="mw-map-sidebar-title"><div><span className="mw-kicker">EXPLORE / INDONESIA</span><h1>Jelajahi sebaran.</h1></div><button className="mw-icon-button mw-map-close" onClick={() => setSidebarOpen(false)} aria-label="Tutup filter"><X size={18}/></button></div><p className="mw-map-intro">Titik lokasi Kampung Nelayan Merah Putih, diperbarui dari eKNMP.</p><div className="mw-map-counts"><div><MapPinned size={17}/><strong>{markers.length.toLocaleString('id-ID')}</strong><span>Total lokasi</span></div><div><span className="mw-dot hub"/><strong>{hub.toLocaleString('id-ID')}</strong><span>HUB</span></div><div><span className="mw-dot support"/><strong>{support.toLocaleString('id-ID')}</strong><span>Penyangga</span></div></div><div className="mw-map-controls"><label htmlFor="mw-map-search">Cari lokasi</label><div className="mw-map-search"><Search size={16}/><input id="mw-map-search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Kampung, kabupaten..."/></div><label htmlFor="mw-map-province">Provinsi</label><select id="mw-map-province" value={province} onChange={event => setProvince(event.target.value)}><option value="">Semua provinsi</option>{provinces.map(value => <option key={value} value={value}>{value}</option>)}</select><label htmlFor="mw-map-status">Status</label><select id="mw-map-status" value={status} onChange={event => setStatus(event.target.value)}><option value="">Semua status</option><option value="HUB">HUB</option><option value="PENYANGGA">Penyangga</option></select><button className="mw-map-reset" onClick={reset}><FilterX size={15}/> Atur ulang filter</button></div><div className="mw-map-sidebar-foot"><Layers3 size={16}/><span>{filtered.length.toLocaleString('id-ID')} titik tampil di peta</span></div></div></aside>
+      <div className="mw-map-canvas">{loading || error ? <div className="mw-map-message">{error || 'Memuat lokasi KNMP...'}</div> : <MapContainer center={[-2.5, 118]} zoom={5} minZoom={2} maxZoom={18} className="mw-map-leaflet" preferCanvas><VectorBasemap/>{filtered.map(item => { const type = statusOf(item.status_knmp); const color = colors[type] || '#8296a8'; return <CircleMarker key={item.id_lokasi} center={[Number(item.lat), Number(item.lon)]} radius={type === 'HUB' ? 6 : 4} pathOptions={{ color: '#ffffff', weight: 1.5, fillColor: color, fillOpacity: .9 }}><Popup maxWidth={330}><LocationPopup item={item}/></Popup><Tooltip direction="top" offset={[0, -8]}>{item.nama_kampung || 'Lokasi KNMP'}</Tooltip></CircleMarker> })}</MapContainer>}<div className="mw-map-overlay"><div><span className="mw-dot hub"/> HUB <span className="mw-dot support"/> PENYANGGA <span className="mw-dot other"/> LAINNYA</div><small>{lastUpdate ? `Sinkronisasi lokasi: ${new Date(lastUpdate).toLocaleDateString('id-ID')}` : 'Tanggal sinkronisasi belum tersedia'}</small></div></div>
     </div>
-  )
+  </div>
 }

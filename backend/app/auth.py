@@ -31,13 +31,6 @@ def get_current_user(
 ) -> User:
     token = credentials.credentials
 
-    # Dev mode: mock token bypasses JWT validation
-    if token.startswith("mock-"):
-        user = db.query(User).filter(User.role == "superadmin").first()
-        if user and user.is_active:
-            return user
-        raise HTTPException(status_code=401, detail="Invalid mock token")
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")

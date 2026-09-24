@@ -15,21 +15,27 @@ def main():
     try:
         print("Login eKNMP...")
         r = requests.post(AUTH_URL, json={"username": EKNMP_USERNAME, "password": EKNMP_PASSWORD}, timeout=30)
+        r.raise_for_status()
         token = r.json()["data"]["token"]
         headers = {"Authorization": f"Bearer {token}"}
-        print(f"  ✓ Token: {token[:20]}...")
+        print("  ✓ Login berhasil")
 
         all_items = []
-        for tahun in [2025, 2026]:
+        for tahun in range(2025, date.today().year + 1):
             print(f"  Fetch tahun {tahun}...")
             r2 = requests.get(f"{BASE_URL}/api/api/knmp/data-tabel",
                 params={"id_program": 3, "pulau": "", "status_knmp": "", "tahun": str(tahun)},
                 headers=headers, timeout=30)
+            r2.raise_for_status()
             items = r2.json().get("data", [])
+            if not isinstance(items, list):
+                raise ValueError(f"Format lokasi eKNMP {tahun} berubah")
             print(f"    {len(items)} lokasi")
             all_items.extend(items)
             time.sleep(0.3)
 
+        if not all_items:
+            raise ValueError("eKNMP mengembalikan 0 lokasi; impor dibatalkan")
         new_loc = 0
         for item in all_items:
             id_lokasi = item.get("id_lokasi")
@@ -74,6 +80,9 @@ def main():
 
         db.commit()
         print(f"\nDone: {len(all_items)} locations, {new_loc} new, {detail_count} with coordinates")
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

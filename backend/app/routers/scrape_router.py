@@ -1,30 +1,29 @@
-"""Scrape router — trigger manual scrape via Admin"""
-import subprocess, sys, os
-from fastapi import APIRouter, Depends
+"""Authenticated, lock-protected manual trigger for the normal cron pipeline."""
+import subprocess
+import os
+from fastapi import APIRouter, Depends, HTTPException
 from ..auth import get_superadmin
 
 router = APIRouter(tags=["scrape"])
 
-BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
-def run_script(name):
-    """Jalankan 1 scraper script, return stdout."""
-    script = os.path.join(BACKEND_DIR, "app", "scrapers", name)
-    result = subprocess.run([sys.executable, script], capture_output=True, text=True, timeout=300)
-    out = result.stdout.strip()
-    err = result.stderr.strip()
-    return f"=== {name} ===\n{out}\n{err}\nExit: {result.returncode}"
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+PIPELINE_PATH = os.path.join(ROOT_DIR, "run_pipeline.sh")
 
 
 @router.post("/scrape/trigger")
 def trigger_scrape(_=Depends(get_superadmin)):
-    """Jalankan semua scraper sequentially (eKNMP → commodity → SIHA → alert)."""
-    logs = []
-
-    logs.append(run_script("eknmp.py"))
-    logs.append(run_script("commodity.py"))
-    logs.append(run_script("scrape_sihi.py"))
-    logs.append(run_script("alert_engine.py"))
-
-    return {"success": True, "message": "Scrape complete", "logs": logs}
+    """Run exactly the same locked pipeline that cron runs."""
+    try:
+        environment = os.environ.copy()
+        environment["PIPELINE_TRIGGER"] = "manual"
+        result = subprocess.run(
+            ["/usr/bin/bash", PIPELINE_PATH], cwd=ROOT_DIR,
+            capture_output=True, text=True, timeout=1800, env=environment,
+        )
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=504, detail="Pipeline melebihi batas 30 menit")
+    log = (result.stdout + "\n" + result.stderr).strip()[-24000:]
+    if result.returncode:
+        status = 409 if "pipeline lain masih berjalan" in log else 502
+        raise HTTPException(status_code=status, detail={"message": "Sinkronisasi gagal", "log": log})
+    return {"success": True, "message": "Sinkronisasi selesai", "log": log}

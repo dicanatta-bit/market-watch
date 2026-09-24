@@ -5,10 +5,11 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { DarkModeProvider } from './context/DarkModeContext.jsx'
 import './styles/index.css'
+import './styles/market-watch-light.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter basename="/market-watch" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter basename="/market-watch/" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DarkModeProvider>
         <AuthProvider>
           <App />
