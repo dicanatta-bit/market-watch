@@ -13,9 +13,10 @@ python -m app.scrapers.eknmp
 echo "=== Step 2: Scrape Commodity ==="
 python -m app.scrapers.commodity
 
-# Step 3: Scrape SIHI TPI
+# Step 3: Scrape SIHI TPI (opsional — situs SIHI kadang tidak bisa diakses
+# dari luar Indonesia; kalau gagal, lanjut saja pakai data eKNMP + commodity)
 echo "=== Step 3: Scrape SIHI ==="
-python -m app.scrapers.scrape_sihi
+python -m app.scrapers.scrape_sihi || echo "[WARN] Scrape SIHI gagal/tidak bisa diakses, lanjut tanpa data SIHI"
 
 # Step 4: Alert engine
 echo "=== Step 4: Alert Engine ==="
