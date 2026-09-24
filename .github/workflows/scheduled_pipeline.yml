@@ -1,9 +1,10 @@
 name: Market Watch - Scheduled Pipeline (VPS)
 
+# Jadwal otomatis dipindah ke auto_update.yml (scrape langsung di GitHub
+# Actions via SSH tunnel ke DB), supaya tidak duplikat scraping/write DB.
+# Workflow ini tetap dipakai manual kalau perlu jalankan run_pipeline.sh
+# penuh di VPS (npm build, generate HTML/peta statis, dll).
 on:
-  schedule:
-    # Setiap Senin jam 01:00 UTC = 08:00 WIB (sama seperti jadwal semula)
-    - cron: '0 1 * * 1'
   workflow_dispatch:
 
 permissions:
