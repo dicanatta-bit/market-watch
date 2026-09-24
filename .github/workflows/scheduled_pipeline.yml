@@ -1,0 +1,63 @@
+name: Market Watch - Scheduled Pipeline (VPS)
+
+on:
+  schedule:
+    # Setiap Senin jam 01:00 UTC = 08:00 WIB (sama seperti jadwal semula)
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write   # dibutuhkan untuk buka issue kalau pipeline gagal
+
+jobs:
+  run-pipeline:
+    name: Trigger run_pipeline.sh di VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Tambahkan VPS ke known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Jalankan pipeline di VPS
+        id: pipeline
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "bash -lc 'cd /var/www/market-watch && bash run_pipeline.sh'"
+
+      - name: Buka issue kalau pipeline gagal
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Pipeline mingguan gagal jalan di VPS";
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: ["pipeline-failure"],
+            });
+            if (existing.some(issue => issue.title === title)) {
+              console.log("Issue serupa masih terbuka, tidak buat duplikat.");
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ["pipeline-failure"],
+              body: [
+                `Run gagal: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                "",
+                "Kemungkinan penyebab: VPS mati/tidak bisa diakses via SSH, atau run_pipeline.sh error di VPS.",
+                "Cek log run di atas, lalu SSH manual ke VPS untuk diagnosa lebih lanjut.",
+              ].join("\n"),
+            });
